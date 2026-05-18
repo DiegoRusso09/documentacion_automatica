@@ -331,14 +331,13 @@ def build_complete_html(
 
         html {{
             width:100%;
-            min-height:100%;
+            
         }}
 
         body {{
             margin:0;
             padding:0;
             width:100%;
-            min-height:100vh;
             background:#ffffff;
             font-family:Arial, Helvetica, sans-serif;
             overflow-x:hidden;
@@ -346,7 +345,6 @@ def build_complete_html(
 
         #vb-shell {{
             width:100%;
-            min-height:100vh;
             display:flex;
             flex-direction:column;
         }}
@@ -358,14 +356,12 @@ def build_complete_html(
 
         #vb-main-content {{
             width:100%;
-            flex:1;
             padding:16px;
             box-sizing:border-box;
         }}
 
         #vb-footer {{
             width:100%;
-            margin-top:auto;
             flex-shrink:0;
         }}
 

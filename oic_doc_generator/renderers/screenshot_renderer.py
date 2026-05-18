@@ -139,7 +139,7 @@ def generate_screenshot(
 
                 "width": 1600,
 
-                "height": 3000
+                "height": 50
             }
         )
 

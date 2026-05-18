@@ -62,7 +62,31 @@ def should_ignore_file(
 
         "component",
 
-        "test"
+        "test",
+
+        "index",
+
+        "root",
+
+        "router",
+
+        "layout",
+
+        "loader",
+
+        "bootstrap",
+
+        "navigation",
+
+        "menu",
+
+        "/js/",
+
+        "/css/",
+
+        "/images/",
+
+        "/resources/"
     ]
 
     for word in ignored_words:
