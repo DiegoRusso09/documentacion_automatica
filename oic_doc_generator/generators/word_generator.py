@@ -926,6 +926,8 @@ def generate_word_document(
                 # =========================================
                 # DIAGRAM
                 # =========================================
+                
+                document.add_paragraph("")
 
                 document.add_paragraph(
                     "Diagrama de Secuencia del Endpoint:"
@@ -1106,13 +1108,34 @@ def generate_word_document(
                         ""
                     )
 
-                    create_header(
+                    if screen_counter == 1:
 
-                        document,
+                        if hasattr(
+                            vb_zip,
+                            "name"
+                        ):
 
-                        f"3.{screen_counter}\t{page_name}",
+                            app_name = vb_zip.name
 
-                        size=14
+                        else:
+
+                            app_name = os.path.basename(
+                                str(vb_zip)
+                            )
+
+                        app_name = app_name.replace(
+                            ".zip",
+                            ""
+                        )
+
+                        create_header(
+                            document,
+                            f"3.1\t{app_name}",
+                            size=14
+                        )
+
+                    document.add_paragraph(
+                        page_name
                     )
 
                     try:
@@ -1171,6 +1194,180 @@ def generate_word_document(
 
                                 width=Inches(6.5)
                             )
+
+                            # =============================
+                            # BUTTONS
+                            # =============================
+
+                            buttons = page.get(
+                                "buttons",
+                                []
+                            )
+
+                            if buttons:
+
+                                document.add_paragraph(
+                                    "• Lista de Botones"
+                                )
+
+                                button_table = (
+                                    document.add_table(
+                                        rows=1,
+                                        cols=2
+                                    )
+                                )
+
+                                document.add_paragraph("")
+
+                                button_table.style = (
+                                    "Table Grid"
+                                )
+
+                                hdr = (
+                                    button_table.rows[0].cells
+                                )
+
+                                hdr[0].text = "BOTÓN"
+                                hdr[1].text = "DESCRIPCIÓN"
+
+                                apply_header_style(
+                                    hdr[0]
+                                )
+
+                                apply_header_style(
+                                    hdr[1]
+                                )
+
+                                for btn in buttons:
+
+                                    row = (
+                                        button_table.add_row().cells
+                                    )
+
+                                    row[0].text = (
+                                        btn.get(
+                                            "name",
+                                            ""
+                                        )
+                                    )
+
+                                    row[1].text = (
+                                        btn.get(
+                                            "description",
+                                            ""
+                                        )
+                                    )
+
+                            # =============================
+                            # PARAMETERS
+                            # =============================
+
+                            document.add_paragraph(
+                                "• Lista de Parámetros"
+                            )
+
+                            parameter_table = (
+                                document.add_table(
+                                    rows=2,
+                                    cols=2
+                                )
+                            )
+
+                            document.add_paragraph("")
+
+                            parameter_table.style = (
+                                "Table Grid"
+                            )
+
+                            hdr = (
+                                parameter_table.rows[0].cells
+                            )
+
+                            hdr[0].text = "PARÁMETROS"
+                            hdr[1].text = "DESCRIPCIÓN"
+
+                            apply_header_style(
+                                hdr[0]
+                            )
+
+                            apply_header_style(
+                                hdr[1]
+                            )
+
+                            row = (
+                                parameter_table.rows[1].cells
+                            )
+
+                            row[0].text = (
+                                "Todos los campos en la búsqueda"
+                            )
+
+                            row[1].text = (
+                                "Todos los campos en la búsqueda"
+                            )
+
+                            # =============================
+                            # FIELDS
+                            # =============================
+
+                            fields = page.get(
+                                "table_columns",
+                                []
+                            )
+
+                            if fields:
+
+                                document.add_paragraph(
+                                    "• Lista de Campos"
+                                )
+
+                                field_table = (
+                                    document.add_table(
+                                        rows=1,
+                                        cols=2
+                                    )
+                                )
+
+                                document.add_paragraph("")
+
+                                field_table.style = (
+                                    "Table Grid"
+                                )
+
+                                hdr = (
+                                    field_table.rows[0].cells
+                                )
+
+                                hdr[0].text = "CAMPOS"
+                                hdr[1].text = "DESCRIPCIÓN"
+
+                                apply_header_style(
+                                    hdr[0]
+                                )
+
+                                apply_header_style(
+                                    hdr[1]
+                                )
+
+                                for field in fields:
+
+                                    row = (
+                                        field_table.add_row().cells
+                                    )
+
+                                    row[0].text = (
+                                        field.get(
+                                            "name",
+                                            ""
+                                        )
+                                    )
+
+                                    row[1].text = (
+                                        field.get(
+                                            "description",
+                                            ""
+                                        )
+                                    )
 
                         else:
 

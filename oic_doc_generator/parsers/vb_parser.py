@@ -4,10 +4,182 @@
 # =========================================================
 
 import os
+from bs4 import BeautifulSoup
+import re
 
 from parsers.vb_extractor import (
     read_text_file
 )
+
+
+# =========================================================
+# EXTRACT BUTTONS
+# =========================================================
+
+def extract_buttons(
+    html
+):
+
+    result = []
+
+    if not html:
+
+        return result
+
+    try:
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser"
+        )
+
+    except:
+
+        return result
+
+    buttons = soup.find_all(
+        "oj-button"
+    )
+
+    for button in buttons:
+
+        label = button.get(
+            "label",
+            ""
+        ).strip()
+
+        if not label:
+
+            continue
+
+        result.append({
+
+            "name": label,
+
+            "description": ""
+        })
+
+    return result
+
+
+# =========================================================
+# EXTRACT TABLE COLUMNS
+# =========================================================
+
+def extract_table_columns(
+    html
+):
+
+    result = []
+
+    if not html:
+
+        return result
+
+    try:
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser"
+        )
+
+    except:
+
+        return result
+
+    seen = set()
+
+    # =====================================================
+    # TABLES
+    # =====================================================
+
+    tables = soup.find_all(
+        "oj-table"
+    )
+
+    for table in tables:
+
+        columns = table.get(
+            "columns",
+            ""
+        )
+
+        if not columns:
+
+            continue
+
+        # =================================================
+        # FIND HEADERTEXT
+        # =================================================
+
+        matches = re.findall(
+
+            r'headerText\s*:\s*[\'"]([^\'"]+)',
+
+            columns
+        )
+
+        for header in matches:
+
+            clean = header.strip()
+
+            if not clean:
+
+                continue
+
+            if clean in seen:
+
+                continue
+
+            seen.add(clean)
+
+            result.append({
+
+                "name": clean,
+
+                "description": ""
+            })
+
+    # =====================================================
+    # INPUTS
+    # =====================================================
+
+    inputs = soup.find_all([
+
+        "oj-input-text",
+
+        "oj-input-number",
+
+        "oj-input-date",
+
+        "oj-combobox-one"
+    ])
+
+    for inp in inputs:
+
+        label = inp.get(
+            "label-hint",
+            ""
+        ).strip()
+
+        if not label:
+
+            continue
+
+        if label in seen:
+
+            continue
+
+        seen.add(label)
+
+        result.append({
+
+            "name": label,
+
+            "description": ""
+        })
+
+    return result
 
 
 # =========================================================
@@ -306,7 +478,17 @@ def find_visual_builder_pages(
                     full_path,
 
                 "html":
-                    html
+                    html,
+
+                "buttons":
+                    extract_buttons(
+                        html
+                    ),
+
+                "table_columns":
+                    extract_table_columns(
+                        html
+                    )
             }
 
             result.append(
