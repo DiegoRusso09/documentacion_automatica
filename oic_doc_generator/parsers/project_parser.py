@@ -763,6 +763,22 @@ def read_project_xml(
         # APPEND
         # =================================================
 
+
+        # =================================================
+        # COLLOCATED INTEGRATION METADATA
+        # =================================================
+
+        integration_metadata = (
+            read_collocated_integration_metadata(
+                extracted_iar,
+                application_id
+            )
+        )
+
+        # =================================================
+        # APPEND
+        # =================================================
+
         applications.append({
 
             "Codigo":
@@ -778,10 +794,193 @@ def read_project_xml(
                 connection_name,
 
             "Code":
-                adapter_code
+                adapter_code,
+
+            "IsIntegration":
+                integration_metadata.get(
+                    "is_integration",
+                    False
+                ),
+
+            "IntegrationCode":
+                integration_metadata.get(
+                    "integration_code",
+                    ""
+                ),
+
+            "IntegrationVersion":
+                integration_metadata.get(
+                    "integration_version",
+                    ""
+                ),
+
+            "IntegrationOperation":
+                integration_metadata.get(
+                    "integration_operation",
+                    ""
+                ),
+
+            "IntegrationService":
+                integration_metadata.get(
+                    "integration_service",
+                    ""
+                )
         })
 
+
     return applications
+
+
+# =========================================================
+# READ COLLOCATED INTEGRATION METADATA
+# =========================================================
+
+def read_collocated_integration_metadata(
+    extracted_iar,
+    application_id
+):
+
+    result = {
+
+        "is_integration": False,
+
+        "integration_code": "",
+
+        "integration_version": "",
+
+        "integration_operation": "",
+
+        "integration_service": ""
+    }
+
+    resources_path = None
+
+    # =====================================================
+    # FIND APPLICATION RESOURCE FOLDER
+    # =====================================================
+
+    for root, dirs, files in os.walk(
+        extracted_iar
+    ):
+
+        lower = root.lower()
+
+        if (
+
+            "resources" in lower
+
+            and
+
+            application_id.lower() in lower
+        ):
+
+            resources_path = root
+            break
+
+    if not resources_path:
+
+        return result
+
+    # =====================================================
+    # FIND JCA
+    # =====================================================
+
+    jca_file = None
+
+    for root, dirs, files in os.walk(
+        resources_path
+    ):
+
+        for file in files:
+
+            if file.lower().endswith(
+                ".jca"
+            ):
+
+                jca_file = os.path.join(
+                    root,
+                    file
+                )
+
+                break
+
+    if not jca_file:
+
+        return result
+
+    # =====================================================
+    # PARSE XML
+    # =====================================================
+
+    try:
+
+        tree = ET.parse(
+            jca_file
+        )
+
+        root = tree.getroot()
+
+    except:
+
+        return result
+
+    # =====================================================
+    # READ PROPERTIES
+    # =====================================================
+
+    for elem in root.iter():
+
+        tag = clean_tag(
+            elem.tag
+        ).lower()
+
+        if tag != "property":
+
+            continue
+
+        name = elem.attrib.get(
+            "name",
+            ""
+        )
+
+        value = elem.attrib.get(
+            "value",
+            ""
+        )
+
+        # =================================================
+        # DETECT INTEGRATION
+        # =================================================
+
+        if name == "integration_code":
+
+            result[
+                "is_integration"
+            ] = True
+
+            result[
+                "integration_code"
+            ] = value
+
+        elif name == "integration_version":
+
+            result[
+                "integration_version"
+            ] = value
+
+        elif name == "integration_operation":
+
+            result[
+                "integration_operation"
+            ] = value
+
+        elif name == "integration_service":
+
+            result[
+                "integration_service"
+            ] = value
+
+    return result
 
 
 # =========================================================

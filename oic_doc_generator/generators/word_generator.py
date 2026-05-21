@@ -27,7 +27,8 @@ from parsers.project_parser import (
     get_project_name,
     read_project_xml,
     build_application_map,
-    get_project_root
+    get_project_root,
+    get_project_version
 )
 
 from parsers.orchestration_parser import (
@@ -37,7 +38,8 @@ from parsers.orchestration_parser import (
 
 from parsers.connections_parser import (
     analyze_dbaas_jca,
-    find_application_folder
+    find_application_folder,
+    build_action_description
 )
 
 from parsers.schedule_parser import (
@@ -47,6 +49,10 @@ from parsers.schedule_parser import (
 
 from parsers.service_parser import (
     get_request_response_schemas
+)
+
+from generators.service_design_generator import (
+    add_service_design_section
 )
 
 from utils.xml_utils import (
@@ -551,6 +557,11 @@ def generate_word_document(
                 "scheduled":
                     is_scheduled_integration(
                         extracted_iar
+                    ),
+
+                "version":
+                    get_project_version(
+                        extracted_iar
                     )
             })
 
@@ -694,50 +705,10 @@ def generate_word_document(
                             )
                         )
 
-                        desc = (
-                            f"De tipo "
-                            f"{app['Tipo']}"
+                        desc = build_action_description(
+                            app,
+                            dbaas
                         )
-
-                        if dbaas["Operacion"]:
-
-                            desc += (
-                                f", realiza "
-                                f"operación "
-                                f"{dbaas['Operacion']}"
-                            )
-
-                        if dbaas["Tabla"]:
-
-                            desc += (
-                                f" a la tabla "
-                                f"{dbaas['Tabla']}"
-                            )
-
-                        if dbaas["SQL"]:
-
-                            desc += (
-                                f" con el siguiente "
-                                f"query "
-                                f"'{dbaas['SQL']}'"
-                            )
-
-                        if (
-
-                            dbaas["Package"]
-
-                            and
-
-                            dbaas["Procedure"]
-                        ):
-
-                            desc += (
-                                f" en el paquete "
-                                f"{dbaas['Package']}."
-                                f"{dbaas['Procedure']}"
-                            )
-
-                        desc += "."
 
                         rows.append({
 
@@ -1222,6 +1193,79 @@ def generate_word_document(
                 document.add_paragraph(
                     f"Error procesando Visual Builder: {str(e)}"
                 )
+
+
+
+    # =====================================================
+    # 4 DISEÑO DE SERVICIOS
+    # =====================================================
+
+    create_header(
+        document,
+        "4\tDiseño de Interface"
+    )
+
+    create_header(
+        document,
+        "4.1\tDiseño de Servicio",
+        size=14
+    )
+
+    if not use_oic:
+
+        document.add_paragraph(
+            "No aplica."
+        )
+
+    else:
+
+        if not integrations_data:
+
+            document.add_paragraph(
+                "No se encontraron integraciones."
+            )
+
+        else:
+
+            for integration in integrations_data:
+
+                if integration.get(
+                    "scheduled",
+                    False
+                ):
+
+                    continue
+                try:
+
+                    add_service_design_section(
+
+                        document,
+
+                        integration.get(
+                            "path"
+                        ),
+
+                        integration.get(
+                            "name"
+                        ),
+
+                        integration.get(
+                            "version",
+                            "01.00.0000"
+                        )
+                    )
+
+                    document.add_paragraph("")
+                    document.add_paragraph("")
+
+                except Exception as e:
+
+                    document.add_paragraph(
+
+                        f"Error generando diseño "
+                        f"de servicio: {str(e)}"
+                    )
+
 
     output = BytesIO()
 

@@ -585,3 +585,139 @@ def get_connection_xmls(
     return get_connections_information(
         extracted_iar
     )
+
+# =========================================================
+# BUILD ACTION DESCRIPTION
+# =========================================================
+
+def build_action_description(
+    app,
+    dbaas=None
+):
+
+    if not app:
+
+        return "Acción desconocida."
+
+    # =====================================================
+    # INTEGRATION CALL
+    # =====================================================
+
+    if app.get(
+        "IsIntegration",
+        False
+    ):
+
+        integration_service = app.get(
+            "IntegrationService",
+            ""
+        )
+
+        integration_code = app.get(
+            "IntegrationCode",
+            ""
+        )
+
+        integration_version = app.get(
+            "IntegrationVersion",
+            ""
+        )
+
+        integration_operation = app.get(
+            "IntegrationOperation",
+            ""
+        )
+
+        invoke_name = app.get(
+            "Invoke",
+            ""
+        )
+
+        return (
+
+            f'Se llama al endpoint '
+            f'"{integration_service}" '
+            f'de la integración '
+            f'"{integration_code}" '
+            f'versión '
+            f'"{integration_version}" '
+            f'con operación '
+            f'"{integration_operation}" '
+            f'y el conector '
+            f'en el flujo es llamado '
+            f'{invoke_name}.'
+        )
+
+    # =====================================================
+    # NORMAL CONNECTION
+    # =====================================================
+
+    connection_type = app.get(
+        "Tipo",
+        "UNKNOWN"
+    )
+
+    invoke_name = app.get(
+        "Invoke",
+        "UNKNOWN"
+    )
+
+    desc = (
+
+        f"Se llama a una conexión "
+        f"{connection_type} "
+        f"llamada "
+        f"{invoke_name}"
+    )
+
+    # =====================================================
+    # DBAAS DETAILS
+    # =====================================================
+
+    if dbaas:
+
+        if dbaas.get(
+            "Operacion"
+        ):
+
+            desc += (
+                f", realiza operación "
+                f"{dbaas['Operacion']}"
+            )
+
+        if dbaas.get(
+            "Tabla"
+        ):
+
+            desc += (
+                f" a la tabla "
+                f"{dbaas['Tabla']}"
+            )
+
+        if dbaas.get(
+            "SQL"
+        ):
+
+            desc += (
+                f" con el query "
+                f"'{dbaas['SQL']}'"
+            )
+
+        if (
+
+            dbaas.get("Package")
+
+            and
+
+            dbaas.get("Procedure")
+        ):
+
+            desc += (
+                f" en el paquete "
+                f"{dbaas['Package']}."
+                f"{dbaas['Procedure']}"
+            )
+
+    desc += "."
+
+    return desc

@@ -415,28 +415,97 @@ def generate_description(
                         )
                     )
 
-                if first_connection:
+                integration_info = (
+                    app_map.get(
+                        app_ref,
+                        {}
+                    )
+                )
+
+                is_integration = (
+                    integration_info.get(
+                        "IsIntegration",
+                        False
+                    )
+                )
+
+                # =========================================
+                # INTEGRATION CALL
+                # =========================================
+
+                if is_integration:
+
+                    integration_code = (
+                        integration_info.get(
+                            "IntegrationCode",
+                            ""
+                        )
+                    )
+
+                    integration_version = (
+                        integration_info.get(
+                            "IntegrationVersion",
+                            ""
+                        )
+                    )
+
+                    integration_operation = (
+                        integration_info.get(
+                            "IntegrationOperation",
+                            ""
+                        )
+                    )
+
+                    integration_service = (
+                        integration_info.get(
+                            "IntegrationService",
+                            ""
+                        )
+                    )
 
                     steps.append(
 
-                        f"una conexión "
-                        f"{connection_type} "
-                        f"llamada "
+                        f"se llama al endpoint "
+                        f"\"{integration_service}\" "
+                        f"en la integración "
+                        f"\"{integration_code}\" "
+                        f"versión "
+                        f"\"{integration_version}\" "
+                        f"con operación "
+                        f"\"{integration_operation}\" "
+                        f"y el conector en el flujo "
+                        f"es llamado "
                         f"{invoke_name}"
                     )
 
-                    first_connection = False
+                # =========================================
+                # NORMAL CONNECTION
+                # =========================================
 
                 else:
 
-                    steps.append(
+                    if first_connection:
 
-                        f"se llama a una "
-                        f"conexión "
-                        f"{connection_type} "
-                        f"llamada "
-                        f"{invoke_name}"
-                    )
+                        steps.append(
+
+                            f"una conexión "
+                            f"{connection_type} "
+                            f"llamada "
+                            f"{invoke_name}"
+                        )
+
+                        first_connection = False
+
+                    else:
+
+                        steps.append(
+
+                            f"se llama a una "
+                            f"conexión "
+                            f"{connection_type} "
+                            f"llamada "
+                            f"{invoke_name}"
+                        )
 
             # =================================================
             # ASSIGNMENT

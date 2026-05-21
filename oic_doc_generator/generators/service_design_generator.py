@@ -19,7 +19,7 @@ from docx.oxml.ns import (
 )
 
 from parsers.service_parser import (
-    get_service_design
+    get_request_response_schemas
 )
 
 
@@ -53,13 +53,57 @@ def style_header_cell(cell):
 
 
 # =========================================================
-# CREATE REQUEST/RESPONSE TABLE
+# BUILD JSON PAYLOAD
+# =========================================================
+
+def build_json_payload(
+    elements
+):
+
+    if not elements:
+
+        return "No aplica."
+
+    lines = []
+
+    lines.append("{")
+
+    for element in elements:
+
+        name = element.get(
+            "name",
+            "field"
+        )
+
+        data_type = element.get(
+            "type",
+            "string"
+        )
+
+        lines.append(
+            f'  "{name}": "{data_type}",'
+        )
+
+    # =====================================================
+    # REMOVE LAST COMMA
+    # =====================================================
+
+    if len(lines) > 1:
+
+        lines[-1] = lines[-1].rstrip(",")
+
+    lines.append("}")
+
+    return "\n".join(lines)
+
+# =========================================================
+# CREATE SERVICE TABLE
 # =========================================================
 
 def create_service_table(
     document,
-    request_fields,
-    response_fields
+    request_elements,
+    response_elements
 ):
 
     table = document.add_table(
@@ -69,15 +113,14 @@ def create_service_table(
 
     table.style = "Table Grid"
 
-    table.alignment = (
-        WD_TABLE_ALIGNMENT.CENTER
-    )
-
     # =====================================================
     # REQUEST HEADER
     # =====================================================
 
-    request_header = table.cell(0, 0)
+    request_header = table.cell(
+        0,
+        0
+    )
 
     request_header.text = "REQUEST"
 
@@ -89,36 +132,23 @@ def create_service_table(
     # REQUEST BODY
     # =====================================================
 
-    request_body = table.cell(1, 0)
+    request_body = table.cell(
+        1,
+        0
+    )
 
-    if request_fields:
-
-        lines = []
-
-        for field in request_fields:
-
-            lines.append(
-
-                f"{field['name']} "
-                f"({field['type']})"
-
-            )
-
-        request_body.text = (
-            "\n".join(lines)
-        )
-
-    else:
-
-        request_body.text = (
-            "No aplica."
-        )
+    request_body.text = build_json_payload(
+        request_elements
+    )
 
     # =====================================================
     # RESPONSE HEADER
     # =====================================================
 
-    response_header = table.cell(2, 0)
+    response_header = table.cell(
+        2,
+        0
+    )
 
     response_header.text = "RESPONSE"
 
@@ -130,32 +160,15 @@ def create_service_table(
     # RESPONSE BODY
     # =====================================================
 
-    response_body = table.cell(3, 0)
+    response_body = table.cell(
+        3,
+        0
+    )
 
-    if response_fields:
-
-        lines = []
-
-        for field in response_fields:
-
-            lines.append(
-
-                f"{field['name']} "
-                f"({field['type']})"
-
-            )
-
-        response_body.text = (
-            "\n".join(lines)
-        )
-
-    else:
-
-        response_body.text = (
-            "No aplica."
-        )
-
-
+    response_body.text = build_json_payload(
+        response_elements
+    )
+    
 # =========================================================
 # ADD SERVICE DESIGN SECTION
 # =========================================================
@@ -167,99 +180,99 @@ def add_service_design_section(
     version
 ):
 
-    services = get_service_design(
+    services = get_request_response_schemas(
         integration_path
     )
 
     # =====================================================
-    # TITLE
+    # FILTER VALID SERVICES
     # =====================================================
 
-    title = document.add_paragraph()
+    valid_services = []
 
-    run = title.add_run(
-        "4.1\tDiseño de Servicio"
+    for service in services:
+
+        request_elements = service.get(
+            "request_elements",
+            []
+        )
+
+        response_elements = service.get(
+            "response_elements",
+            []
+        )
+
+        if (
+
+            not request_elements
+
+            and
+
+            not response_elements
+        ):
+
+            continue
+
+        valid_services.append(
+            service
+        )
+
+    # =====================================================
+    # NO VALID SERVICES
+    # =====================================================
+
+    if not valid_services:
+
+        return
+
+    # =====================================================
+    # INTEGRATION TITLE
+    # =====================================================
+
+    p = document.add_paragraph()
+
+    run = p.add_run(
+        f"• {integration_name}|{version}"
     )
 
     run.bold = True
 
-    run.font.size = Pt(15)
-
     # =====================================================
-    # SERVICES
+    # ITERATE SERVICES
     # =====================================================
 
-    if not services:
-
-        document.add_paragraph(
-            "No se encontraron diseños de servicio."
-        )
-
-        return
-
-    for service in services:
-
-        # =================================================
-        # INTEGRATION TITLE
-        # =================================================
-
-        document.add_paragraph(
-
-            f"• {integration_name} "
-            f"| {version}"
-
-        )
-
-        # =================================================
-        # ENDPOINT INFO
-        # =================================================
+    for service in valid_services:
 
         endpoint_name = service.get(
-            "endpoint_name",
+            "endpoint",
             "UNKNOWN"
         )
 
-        has_request = bool(
-            service.get(
-                "request_fields",
-                []
+        request_elements = service.get(
+            "request_elements",
+            []
+        )
+
+        response_elements = service.get(
+            "response_elements",
+            []
+        )
+
+        # =================================================
+        # ENDPOINT TITLE
+        # =================================================
+
+        endpoint_paragraph = (
+            document.add_paragraph()
+        )
+
+        endpoint_run = (
+            endpoint_paragraph.add_run(
+                endpoint_name
             )
         )
 
-        has_response = bool(
-            service.get(
-                "response_fields",
-                []
-            )
-        )
-
-        endpoint_line = endpoint_name
-
-        if (
-            has_request
-            and
-            has_response
-        ):
-
-            endpoint_line += (
-                " + Request/Response"
-            )
-
-        elif has_request:
-
-            endpoint_line += (
-                " + Request"
-            )
-
-        elif has_response:
-
-            endpoint_line += (
-                " + Response"
-            )
-
-        document.add_paragraph(
-            endpoint_line
-        )
+        endpoint_run.bold = True
 
         # =================================================
         # DATA TYPE
@@ -277,16 +290,9 @@ def add_service_design_section(
 
             document,
 
-            service.get(
-                "request_fields",
-                []
-            ),
+            request_elements,
 
-            service.get(
-                "response_fields",
-                []
-            )
-
+            response_elements
         )
 
         document.add_paragraph("")

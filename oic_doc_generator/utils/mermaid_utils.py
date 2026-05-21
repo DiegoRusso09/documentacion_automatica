@@ -1,56 +1,47 @@
 # =========================================================
-# FILE: oic_doc_generator/utils/mermaid_utils.py
+# mermaid_utils.py
 # =========================================================
 
 import os
 import re
 import shutil
-import subprocess
 import tempfile
-
-import streamlit as st
+import subprocess
 
 
 # =========================================================
 # SANITIZE MERMAID TEXT
 # =========================================================
 
-def sanitize_mermaid_text(
-    text
-):
+def sanitize_mermaid_text(text):
 
     if not text:
-
         return "UNKNOWN"
 
+    text = str(text)
+
     text = re.sub(
-
         r'["\'<>]',
-
         '',
-
         text
     )
 
-    text = text.replace(
-        "-",
-        "_"
+    text = text.replace("-", "_")
+    text = text.replace(" ", "_")
+    text = text.replace("/", "_")
+    text = text.replace("\\", "_")
+    text = text.replace(".", "_")
+    text = text.replace(":", "_")
+
+    text = re.sub(
+        r'[^a-zA-Z0-9_]',
+        '',
+        text
     )
 
-    text = text.replace(
-        " ",
-        "_"
-    )
+    if re.match(r'^\d', text):
 
-    text = text.replace(
-        "/",
-        "_"
-    )
-
-    text = text.replace(
-        ".",
-        "_"
-    )
+        text = f"N_{text}"
 
     return text
 
@@ -72,15 +63,20 @@ def find_mmdc():
     possible_paths = [
 
         r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc.cmd",
+        r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc",
 
-        r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc"
+        r"C:\Users\Administrator\AppData\Roaming\npm\mmdc.cmd",
+        r"C:\Users\Administrator\AppData\Roaming\npm\mmdc",
+
+        r"C:\Program Files\nodejs\mmdc.cmd",
+
+        "/usr/bin/mmdc",
+        "/usr/local/bin/mmdc"
     ]
 
     for path in possible_paths:
 
-        if os.path.exists(
-            path
-        ):
+        if os.path.exists(path):
 
             return path
 
@@ -88,13 +84,13 @@ def find_mmdc():
 
 
 # =========================================================
-# GENERATE MERMAID CODE
+# BUILD MERMAID CODE
 # =========================================================
 
-def generate_mermaid_code(
+def build_mermaid_code(
     endpoint_name,
     rows,
-    integration_type="REST"
+    integration_type="REQUEST"
 ):
 
     lines = []
@@ -119,17 +115,88 @@ def generate_mermaid_code(
     # PARTICIPANTS
     # =====================================================
 
-    if integration_type.lower() != "scheduled":
+    if integration_type.upper() == "SCHEDULED":
+
+        lines.append(
+            "participant SCHEDULER"
+        )
+
+        lines.append(
+            f"participant API as {endpoint_clean}"
+        )
+
+    else:
 
         lines.append(
             "participant CLIENT"
         )
 
-    lines.append(
-        f"participant API as {endpoint_clean}"
-    )
+        lines.append(
+            f"participant API as {endpoint_clean}"
+        )
 
     participants = []
+
+    # =====================================================
+    # DETECT TARGET TYPE
+    # =====================================================
+
+    def detect_target(desc):
+
+        desc_lower = desc.lower()
+
+        # ================================================
+        # INTEGRATION
+        # ================================================
+
+        if "integración" in desc_lower:
+
+            return "INTEGRATION"
+
+        # ================================================
+        # CONNECTION TYPES
+        # ================================================
+
+        known_types = [
+
+            "FTP",
+            "REST",
+            "SOAP",
+            "DBAAS",
+            "ERP",
+            "STAGEFILE"
+        ]
+
+        for conn_type in known_types:
+
+            if conn_type.lower() in desc_lower:
+
+                return conn_type
+
+        # ================================================
+        # INTERNAL ACTIONS
+        # ================================================
+
+        internal_keywords = [
+
+            "assignment",
+            "switch",
+            "for",
+            "while",
+            "scope"
+        ]
+
+        for keyword in internal_keywords:
+
+            if keyword in desc_lower:
+
+                return "SYSTEM"
+
+        return "SYSTEM"
+
+    # =====================================================
+    # PARTICIPANTS
+    # =====================================================
 
     for row in rows[1:]:
 
@@ -138,26 +205,23 @@ def generate_mermaid_code(
             ""
         )
 
-        tipo_match = re.search(
-
-            r'De tipo ([^,\.]+)',
-
+        participant = detect_target(
             desc
         )
 
-        participant = "SYSTEM"
-
-        if tipo_match:
-
-            participant = sanitize_mermaid_text(
-                tipo_match.group(1)
-            )
+        participant = sanitize_mermaid_text(
+            participant
+        )
 
         if participant not in participants:
 
             participants.append(
                 participant
             )
+
+    # =====================================================
+    # APPEND PARTICIPANTS
+    # =====================================================
 
     for participant in participants:
 
@@ -169,16 +233,16 @@ def generate_mermaid_code(
     # START FLOW
     # =====================================================
 
-    if integration_type.lower() != "scheduled":
+    if integration_type.upper() == "SCHEDULED":
 
         lines.append(
-            "CLIENT->>API: Request"
+            "SCHEDULER->>API: Trigger"
         )
 
     else:
 
         lines.append(
-            "Note over API: Scheduled Execution"
+            "CLIENT->>API: Request"
         )
 
     # =====================================================
@@ -187,12 +251,13 @@ def generate_mermaid_code(
 
     for row in rows[1:]:
 
-        action = sanitize_mermaid_text(
+        action = row.get(
+            "Nombre Acción",
+            "ACTION"
+        )
 
-            row.get(
-                "Nombre Acción",
-                "ACTION"
-            )
+        action = sanitize_mermaid_text(
+            action
         )
 
         desc = row.get(
@@ -200,20 +265,13 @@ def generate_mermaid_code(
             ""
         )
 
-        tipo_match = re.search(
-
-            r'De tipo ([^,\.]+)',
-
+        target = detect_target(
             desc
         )
 
-        target = "SYSTEM"
-
-        if tipo_match:
-
-            target = sanitize_mermaid_text(
-                tipo_match.group(1)
-            )
+        target = sanitize_mermaid_text(
+            target
+        )
 
         lines.append(
             f"API->>{target}: {action}"
@@ -227,28 +285,23 @@ def generate_mermaid_code(
     # END FLOW
     # =====================================================
 
-    if integration_type.lower() != "scheduled":
+    if integration_type.upper() != "SCHEDULED":
 
         lines.append(
             "API-->>CLIENT: Response"
         )
 
-    return "\n".join(
-        lines
-    )
+    return "\n".join(lines)
 
 
 # =========================================================
-# GENERATE SEQUENCE DIAGRAM PNG
+# GENERATE MERMAID PNG
 # =========================================================
 
 def generate_sequence_diagram_png(
-
     endpoint_name,
-
     rows,
-
-    integration_type="REST"
+    integration_type="REQUEST"
 ):
 
     mmdc_path = find_mmdc()
@@ -256,104 +309,63 @@ def generate_sequence_diagram_png(
     if not mmdc_path:
 
         raise Exception(
-            "No se encontró Mermaid CLI (mmdc)"
+            "No se encontró Mermaid CLI (mmdc). "
+            "Instalar con: npm install -g @mermaid-js/mermaid-cli"
         )
 
     temp_dir = tempfile.mkdtemp()
 
     mmd_file = os.path.join(
-
         temp_dir,
-
         "diagram.mmd"
     )
 
     png_file = os.path.join(
-
         temp_dir,
-
         "diagram.png"
     )
 
-    mermaid_code = generate_mermaid_code(
-
+    mermaid_code = build_mermaid_code(
         endpoint_name,
-
         rows,
-
         integration_type
     )
 
-    # =====================================================
-    # SHOW CODE IN STREAMLIT
-    # =====================================================
-
-    st.code(
-        mermaid_code,
-        language="text"
-    )
-
-    # =====================================================
-    # WRITE MMD FILE
-    # =====================================================
-
     with open(
-
         mmd_file,
-
         "w",
-
         encoding="utf-8"
-
     ) as f:
 
         f.write(
             mermaid_code
         )
 
-    # =====================================================
-    # EXECUTE MMDC
-    # =====================================================
-
     result = subprocess.run(
 
         [
-
             mmdc_path,
-
             "-i",
             mmd_file,
-
             "-o",
             png_file,
-
             "-t",
             "neutral",
-
             "-b",
             "white",
-
             "-s",
             "2"
         ],
 
         capture_output=True,
-
         text=True
-    )
 
-    # =====================================================
-    # VALIDATE RESULT
-    # =====================================================
+    )
 
     if result.returncode != 0:
 
-        st.error(
-            result.stderr
-        )
-
         raise Exception(
-            result.stderr
+            f"Error Mermaid:\n{result.stderr}"
         )
 
     if not os.path.exists(
@@ -365,3 +377,39 @@ def generate_sequence_diagram_png(
         )
 
     return png_file
+
+
+# =========================================================
+# GENERATE MERMAID TXT
+# =========================================================
+
+def generate_mermaid_txt(
+    endpoint_name,
+    rows,
+    integration_type="REQUEST"
+):
+
+    temp_dir = tempfile.mkdtemp()
+
+    txt_file = os.path.join(
+        temp_dir,
+        "diagram.txt"
+    )
+
+    mermaid_code = build_mermaid_code(
+        endpoint_name,
+        rows,
+        integration_type
+    )
+
+    with open(
+        txt_file,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            mermaid_code
+        )
+
+    return txt_file
