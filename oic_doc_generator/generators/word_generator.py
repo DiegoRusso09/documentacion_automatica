@@ -7,6 +7,11 @@ from io import BytesIO
 from datetime import datetime
 import os
 
+from docx.shared import Cm
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_BREAK
+from docx.enum.style import WD_STYLE_TYPE
+
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import (
@@ -91,20 +96,33 @@ def create_header(
     size=16
 ):
 
-    p = document.add_paragraph()
+    # =====================================================
+    # LEVEL
+    # =====================================================
+
+    if "." in text:
+
+        style_name = "HD2"
+
+    else:
+
+        style_name = "HD1"
+
+    p = document.add_paragraph(
+        style=style_name
+    )
 
     run = p.add_run(text)
-
-    run.bold = True
 
     run.font.name = "Arial"
 
     run.font.size = Pt(size)
 
+    run.bold = True
+
     p.alignment = (
         WD_PARAGRAPH_ALIGNMENT.LEFT
     )
-
 
 # =========================================================
 # APPLY HEADER STYLE
@@ -141,6 +159,598 @@ def apply_header_style(
                     255,
                     255
                 )
+
+# =========================================================
+# ADD DESCRIPTION BOX
+# =========================================================
+
+def add_description_box(
+    document,
+    text
+):
+
+    table = document.add_table(
+        rows=1,
+        cols=1
+    )
+
+    table.style = "Table Grid"
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.LEFT
+    )
+
+    cell = table.cell(0,0)
+
+    # =====================================================
+    # WIDTH
+    # =====================================================
+
+    cell.width = Cm(16.5)
+
+    # =====================================================
+    # BACKGROUND
+    # =====================================================
+
+    shading = parse_xml(
+
+        r'<w:shd {} w:fill="D8E4BC"/>'.format(
+            nsdecls('w')
+        )
+    )
+
+    cell._tc.get_or_add_tcPr().append(
+        shading
+    )
+
+    # =====================================================
+    # TEXT
+    # =====================================================
+
+    paragraph = cell.paragraphs[0]
+
+    run = paragraph.add_run(text)
+
+    run.font.name = "Candara"
+
+    run.font.size = Pt(10)
+
+    paragraph.alignment = (
+        WD_PARAGRAPH_ALIGNMENT.LEFT
+    )
+
+# =========================================================
+# ADD FRAMED IMAGE
+# =========================================================
+
+def add_framed_image(
+    document,
+    image_path,
+    width=Inches(6.5)
+):
+
+    table = document.add_table(
+        rows=1,
+        cols=1
+    )
+
+    # =====================================================
+    # REMOVE DEFAULT TABLE STYLE
+    # =====================================================
+
+    table.style = None
+
+    cell = table.cell(0,0)
+
+    # =====================================================
+    # BORDER ONLY FOR IMAGE CELL
+    # =====================================================
+
+    tc_pr = cell._tc.get_or_add_tcPr()
+
+    borders = parse_xml(r'''
+        <w:tcBorders xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+            <w:top w:val="single" w:sz="20" w:color="000000"/>
+            <w:left w:val="single" w:sz="20" w:color="000000"/>
+            <w:bottom w:val="single" w:sz="20" w:color="000000"/>
+            <w:right w:val="single" w:sz="20" w:color="000000"/>
+        </w:tcBorders>
+    ''')
+
+    tc_pr.append(
+        borders
+    )
+
+    paragraph = cell.paragraphs[0]
+
+    paragraph.alignment = (
+        WD_PARAGRAPH_ALIGNMENT.CENTER
+    )
+
+    run = paragraph.add_run()
+
+    run.add_picture(
+        image_path,
+        width=width
+    )
+
+# =========================================================
+# CREATE CUSTOM STYLES
+# =========================================================
+
+def create_custom_styles(
+    document
+):
+
+    styles = document.styles
+
+    # =====================================================
+    # HD1
+    # =====================================================
+
+    if "HD1" not in styles:
+
+        style = styles.add_style(
+            "HD1",
+            WD_STYLE_TYPE.PARAGRAPH
+        )
+
+        font = style.font
+
+        font.name = "Arial"
+        font.size = Pt(16)
+        font.bold = True
+
+        paragraph_format = style.paragraph_format
+
+        paragraph_format.left_indent = Cm(0)
+
+        paragraph_format.first_line_indent = Cm(0)
+
+        paragraph_format.space_before = Pt(6)
+
+        paragraph_format.space_after = Pt(12)
+
+        paragraph_format.keep_with_next = True
+
+        paragraph_format.keep_together = True
+
+        # ================================================
+        # BORDER TOP
+        # ================================================
+
+        pPr = style.element.get_or_add_pPr()
+
+        border_xml = parse_xml(r'''
+            <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:top
+                    w:val="single"
+                    w:sz="45"
+                    w:space="1"
+                    w:color="auto"/>
+            </w:pBdr>
+        ''')
+
+        pPr.append(border_xml)
+
+    # =====================================================
+    # HD2
+    # =====================================================
+
+    if "HD2" not in styles:
+
+        style = styles.add_style(
+            "HD2",
+            WD_STYLE_TYPE.PARAGRAPH
+        )
+
+        font = style.font
+
+        font.name = "Arial"
+        font.size = Pt(13)
+        font.bold = True
+
+        # ================================================
+        # BORDER TOP
+        # ================================================
+
+        pPr = style.element.get_or_add_pPr()
+
+        border_xml = parse_xml(r'''
+            <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:top
+                    w:val="single"
+                    w:sz="24"
+                    w:space="1"
+                    w:color="auto"/>
+            </w:pBdr>
+        ''')
+
+        pPr.append(border_xml)
+
+        paragraph_format = style.paragraph_format
+
+        paragraph_format.left_indent = Cm(0)
+
+        paragraph_format.first_line_indent = Cm(0)
+
+        paragraph_format.space_before = Pt(6)
+
+        paragraph_format.space_after = Pt(6)
+
+        paragraph_format.keep_with_next = True
+
+        paragraph_format.keep_together = True
+
+# =========================================================
+# ADD COVER PAGE
+# =========================================================
+
+def add_cover_page(
+    document,
+    development_name,
+    author_name
+):
+
+    logo_path = os.path.join(
+
+        os.getcwd(),
+
+        "templates",
+
+        "NEORA_PNG.png"
+    )
+
+    # =====================================================
+    # HEADER TABLE
+    # =====================================================
+
+    table = document.add_table(
+        rows=4,
+        cols=4
+    )
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.CENTER
+    )
+
+    table.style = "Table Grid"
+
+    # =====================================================
+    # COLUMN WIDTHS
+    # =====================================================
+
+    widths = [
+
+        Cm(5),
+
+        Cm(9),
+
+        Cm(4),
+
+        Cm(7)
+    ]
+
+    for row in table.rows:
+
+        for idx, width in enumerate(widths):
+
+            row.cells[idx].width = width
+
+    # =====================================================
+    # MERGES
+    # =====================================================
+
+    logo_cell = table.cell(0,0).merge(
+        table.cell(3,0)
+    )
+
+    title_cell = table.cell(0,1).merge(
+        table.cell(3,1)
+    )
+
+    # =====================================================
+    # LOGO
+    # =====================================================
+
+    p = logo_cell.paragraphs[0]
+
+    p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    run = p.add_run()
+
+    if os.path.exists(logo_path):
+
+        run.add_picture(
+            logo_path,
+            width=Cm(4)
+        )
+
+    # =====================================================
+    # TITLE
+    # =====================================================
+
+    p = title_cell.paragraphs[0]
+
+    p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    run = p.add_run(
+        "ESPECIFICACIÓN\nDE\nDESARROLLO"
+    )
+
+    run.bold = True
+    run.font.name = "Arial"
+    run.font.size = Pt(16)
+
+    # =====================================================
+    # GREEN COLUMN
+    # =====================================================
+
+    labels = [
+
+        "Código",
+
+        "Versión",
+
+        "Fecha",
+
+        "Página"
+    ]
+
+    values = [
+
+        "NEO-GD-IN-02",
+
+        "00",
+
+        "15/06/2023",
+
+        "1 de 1"
+    ]
+
+    for i in range(4):
+
+        left = table.cell(i,2)
+        right = table.cell(i,3)
+
+        left.text = labels[i]
+        right.text = values[i]
+
+        apply_header_style(
+            left,
+            fill="6DBE45",
+            white_text=True
+        )
+
+        for p in left.paragraphs:
+
+            p.alignment = (
+                WD_PARAGRAPH_ALIGNMENT.CENTER
+            )
+
+        for p in right.paragraphs:
+
+            p.alignment = (
+                WD_PARAGRAPH_ALIGNMENT.CENTER
+            )
+
+    # =====================================================
+    # SPACE
+    # =====================================================
+
+    document.add_paragraph("")
+
+    # =====================================================
+    # BLACK LINE
+    # =====================================================
+
+    p = document.add_paragraph()
+
+    run = p.add_run(
+        " "
+    )
+
+    run.font.highlight_color = None
+
+    p.paragraph_format.space_after = Pt(0)
+
+    shading = parse_xml(
+
+        r'<w:shd {} w:fill="000000"/>'.format(
+            nsdecls('w')
+        )
+    )
+
+    p._p.get_or_add_pPr().append(
+        shading
+    )
+
+    # =====================================================
+    # CONTENT
+    # =====================================================
+
+    def add_line(
+        text,
+        size,
+        bold=False,
+        color=None
+    ):
+
+        p = document.add_paragraph()
+
+        p.alignment = (
+            WD_PARAGRAPH_ALIGNMENT.LEFT
+        )
+
+        run = p.add_run(text)
+
+        run.font.name = "Arial"
+        run.font.size = Pt(size)
+        run.bold = bold
+
+        if color:
+
+            run.font.color.rgb = color
+
+    add_line(
+        "OUM",
+        18
+    )
+
+    add_line(
+        "DS.140.1 ESPECIFICACIÓN DE DISEÑO",
+        24
+    )
+
+    add_line(
+        "NEORA",
+        24,
+        color=RGBColor(0,0,255)
+    )
+
+    add_line(
+        development_name,
+        24
+    )
+
+    # =====================================================
+    # INFO TABLE
+    # =====================================================
+
+    info = document.add_table(
+    rows=5,
+    cols=2
+)
+
+    info.style = "Table Grid"
+
+    # =====================================================
+    # REMOVE BORDERS
+    # =====================================================
+
+    for row in info.rows:
+
+        for cell in row.cells:
+
+            tc_pr = cell._tc.get_or_add_tcPr()
+
+            borders = parse_xml(r'''
+                <w:tcBorders xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                    <w:top w:val="nil"/>
+                    <w:left w:val="nil"/>
+                    <w:bottom w:val="nil"/>
+                    <w:right w:val="nil"/>
+                </w:tcBorders>
+            ''')
+
+            tc_pr.append(borders)
+
+    info_data = [
+
+        ("Autor:", author_name),
+
+        (
+            "Fecha de Creación:",
+            datetime.today().strftime(
+                "%B %d, %Y"
+            )
+        ),
+
+        (
+            "Última Actualización:",
+            datetime.today().strftime(
+                "%B %d, %Y"
+            )
+        ),
+
+        ("Referencia:", ""),
+
+        ("Versión:", "1.0")
+    ]
+
+    info_data = [
+
+        ("Autor:", author_name),
+
+        (
+            "Fecha de Creación:",
+            datetime.today().strftime(
+                "%B %d, %Y"
+            )
+        ),
+
+        (
+            "Última Actualización:",
+            datetime.today().strftime(
+                "%B %d, %Y"
+            )
+        ),
+
+        ("Referencia:", ""),
+
+        ("Versión:", "1.0")
+    ]
+
+    for idx, item in enumerate(info_data):
+
+        left = info.cell(idx,0)
+        right = info.cell(idx,1)
+
+        left.text = item[0]
+        right.text = item[1]
+
+        for cell in [left, right]:
+
+            for p in cell.paragraphs:
+
+                for run in p.runs:
+
+                    run.font.name = "Arial"
+                    run.font.size = Pt(10)
+
+    # =====================================================
+    # SPACES
+    # =====================================================
+
+    document.add_paragraph("")
+    document.add_paragraph("")
+    document.add_paragraph("")
+
+    p = document.add_paragraph()
+
+    run = p.add_run(
+        "Aprobadores:"
+    )
+
+    run.bold = True
+    run.font.name = "Arial"
+    run.font.size = Pt(10)
+
+    # =====================================================
+    # BOTTOM LOGO
+    # =====================================================
+
+    document.add_paragraph("")
+    document.add_paragraph("")
+    document.add_paragraph("")
+
+    if os.path.exists(logo_path):
+
+        p = document.add_paragraph()
+
+        run = p.add_run()
+
+        run.add_picture(
+            logo_path,
+            width=Cm(4)
+        )
+
+    # =====================================================
+    # PAGE BREAK
+    # =====================================================
+
+    document.add_page_break()
+
 
 
 # =========================================================
@@ -278,6 +888,16 @@ def generate_word_document(
 
     document = Document()
 
+    create_custom_styles(
+        document
+    )
+
+    add_cover_page(
+        document,
+        development_name,
+        author_name
+    )
+
     style = document.styles['Normal']
 
     style.font.name = 'Arial'
@@ -346,6 +966,8 @@ def generate_word_document(
         "Creación del Documento"
     )
 
+    document.add_paragraph("")
+
     # =====================================================
     # 1.2 REVISORES
     # =====================================================
@@ -375,6 +997,8 @@ def generate_word_document(
         hdr[1]
     )
 
+    document.add_paragraph("")
+
     # =====================================================
     # 2 VISIÓN GENERAL
     # =====================================================
@@ -383,6 +1007,18 @@ def generate_word_document(
         document,
         "2\tVisión General"
     )
+
+    add_description_box(
+
+        document,
+
+        "Descripción general del desarrollo "
+        "que permite identificar los componentes "
+        "y la manera que estos interactúan "
+        "como parte del desarrollo."
+    )
+
+    document.add_paragraph("")
 
     document.add_paragraph(
 
@@ -402,6 +1038,21 @@ def generate_word_document(
         document,
         "2.1\tReglas del Negocio"
     )
+
+    add_description_box(
+
+        document,
+
+        "En esta sección se coloca la información "
+        "de reglas de negocio descritas en el "
+        "documento de análisis funcional del "
+        "desarrollo (AN-100) como parte de la "
+        "documentación se revisa que todo lo que "
+        "se coloca en esta sección se cumple "
+        "por el desarrollo."
+    )
+
+    document.add_paragraph("")
 
     for _ in range(4):
 
@@ -457,6 +1108,8 @@ def generate_word_document(
         row[0].text = component
         row[1].text = ""
 
+    document.add_paragraph("")
+
     # =====================================================
     # 2.3
     # =====================================================
@@ -505,6 +1158,17 @@ def generate_word_document(
         document,
         "2.5\tDiagrama de bloques de construcción"
     )
+
+    add_description_box(
+
+        document,
+
+        "Se presentan imágenes de cada integración "
+        "creada para el desarrollo y su respectivo "
+        "diagrama de secuencia."
+    )
+
+    document.add_paragraph("")
 
     integrations_data = []
 
@@ -926,7 +1590,7 @@ def generate_word_document(
                 # =========================================
                 # DIAGRAM
                 # =========================================
-                
+
                 document.add_paragraph("")
 
                 document.add_paragraph(
@@ -956,12 +1620,15 @@ def generate_word_document(
                     img_path
                 ):
 
-                    document.add_picture(
+                    add_framed_image(
+
+                        document,
 
                         img_path,
 
                         width=Inches(6.5)
                     )
+
 
                 # =========================================
                 # FREQUENCY
@@ -1188,12 +1855,15 @@ def generate_word_document(
                             )
                         ):
 
-                            document.add_picture(
+                            add_framed_image(
+
+                                document,
 
                                 image_path,
 
                                 width=Inches(6.5)
                             )
+
 
                             # =============================
                             # BUTTONS
@@ -1401,6 +2071,19 @@ def generate_word_document(
         document,
         "4\tDiseño de Interface"
     )
+
+    add_description_box(
+
+        document,
+
+        "En esta sección se describe "
+        "todo aquello que se utilice "
+        "en el desarrollo como un "
+        "servicio de interfaz "
+        "(Ejem: SOAP, REST)."
+    )
+
+    document.add_paragraph("")
 
     create_header(
         document,
