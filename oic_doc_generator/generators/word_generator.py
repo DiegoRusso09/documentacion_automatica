@@ -72,6 +72,8 @@ from generators.report_design_generator import (
     add_report_design_section
 )
 
+from generators.sql_design_generator import ( add_sql_design_section )
+
 from utils.xml_utils import (
     clean_tag,
     extract_application_from_refuri
@@ -97,44 +99,10 @@ from renderers.screenshot_renderer import (
     render_html_to_image
 )
 
-
-# =========================================================
-# CREATE HEADER
-# =========================================================
-
-def create_header(
-    document,
-    text,
-    size=16
-):
-
-    # =====================================================
-    # LEVEL
-    # =====================================================
-
-    if "." in text:
-
-        style_name = "HD2"
-
-    else:
-
-        style_name = "HD1"
-
-    p = document.add_paragraph(
-        style=style_name
-    )
-
-    run = p.add_run(text)
-
-    run.font.name = "Arial"
-
-    run.font.size = Pt(size)
-
-    run.bold = True
-
-    p.alignment = (
-        WD_PARAGRAPH_ALIGNMENT.LEFT
-    )
+from utils.word_utils import (
+    create_header,
+    add_description_box
+)
 
 # =========================================================
 # APPLY HEADER STYLE
@@ -171,65 +139,6 @@ def apply_header_style(
                     255,
                     255
                 )
-
-# =========================================================
-# ADD DESCRIPTION BOX
-# =========================================================
-
-def add_description_box(
-    document,
-    text
-):
-
-    table = document.add_table(
-        rows=1,
-        cols=1
-    )
-
-    table.style = "Table Grid"
-
-    table.alignment = (
-        WD_TABLE_ALIGNMENT.LEFT
-    )
-
-    cell = table.cell(0,0)
-
-    # =====================================================
-    # WIDTH
-    # =====================================================
-
-    cell.width = Cm(16.5)
-
-    # =====================================================
-    # BACKGROUND
-    # =====================================================
-
-    shading = parse_xml(
-
-        r'<w:shd {} w:fill="D8E4BC"/>'.format(
-            nsdecls('w')
-        )
-    )
-
-    cell._tc.get_or_add_tcPr().append(
-        shading
-    )
-
-    # =====================================================
-    # TEXT
-    # =====================================================
-
-    paragraph = cell.paragraphs[0]
-
-    run = paragraph.add_run(text)
-
-    run.font.name = "Candara"
-
-    run.font.size = Pt(10)
-
-    paragraph.alignment = (
-        WD_PARAGRAPH_ALIGNMENT.LEFT
-    )
 
 # =========================================================
 # ADD FRAMED IMAGE
@@ -895,7 +804,6 @@ def generate_word_document(
     selected_components,
     visual_builder_apps,
     apex_apps,
-    use_oic,
     bip_files=None
 ):
 
@@ -1185,7 +1093,7 @@ def generate_word_document(
 
     integrations_data = []
 
-    if not use_oic:
+    if not package_path:
 
         document.add_paragraph(
             "No aplica."
@@ -2104,7 +2012,7 @@ def generate_word_document(
         size=14
     )
 
-    if not use_oic:
+    if not package_path:
 
         document.add_paragraph(
             "No aplica."
@@ -2163,6 +2071,8 @@ def generate_word_document(
     # 5 DISEÑO DEL REPORTE
     # =====================================================
 
+    bip_metadata = {}
+
     if bip_files:
 
         try:
@@ -2184,13 +2094,11 @@ def generate_word_document(
             )
 
             # =============================================
-            # ADD SECTION
+            # REPORT SECTION
             # =============================================
 
             add_report_design_section(
-
                 document,
-
                 bip_metadata
             )
 
@@ -2202,11 +2110,35 @@ def generate_word_document(
             )
 
             document.add_paragraph(
-
                 f"Error procesando reportes BI Publisher: "
                 f"{str(e)}"
             )
 
+    # =====================================================
+    # 6 SENTENCIAS SQL
+    # =====================================================
+
+    if bip_files and bip_metadata:
+
+        try:
+
+            add_sql_design_section(
+                document,
+                bip_metadata
+            )
+
+        except Exception as e:
+
+            create_header(
+                document,
+                "6\tSentencias SQL"
+            )
+
+            document.add_paragraph(
+                f"Error generando "
+                f"sentencias SQL: "
+                f"{str(e)}"
+            )
 
     output = BytesIO()
 

@@ -464,19 +464,19 @@ if st.button(
 
             selected_components = []
 
-            if use_visual_builder:
+            if visual_builder_apps:
 
                 selected_components.append(
                     "Visual Builder"
                 )
 
-            if use_apex:
+            if apex_apps:
 
                 selected_components.append(
                     "APEX"
                 )
 
-            if use_oic:
+            if uploaded_par or uploaded_iar:
 
                 selected_components.append(
                     "OIC"
@@ -488,7 +488,7 @@ if st.button(
                     "Objetos BD"
                 )
 
-            if use_bip:
+            if bip_files:
 
                 selected_components.append(
                     "BI Publisher"
@@ -535,9 +535,6 @@ if st.button(
 
                 apex_apps=
                     apex_apps,
-
-                use_oic=
-                    use_oic,
 
                 bip_files=
                     bip_files

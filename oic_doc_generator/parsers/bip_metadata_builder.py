@@ -136,6 +136,16 @@ def build_bip_metadata(
             []
         )
 
+        dataset_sqls = report.get(
+            "dataset_sqls",
+            []
+        )
+
+        xsd_structure = report.get(
+            "xsd_structure",
+            {}
+        )
+
         dm_found = report.get(
             "dm_found",
             False
@@ -189,6 +199,12 @@ def build_bip_metadata(
 
             "parameters":
                 parameters,
+
+            "dataset_sqls":
+                dataset_sqls,
+
+            "xsd_structure":
+                xsd_structure,
 
             "dm_found":
                 dm_found,

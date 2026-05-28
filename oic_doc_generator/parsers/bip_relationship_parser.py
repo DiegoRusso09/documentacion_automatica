@@ -435,6 +435,12 @@ def match_reports_with_dms(
             "dm_parameters":
                 [],
 
+            "dataset_sqls":
+                [],
+
+            "xsd_structure":
+                {},
+
             "dm_found":
                 matched_dm is not None,
 
@@ -455,16 +461,38 @@ def match_reports_with_dms(
                 ""
             )
 
-            # =============================================
-            # PARAMETERS
-            # =============================================
+        # =============================================
+        # PARAMETERS
+        # =============================================
 
-            consolidated[
-                "parameters"
-            ] = matched_dm.get(
-                "parameters",
-                []
-            )
+        consolidated[
+            "parameters"
+        ] = matched_dm.get(
+            "parameters",
+            []
+        )
+
+        # =============================================
+        # DATASET SQLS
+        # =============================================
+
+        consolidated[
+            "dataset_sqls"
+        ] = matched_dm.get(
+            "dataset_sqls",
+            []
+        )
+
+        # =============================================
+        # XSD STRUCTURE
+        # =============================================
+
+        consolidated[
+            "xsd_structure"
+        ] = matched_dm.get(
+            "xsd_structure",
+            {}
+        )
 
         result.append(
             consolidated

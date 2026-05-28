@@ -208,6 +208,221 @@ def extract_datasets(
 
     return result
 
+# =========================================================
+# EXTRACT DATASET SQLS
+# =========================================================
+
+def extract_dataset_sqls(
+    dm_root
+):
+
+    result = []
+
+    if dm_root is None:
+
+        return result
+
+    # =====================================================
+    # ITERATE DATASETS
+    # =====================================================
+
+    for elem in dm_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                elem.tag
+            )
+
+        except:
+
+            continue
+
+        if tag.lower() != "dataset":
+
+            continue
+
+        dataset_name = elem.attrib.get(
+            "name",
+            ""
+        )
+
+        sql_text = ""
+
+        datasource = ""
+
+        # =================================================
+        # SEARCH SQL
+        # =================================================
+
+        for child in elem.iter():
+
+            try:
+
+                child_tag = clean_tag(
+                    child.tag
+                )
+
+            except:
+
+                continue
+
+            if child_tag.lower() != "sql":
+
+                continue
+
+            datasource = child.attrib.get(
+                "dataSourceRef",
+                ""
+            )
+
+            if child.text:
+
+                sql_text = child.text.strip()
+
+            break
+
+        result.append({
+
+            "name":
+                dataset_name,
+
+            "datasource":
+                datasource,
+
+            "sql":
+                sql_text
+        })
+
+    return result
+
+
+# =========================================================
+# EXTRACT OUTPUT STRUCTURE
+# =========================================================
+
+def extract_output_structure(
+    dm_root
+):
+
+    result = {
+
+        "root_name": "",
+
+        "groups": []
+    }
+
+    if dm_root is None:
+
+        return result
+
+    # =====================================================
+    # SEARCH OUTPUT
+    # =====================================================
+
+    for elem in dm_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                elem.tag
+            )
+
+        except:
+
+            continue
+
+        if tag.lower() != "output":
+
+            continue
+
+        result["root_name"] = elem.attrib.get(
+            "rootName",
+            "DATA_DS"
+        )
+
+        # =================================================
+        # GROUPS
+        # =================================================
+
+        for group in elem.iter():
+
+            try:
+
+                group_tag = clean_tag(
+                    group.tag
+                )
+
+            except:
+
+                continue
+
+            if group_tag.lower() != "group":
+
+                continue
+
+            group_name = group.attrib.get(
+                "name",
+                ""
+            )
+
+            group_source = group.attrib.get(
+                "source",
+                ""
+            )
+
+            elements = []
+
+            # =============================================
+            # ELEMENTS
+            # =============================================
+
+            for field in group.iter():
+
+                try:
+
+                    field_tag = clean_tag(
+                        field.tag
+                    )
+
+                except:
+
+                    continue
+
+                if field_tag.lower() != "element":
+
+                    continue
+
+                elements.append({
+
+                    "name":
+                        field.attrib.get(
+                            "name",
+                            ""
+                        ),
+
+                    "type":
+                        field.attrib.get(
+                            "dataType",
+                            "xsd:string"
+                        )
+                })
+
+            result["groups"].append({
+
+                "group_name":
+                    group_name,
+
+                "source":
+                    group_source,
+
+                "elements":
+                    elements
+            })
+
+        break
+
+    return result
 
 # =========================================================
 # EXTRACT DM PARAMETERS
@@ -408,6 +623,10 @@ def parse_bip_datamodel(
 
         "datasets": [],
 
+        "dataset_sqls": [],
+
+        "xsd_structure": {},
+
         "parameters": [],
 
         "dm_xml_path": ""
@@ -475,6 +694,22 @@ def parse_bip_datamodel(
     # =====================================================
 
     result["datasets"] = extract_datasets(
+        dm_root
+    )
+
+    # =====================================================
+    # DATASET SQLS
+    # =====================================================
+
+    result["dataset_sqls"] = extract_dataset_sqls(
+        dm_root
+    )
+
+    # =====================================================
+    # XSD STRUCTURE
+    # =====================================================
+
+    result["xsd_structure"] = extract_output_structure(
         dm_root
     )
 
