@@ -20,6 +20,13 @@ from generators.word_generator import (
     generate_word_document
 )
 
+from parsers.bip_archive_parser import (
+    build_bip_artifact_tree
+)
+
+from parsers.bip_metadata_builder import (
+    build_bip_metadata
+)
 
 # =========================================================
 # CONFIG
@@ -313,13 +320,120 @@ if use_oic:
                 f"Error leyendo IAR: {str(e)}"
             )
 
+# =========================================================
+# BI PUBLISHER
+# =========================================================
+
+bip_files = []
+
+if use_bip:
+
+    st.header(
+        "6. Reportes BI Publisher"
+    )
+
+    st.markdown(
+        """
+        Puede subir:
+
+        - Reportes `.xdoz`
+        - Data Models `.xdmz`
+        - Carpetas `.xdrz`
+        """
+    )
+
+    uploaded_bip_files = st.file_uploader(
+
+        "Subir archivos BI Publisher",
+
+        type=[
+
+            "xdoz",
+
+            "xdmz",
+
+            "xdrz"
+        ],
+
+        accept_multiple_files=True,
+
+        key="bip_files"
+    )
+
+    if uploaded_bip_files:
+
+        bip_files = uploaded_bip_files
+
+        st.success(
+            f"{len(bip_files)} archivo(s) BI Publisher cargado(s)."
+        )
+
+        # =================================================
+        # VALIDATE
+        # =================================================
+
+        try:
+
+            artifact_tree = build_bip_artifact_tree(
+                bip_files
+            )
+
+            bip_metadata = build_bip_metadata(
+                artifact_tree
+            )
+
+            warnings = bip_metadata.get(
+                "warnings",
+                []
+            )
+
+            if warnings:
+
+                st.warning(
+                    "Se encontraron observaciones:"
+                )
+
+                for warning in warnings:
+
+                    st.warning(
+                        warning
+                    )
+
+            reports = bip_metadata.get(
+                "reports",
+                []
+            )
+
+            if reports:
+
+                st.success(
+                    f"Se detectaron "
+                    f"{len(reports)} reporte(s)."
+                )
+
+                for report in reports:
+
+                    st.info(
+
+                        f"Reporte: "
+                        f"{report.get('report_name','')} "
+                        f"| DM: "
+                        f"{report.get('data_model','NO ENCONTRADO')}"
+                    )
+
+        except Exception as e:
+
+            st.error(
+                f"Error procesando BI Publisher: "
+                f"{str(e)}"
+            )
 
 # =========================================================
 # GENERATE WORD
 # =========================================================
 
 st.header(
-    "6. Generar Documento"
+    "7. Generar Documento"
 )
 
 if st.button(
@@ -423,7 +537,10 @@ if st.button(
                     apex_apps,
 
                 use_oic=
-                    use_oic
+                    use_oic,
+
+                bip_files=
+                    bip_files
             )
 
             st.success(

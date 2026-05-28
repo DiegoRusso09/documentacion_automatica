@@ -60,6 +60,18 @@ from generators.service_design_generator import (
     add_service_design_section
 )
 
+from parsers.bip_archive_parser import (
+    build_bip_artifact_tree
+)
+
+from parsers.bip_metadata_builder import (
+    build_bip_metadata
+)
+
+from generators.report_design_generator import (
+    add_report_design_section
+)
+
 from utils.xml_utils import (
     clean_tag,
     extract_application_from_refuri
@@ -883,7 +895,8 @@ def generate_word_document(
     selected_components,
     visual_builder_apps,
     apex_apps,
-    use_oic
+    use_oic,
+    bip_files=None
 ):
 
     document = Document()
@@ -2145,6 +2158,54 @@ def generate_word_document(
                         f"Error generando diseño "
                         f"de servicio: {str(e)}"
                     )
+
+    # =====================================================
+    # 5 DISEÑO DEL REPORTE
+    # =====================================================
+
+    if bip_files:
+
+        try:
+
+            # =============================================
+            # BUILD ARTIFACT TREE
+            # =============================================
+
+            artifact_tree = build_bip_artifact_tree(
+                bip_files
+            )
+
+            # =============================================
+            # BUILD METADATA
+            # =============================================
+
+            bip_metadata = build_bip_metadata(
+                artifact_tree
+            )
+
+            # =============================================
+            # ADD SECTION
+            # =============================================
+
+            add_report_design_section(
+
+                document,
+
+                bip_metadata
+            )
+
+        except Exception as e:
+
+            create_header(
+                document,
+                "5\tDiseño del Reporte"
+            )
+
+            document.add_paragraph(
+
+                f"Error procesando reportes BI Publisher: "
+                f"{str(e)}"
+            )
 
 
     output = BytesIO()
