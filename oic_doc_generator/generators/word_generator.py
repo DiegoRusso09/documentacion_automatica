@@ -14,10 +14,17 @@ from docx.enum.style import WD_STYLE_TYPE
 
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
+
+from generators.database_design_generator import (
+    add_database_design_section
+)
+
 from docx.enum.text import (
     WD_PARAGRAPH_ALIGNMENT
 )
+
 from docx.oxml import parse_xml
+
 from docx.oxml.ns import (
     nsdecls,
     qn
@@ -804,7 +811,9 @@ def generate_word_document(
     selected_components,
     visual_builder_apps,
     apex_apps,
-    bip_files=None
+    bip_files=None,
+    database_metadata=None,
+    database_export_info=None
 ):
 
     document = Document()
@@ -2137,6 +2146,37 @@ def generate_word_document(
             document.add_paragraph(
                 f"Error generando "
                 f"sentencias SQL: "
+                f"{str(e)}"
+            )
+
+    # =====================================================
+    # 7 DISEÑO DE BASE DE DATOS
+    # =====================================================
+
+    if database_metadata:
+
+        try:
+
+            add_database_design_section(
+
+                document,
+
+                database_metadata,
+
+                database_export_info
+            )
+
+        except Exception as e:
+
+            create_header(
+                document,
+                "7\tDiseño de Base de Datos"
+            )
+
+            document.add_paragraph(
+
+                f"Error generando "
+                f"diseño de base de datos: "
                 f"{str(e)}"
             )
 

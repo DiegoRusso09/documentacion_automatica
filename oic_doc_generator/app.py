@@ -4,8 +4,14 @@
 # =========================================================
 
 import os
-
+import tempfile
 import streamlit as st
+import tempfile
+import uuid
+
+from utils.sql_exporter import (
+    create_delivery_zip
+)
 
 from parsers.par_parser import (
     extract_package,
@@ -26,6 +32,18 @@ from parsers.bip_archive_parser import (
 
 from parsers.bip_metadata_builder import (
     build_bip_metadata
+)
+
+from parsers.sql_object_parser import (
+    build_database_metadata
+)
+
+from parsers.sql_conflict_validator import (
+    validate_sql_objects
+)
+
+from utils.sql_exporter import (
+    export_database_sql
 )
 
 # =========================================================
@@ -429,11 +447,93 @@ if use_bip:
             )
 
 # =========================================================
+# DATABASE OBJECTS
+# =========================================================
+
+database_metadata = None
+
+database_export_info = None
+
+if use_db:
+
+    st.header(
+        "7. Objetos de Base de Datos"
+    )
+
+    uploaded_sql_files = st.file_uploader(
+
+        "Subir archivos SQL",
+
+        type=["sql"],
+
+        accept_multiple_files=True,
+
+        key="sql_files"
+    )
+
+    if uploaded_sql_files:
+
+        try:
+
+            database_metadata = (
+                build_database_metadata(
+                    uploaded_sql_files
+                )
+            )
+
+            st.write(database_metadata)
+
+            warnings = database_metadata.get(
+                "warnings",
+                []
+            )
+
+            for warning in warnings:
+
+                st.warning(
+                    warning
+                )
+
+            validation = (
+                validate_sql_objects(
+                    database_metadata
+                )
+            )
+
+            if not validation["valid"]:
+
+                for error in validation["errors"]:
+
+                    st.error(error)
+
+                st.stop()
+
+            database_export_info = (
+                export_database_sql(
+                    database_metadata
+                )
+            )
+
+            st.success(
+                f"Se detectaron "
+                f"{len(database_metadata.get('tables', []))} tabla(s), "
+                f"{len(database_metadata.get('sequences', []))} secuencia(s) y "
+                f"{len(database_metadata.get('packages', []))} paquete(s)."
+            )
+
+        except Exception as e:
+
+            st.error(
+                f"Error procesando SQL: "
+                f"{str(e)}"
+            )
+
+# =========================================================
 # GENERATE WORD
 # =========================================================
 
 st.header(
-    "7. Generar Documento"
+    "8. Generar Documento"
 )
 
 if st.button(
@@ -537,30 +637,106 @@ if st.button(
                     apex_apps,
 
                 bip_files=
-                    bip_files
+                    bip_files,
+
+                database_metadata=
+                    database_metadata,
+
+                database_export_info=
+                    database_export_info
             )
 
             st.success(
                 "Documento generado correctamente."
             )
 
-            st.download_button(
+            # =====================================================
+            # ZIP DELIVERY
+            # =====================================================
 
-                label=
-                    "⬇️ Descargar Word",
+            if database_export_info:
 
-                data=
-                    word_file,
-
-                file_name=
-                    "documentacion_tecnica.docx",
-
-                mime=(
-                    "application/vnd.openxmlformats-"
-                    "officedocument.wordprocessingml."
-                    "document"
+                from utils.sql_exporter import (
+                    create_delivery_zip
                 )
-            )
+
+                import os
+
+                delivery_folder = (
+                    database_export_info["root"]
+                )
+
+                word_path = os.path.join(
+
+                    delivery_folder,
+
+                    "documentacion_tecnica.docx"
+                )
+
+                with open(
+                    word_path,
+                    "wb"
+                ) as f:
+
+                    f.write(
+                        word_file.getvalue()
+                    )
+
+                zip_path = os.path.join(
+
+                    tempfile.gettempdir(),
+
+                    f"Entrega_{uuid.uuid4()}.zip"
+                )
+
+                create_delivery_zip(
+
+                    delivery_folder,
+
+                    zip_path
+                )
+
+                with open(
+                    zip_path,
+                    "rb"
+                ) as f:
+
+                    zip_bytes = f.read()
+
+                st.download_button(
+
+                    label=
+                        "⬇️ Descargar Entrega",
+
+                    data=
+                        zip_bytes,
+
+                    file_name=
+                        "Entrega.zip",
+
+                    mime=
+                        "application/zip"
+                )
+
+            else:
+
+                st.download_button(
+
+                    label=
+                        "⬇️ Descargar Word",
+
+                    data=
+                        word_file,
+
+                    file_name=
+                        "documentacion_tecnica.docx",
+
+                    mime=(
+                        "application/vnd.openxmlformats-"
+                        "officedocument.wordprocessingml."
+                        "document"
+                    )
+                )
 
         except Exception as e:
 

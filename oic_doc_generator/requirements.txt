@@ -1,0 +1,6 @@
+streamlit
+python-docx
+Pillow
+lxml
+networkx
+matplotlib
