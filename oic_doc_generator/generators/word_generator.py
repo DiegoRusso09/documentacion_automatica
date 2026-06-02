@@ -1759,16 +1759,20 @@ def generate_word_document(
                         # RENDER IMAGE
                         # =================================
 
-                        image_path = (
-                            render_html_to_image(
+                        try:
 
-                                html_content=
-                                    complete_html,
-
-                                resources_path=
-                                    resources_path
+                            image_path = render_html_to_image(
+                                html_content=complete_html,
+                                resources_path=resources_path
                             )
-                        )
+
+                        except Exception as e:
+
+                            image_path = None
+
+                            document.add_paragraph(
+                                f"No fue posible generar la captura Visual Builder: {str(e)}"
+                            )
 
                         # =================================
                         # INSERT IMAGE
