@@ -7,7 +7,7 @@ import os
 from bs4 import BeautifulSoup
 import re
 
-from parsers.vb_extractor import (
+from oic_doc_generator.parsers.vb_extractor import (
     read_text_file
 )
 

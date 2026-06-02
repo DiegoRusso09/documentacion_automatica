@@ -3,12 +3,12 @@
 # oic_doc_generator/parsers/bip_metadata_builder.py
 # =========================================================
 
-from parsers.bip_archive_parser import (
+from oic_doc_generator.parsers.bip_archive_parser import (
     get_report_artifacts,
     get_datamodel_artifacts
 )
 
-from parsers.bip_relationship_parser import (
+from oic_doc_generator.parsers.bip_relationship_parser import (
     match_reports_with_dms
 )
 

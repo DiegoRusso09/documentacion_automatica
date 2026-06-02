@@ -15,7 +15,7 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 
-from generators.database_design_generator import (
+from oic_doc_generator.generators.database_design_generator import (
     add_database_design_section
 )
 
@@ -30,12 +30,12 @@ from docx.oxml.ns import (
     qn
 )
 
-from parsers.iar_parser import (
+from oic_doc_generator.parsers.iar_parser import (
     find_all_iar_files,
     extract_iar
 )
 
-from parsers.project_parser import (
+from oic_doc_generator.parsers.project_parser import (
     get_project_name,
     read_project_xml,
     build_application_map,
@@ -43,70 +43,70 @@ from parsers.project_parser import (
     get_project_version
 )
 
-from parsers.orchestration_parser import (
+from oic_doc_generator.parsers.orchestration_parser import (
     get_endpoint_flows,
     generate_description
 )
 
-from parsers.connections_parser import (
+from oic_doc_generator.parsers.connections_parser import (
     analyze_dbaas_jca,
     find_application_folder,
     build_action_description
 )
 
-from parsers.schedule_parser import (
+from oic_doc_generator.parsers.schedule_parser import (
     get_schedule_information,
     is_scheduled_integration
 )
 
-from parsers.service_parser import (
+from oic_doc_generator.parsers.service_parser import (
     get_request_response_schemas
 )
 
-from generators.service_design_generator import (
+from oic_doc_generator.generators.service_design_generator import (
     add_service_design_section
 )
 
-from parsers.bip_archive_parser import (
+from oic_doc_generator.parsers.bip_archive_parser import (
     build_bip_artifact_tree
 )
 
-from parsers.bip_metadata_builder import (
+from oic_doc_generator.parsers.bip_metadata_builder import (
     build_bip_metadata
 )
 
-from generators.report_design_generator import (
+from oic_doc_generator.generators.report_design_generator import (
     add_report_design_section
 )
 
-from generators.sql_design_generator import ( add_sql_design_section )
+from oic_doc_generator.generators.sql_design_generator import ( add_sql_design_section )
 
-from utils.xml_utils import (
+from oic_doc_generator.utils.xml_utils import (
     clean_tag,
     extract_application_from_refuri
 )
 
-from utils.mermaid_utils import (
+from oic_doc_generator.utils.mermaid_utils import (
     generate_sequence_diagram_png
 )
 
-from parsers.vb_extractor import (
+from oic_doc_generator.parsers.vb_extractor import (
     build_extraction_metadata
 )
 
-from parsers.vb_parser import (
+from oic_doc_generator.parsers.vb_parser import (
     build_page_metadata
 )
 
-from renderers.html_builder import (
+from oic_doc_generator.renderers.html_builder import (
     build_complete_html
 )
 
-from renderers.screenshot_renderer import (
+from oic_doc_generator.renderers.screenshot_renderer import (
     render_html_to_image
 )
 
-from utils.word_utils import (
+from oic_doc_generator.utils.word_utils import (
     create_header,
     add_description_box
 )

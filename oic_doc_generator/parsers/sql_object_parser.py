@@ -3,15 +3,15 @@
 # oic_doc_generator/parsers/sql_object_parser.py
 # =========================================================
 
-from parsers.sql_table_parser import (
+from oic_doc_generator.parsers.sql_table_parser import (
     extract_tables
 )
 
-from parsers.sql_sequence_parser import (
+from oic_doc_generator.parsers.sql_sequence_parser import (
     extract_sequences
 )
 
-from parsers.sql_package_parser import (
+from oic_doc_generator.parsers.sql_package_parser import (
     extract_packages
 )
 

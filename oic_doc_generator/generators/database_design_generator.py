@@ -10,11 +10,11 @@ from docx.shared import (
     Inches
 )
 
-from generators.erd_generator import (
+from oic_doc_generator.generators.erd_generator import (
     generate_erd_diagram
 )
 
-from utils.word_utils import (
+from oic_doc_generator.utils.word_utils import (
     create_header,
     add_description_box
 )
@@ -227,7 +227,7 @@ def add_tables_section(
 # PART 2
 # =========================================================
 
-from utils.sql_exporter import (
+from oic_doc_generator.utils.sql_exporter import (
     export_database_sql
 )
 

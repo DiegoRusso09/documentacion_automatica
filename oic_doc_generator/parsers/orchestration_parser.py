@@ -5,16 +5,16 @@
 
 import xml.etree.ElementTree as ET
 
-from utils.xml_utils import (
+from oic_doc_generator.utils.xml_utils import (
     clean_tag,
     extract_application_from_refuri
 )
 
-from parsers.schedule_parser import (
+from oic_doc_generator.parsers.schedule_parser import (
     is_scheduled_integration
 )
 
-from parsers.project_parser import (
+from oic_doc_generator.parsers.project_parser import (
     build_application_map
 )
 

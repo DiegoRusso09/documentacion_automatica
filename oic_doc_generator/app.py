@@ -9,40 +9,40 @@ import streamlit as st
 import tempfile
 import uuid
 
-from utils.sql_exporter import (
+from oic_doc_generator.utils.sql_exporter import (
     create_delivery_zip
 )
 
-from parsers.par_parser import (
+from oic_doc_generator.parsers.par_parser import (
     extract_package,
     get_par_binary_content_zip
 )
 
-from parsers.iar_parser import (
+from oic_doc_generator.parsers.iar_parser import (
     get_iar_binary_content_zip
 )
 
-from generators.word_generator import (
+from oic_doc_generator.generators.word_generator import (
     generate_word_document
 )
 
-from parsers.bip_archive_parser import (
+from oic_doc_generator.parsers.bip_archive_parser import (
     build_bip_artifact_tree
 )
 
-from parsers.bip_metadata_builder import (
+from oic_doc_generator.parsers.bip_metadata_builder import (
     build_bip_metadata
 )
 
-from parsers.sql_object_parser import (
+from oic_doc_generator.parsers.sql_object_parser import (
     build_database_metadata
 )
 
-from parsers.sql_conflict_validator import (
+from oic_doc_generator.parsers.sql_conflict_validator import (
     validate_sql_objects
 )
 
-from utils.sql_exporter import (
+from oic_doc_generator.utils.sql_exporter import (
     export_database_sql
 )
 
@@ -656,7 +656,7 @@ if st.button(
 
             if database_export_info:
 
-                from utils.sql_exporter import (
+                from oic_doc_generator.utils.sql_exporter import (
                     create_delivery_zip
                 )
 

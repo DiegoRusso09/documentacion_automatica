@@ -7,7 +7,7 @@ import re
 
 import xml.etree.ElementTree as ET
 
-from utils.xml_utils import (
+from oic_doc_generator.utils.xml_utils import (
     clean_tag,
     camel_to_snake_upper
 )
