@@ -52,36 +52,38 @@ def sanitize_mermaid_text(text):
 
 def find_mmdc():
 
-    mmdc_path = shutil.which(
-        "mmdc"
-    )
+    import os
+    import shutil
 
-    if mmdc_path:
+    candidates = [
 
-        return mmdc_path
+        shutil.which("mmdc"),
 
-    possible_paths = [
-
-        r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc.cmd",
-        r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc",
-
-        r"C:\Users\Administrator\AppData\Roaming\npm\mmdc.cmd",
-        r"C:\Users\Administrator\AppData\Roaming\npm\mmdc",
-
-        r"C:\Program Files\nodejs\mmdc.cmd",
+        "/usr/local/bin/mmdc",
 
         "/usr/bin/mmdc",
-        "/usr/local/bin/mmdc"
+
+        "/home/adminuser/.npm-global/bin/mmdc",
+
+        "/home/adminuser/venv/bin/mmdc"
     ]
 
-    for path in possible_paths:
+    for candidate in candidates:
 
-        if os.path.exists(path):
+        if candidate and os.path.exists(
+            candidate
+        ):
 
-            return path
+            return candidate
 
-    return None
+    raise Exception(
+        f"""
+Mermaid CLI no encontrado.
 
+PATH:
+{os.environ.get('PATH')}
+"""
+    )
 
 # =========================================================
 # BUILD MERMAID CODE
