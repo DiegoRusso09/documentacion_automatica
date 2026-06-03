@@ -15,20 +15,20 @@ from docx.enum.text import (
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
 
-from oic_doc_generator.utils.word_utils import (
+from utils.word_utils import (
     create_header,
     add_description_box
 )
 
-from oic_doc_generator.utils.sql_formatter import (
+from utils.sql_formatter import (
     beautify_sql
 )
 
-from oic_doc_generator.utils.xsd_formatter import (
+from utils.xsd_formatter import (
     build_xsd_text
 )
 
-from oic_doc_generator.utils.code_block_utils import (
+from utils.code_block_utils import (
     add_code_block
 )
 

@@ -9,7 +9,7 @@ import os
 
 from io import BytesIO
 
-from oic_doc_generator.parsers.par_parser import (
+from parsers.par_parser import (
     find_all_iar_files,
     find_application_folder,
     find_jca_file,

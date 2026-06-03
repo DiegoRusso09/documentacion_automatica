@@ -10,7 +10,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from oic_doc_generator.utils.oj_translator import (
+from utils.oj_translator import (
     translate_oj_html
 )
 

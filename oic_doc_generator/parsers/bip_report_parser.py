@@ -7,7 +7,7 @@ import os
 import xml.etree.ElementTree as ET
 from urllib.parse import unquote
 
-from oic_doc_generator.utils.xml_utils import (
+from utils.xml_utils import (
     clean_tag
 )
 

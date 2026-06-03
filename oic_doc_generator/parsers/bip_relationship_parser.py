@@ -3,11 +3,11 @@
 # oic_doc_generator/parsers/bip_relationship_parser.py
 # =========================================================
 
-from oic_doc_generator.parsers.bip_report_parser import (
+from parsers.bip_report_parser import (
     parse_bip_report
 )
 
-from oic_doc_generator.parsers.bip_dm_parser import (
+from parsers.bip_dm_parser import (
     parse_bip_datamodel
 )
 

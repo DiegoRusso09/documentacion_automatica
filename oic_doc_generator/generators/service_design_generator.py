@@ -18,7 +18,7 @@ from docx.oxml.ns import (
     nsdecls
 )
 
-from oic_doc_generator.parsers.service_parser import (
+from parsers.service_parser import (
     get_request_response_schemas
 )
 
