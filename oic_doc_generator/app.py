@@ -9,7 +9,7 @@ import streamlit as st
 import tempfile
 import uuid
 
-from oic_doc_generator.utils.sql_exporter import (
+from utils.sql_exporter import (
     create_delivery_zip
 )
 
@@ -42,7 +42,7 @@ from oic_doc_generator.parsers.sql_conflict_validator import (
     validate_sql_objects
 )
 
-from oic_doc_generator.utils.sql_exporter import (
+from utils.sql_exporter import (
     export_database_sql
 )
 
@@ -656,7 +656,7 @@ if st.button(
 
             if database_export_info:
 
-                from oic_doc_generator.utils.sql_exporter import (
+                from utils.sql_exporter import (
                     create_delivery_zip
                 )
 
