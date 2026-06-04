@@ -274,7 +274,7 @@ def generate_ds140_service(
 
     word_path = os.path.join(
         delivery_folder,
-        "documentacion_tecnica.docx"
+        "NEO-GD-IN-02 DS-140 Especificación de Diseño.docx"
     )
 
     with open(

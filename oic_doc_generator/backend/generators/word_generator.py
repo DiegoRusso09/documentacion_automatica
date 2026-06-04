@@ -941,12 +941,55 @@ def generate_word_document(
         hdr[1]
     )
 
-    document.add_paragraph("")
+    document.add_page_break()
+
+    create_header(
+        document,
+        "Tabla de Contenido"
+    )
+
+    paragraph = document.add_paragraph()
+
+    run = paragraph.add_run()
+
+    fld_char_begin = parse_xml(
+        r'<w:fldChar w:fldCharType="begin" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+    )
+
+    instr_text = parse_xml(
+        r'<w:instrText xml:space="preserve" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"> TOC \o "1-3" \h \z \u </w:instrText>'
+    )
+
+    fld_char_separate = parse_xml(
+        r'<w:fldChar w:fldCharType="separate" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+    )
+
+    fld_char_end = parse_xml(
+        r'<w:fldChar w:fldCharType="end" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+    )
+
+    run._r.append(
+        fld_char_begin
+    )
+
+    run._r.append(
+        instr_text
+    )
+
+    run._r.append(
+        fld_char_separate
+    )
+
+    run._r.append(
+        fld_char_end
+    )
+
+    document.add_page_break()
 
     # =====================================================
     # 2 VISIÓN GENERAL
     # =====================================================
-
+    document.add_page_break()
     create_header(
         document,
         "2\tVisión General"
@@ -1612,7 +1655,7 @@ def generate_word_document(
     # =====================================================
     # 3 DISEÑO DE PANTALLA
     # =====================================================
-
+    document.add_page_break()
     create_header(
         document,
         "3\tDiseño de Pantalla"
@@ -2042,7 +2085,7 @@ def generate_word_document(
     # =====================================================
     # 4 DISEÑO DE SERVICIOS
     # =====================================================
-
+    document.add_page_break()
     create_header(
         document,
         "4\tDiseño de Interface"
@@ -2140,7 +2183,7 @@ def generate_word_document(
     if bip_files:
 
         try:
-
+            document.add_page_break()
             # =============================================
             # BUILD ARTIFACT TREE
             # =============================================
@@ -2168,6 +2211,8 @@ def generate_word_document(
 
         except Exception as e:
 
+            document.add_page_break()
+
             create_header(
                 document,
                 "5\tDiseño del Reporte"
@@ -2185,14 +2230,14 @@ def generate_word_document(
     if bip_files and bip_metadata:
 
         try:
-
+            document.add_page_break()
             add_sql_design_section(
                 document,
                 bip_metadata
             )
 
         except Exception as e:
-
+            document.add_page_break()
             create_header(
                 document,
                 "6\tSentencias SQL"
@@ -2211,7 +2256,7 @@ def generate_word_document(
     if database_metadata:
 
         try:
-
+            document.add_page_break()
             add_database_design_section(
 
                 document,
@@ -2222,7 +2267,7 @@ def generate_word_document(
             )
 
         except Exception as e:
-
+            document.add_page_break()
             create_header(
                 document,
                 "7\tDiseño de Base de Datos"
@@ -2234,6 +2279,215 @@ def generate_word_document(
                 f"diseño de base de datos: "
                 f"{str(e)}"
             )
+
+    # =====================================================
+    # 8 CONTROL DE ACCESOS
+    # =====================================================
+
+    document.add_page_break()
+
+    create_header(
+        document,
+        "8\tControl de Accesos"
+    )
+
+    add_description_box(
+
+        document,
+
+        "En esta sección se lista los usuarios "
+        "y tipos de roles que deben ser considerados "
+        "en los diferentes componentes para el "
+        "funcionamiento del desarrollo."
+    )
+
+    document.add_paragraph("")
+
+    access_table = document.add_table(
+        rows=1,
+        cols=4
+    )
+
+    access_table.style = "Table Grid"
+
+    hdr = access_table.rows[0].cells
+
+    hdr[0].text = "Componente"
+    hdr[1].text = "Nombre de Usuario"
+    hdr[2].text = "Método de Control de Acceso"
+    hdr[3].text = "Comentarios"
+
+    for cell in hdr:
+
+        apply_header_style(
+            cell
+        )
+
+    access_rows = []
+
+    access_rows.append({
+
+        "component":
+            "ERP Cloud",
+
+        "user":
+            "<Usuario de ERP>",
+
+        "method":
+            "Permite acceder al sistema para ejecutar los reportes",
+
+        "comment":
+            "El usuario debe contar con privilegios para acceder al OTBI, modificar, crear y eliminar reportes."
+    })
+
+    if (
+
+        "OIC" in selected_components
+
+        or
+
+        "Visual Builder" in selected_components
+
+    ):
+
+        access_rows.append({
+
+            "component":
+                "OIC",
+
+            "user":
+                "<Usuario de OIC>",
+
+            "method":
+                "Permite acceder al sistema para ejecutar las integraciones",
+
+            "comment":
+                "El usuario debe contar con privilegios para acceder o modificar las integraciones."
+        })
+
+    if "Objetos BD" in selected_components:
+
+        access_rows.append({
+
+            "component":
+                "BD",
+
+            "user":
+                "<Usuario de BD>",
+
+            "method":
+                "Permite acceder a los objetos de base de datos según el esquema establecido",
+
+            "comment":
+                "El usuario debe contar con privilegios para acceder, crear, modificar y eliminar tablas, secuencias, vistas, paquetes, etc."
+        })
+
+    if "APEX" in selected_components:
+
+        access_rows.append({
+
+            "component":
+                "APEX",
+
+            "user":
+                "<Usuario de APEX>",
+
+            "method":
+                "Permite acceder a los objetos de base de datos según el esquema establecido además de las aplicaciones creadas en el Workspace del usuario",
+
+            "comment":
+                "El usuario debe contar con privilegios para acceder, crear, modificar y eliminar tablas, secuencias, vistas, paquetes, etc."
+        })
+
+    for item in access_rows:
+
+        row = access_table.add_row().cells
+
+        row[0].text = item["component"]
+        row[1].text = item["user"]
+        row[2].text = item["method"]
+        row[3].text = item["comment"]
+
+    # =====================================================
+    # 10 TEMAS ABIERTOS Y CERRADOS
+    # =====================================================
+
+    document.add_page_break()
+
+    create_header(
+        document,
+        "10\tTemas Abiertos y Cerrados"
+    )
+
+    # =====================================================
+    # 10.1 TEMAS ABIERTOS
+    # =====================================================
+
+    create_header(
+        document,
+        "10.1\tTemas Abiertos"
+    )
+
+    open_table = document.add_table(
+        rows=5,
+        cols=6
+    )
+
+    open_table.style = "Table Grid"
+
+    headers = [
+
+        "ID",
+
+        "Tema",
+
+        "Resolución",
+
+        "Responsabilidad",
+
+        "Fecha Estimada",
+
+        "Fecha Impactada"
+    ]
+
+    hdr = open_table.rows[0].cells
+
+    for i in range(6):
+
+        hdr[i].text = headers[i]
+
+        apply_header_style(
+            hdr[i]
+        )
+
+    document.add_paragraph("")
+
+    # =====================================================
+    # 10.2 TEMAS CERRADOS
+    # =====================================================
+
+    create_header(
+        document,
+        "10.2\tTemas Cerrados"
+    )
+
+    closed_table = document.add_table(
+        rows=5,
+        cols=6
+    )
+
+    closed_table.style = "Table Grid"
+
+    hdr = closed_table.rows[0].cells
+
+    for i in range(6):
+
+        hdr[i].text = headers[i]
+
+        apply_header_style(
+            hdr[i]
+        )
+
 
     output = BytesIO()
 

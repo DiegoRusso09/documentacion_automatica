@@ -26,17 +26,19 @@ def create_header(
     size=16
 ):
 
-    p = document.add_paragraph()
-
-    # =====================================================
-    # STYLE
-    # =====================================================
-
     if "." in text:
+
+        p = document.add_paragraph(
+            style="Heading 2"
+        )
 
         p.style = "HD2"
 
     else:
+
+        p = document.add_paragraph(
+            style="Heading 1"
+        )
 
         p.style = "HD1"
 
@@ -51,8 +53,7 @@ def create_header(
     p.alignment = (
         WD_PARAGRAPH_ALIGNMENT.LEFT
     )
-
-
+    
 # =========================================================
 # ADD DESCRIPTION BOX
 # =========================================================
