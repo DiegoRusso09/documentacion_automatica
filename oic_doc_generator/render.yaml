@@ -1,0 +1,19 @@
+services:
+  - type: web
+
+    name: documentacion-automatica
+
+    runtime: python
+
+    plan: free
+
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+
+    startCommand: |
+      uvicorn oic_doc_generator.main:app --host 0.0.0.0 --port $PORT
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11

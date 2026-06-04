@@ -1,8 +1,12 @@
-streamlit
+fastapi
+uvicorn[standard]
+python-multipart
+
 python-docx
 lxml
 Pillow
 networkx
 matplotlib
 beautifulsoup4
+
 playwright

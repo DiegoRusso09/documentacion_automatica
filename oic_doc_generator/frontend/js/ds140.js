@@ -98,7 +98,7 @@ async function generateDS140() {
         const response =
             await fetch(
 
-                "http://localhost:8000/api/ds140/start",
+                "/api/ds140/start",
 
                 {
                     method: "POST",
@@ -143,7 +143,7 @@ async function checkStatus() {
     const response =
         await fetch(
 
-            `http://localhost:8000/api/ds140/status/${currentJobId}`
+            `/api/ds140/status/${currentJobId}`
         );
 
     const job =
@@ -209,7 +209,7 @@ async function checkStatus() {
 
         window.location.href =
 
-            `http://localhost:8000/api/ds140/download/${currentJobId}`;
+            `/api/ds140/download/${currentJobId}`;
 
         resetButton();
     }
