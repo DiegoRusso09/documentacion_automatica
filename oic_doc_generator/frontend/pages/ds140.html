@@ -1,0 +1,299 @@
+<div class="ds140-container">
+
+    <section class="page-header">
+
+        <h1>
+            DS140
+        </h1>
+
+        <p>
+            Generación Automática de Documentación Técnica
+        </p>
+
+    </section>
+
+    <section class="project-info card">
+
+        <h2>
+            Información General
+        </h2>
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>
+                    Autor
+                </label>
+
+                <input id="author_name" type="text" placeholder="Ingrese el autor">
+
+            </div>
+
+            <div>
+
+                <label>
+                    Nombre Desarrollo
+                </label>
+
+                <input id="development_name" type="text" placeholder="Ingrese el nombre del desarrollo">
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="top-layout">
+
+        <div class="components card">
+
+            <h2>
+                Componentes
+            </h2>
+
+            <label>
+                <input type="checkbox" checked disabled>
+                Visual Builder
+            </label>
+
+            <label>
+                <input type="checkbox" checked disabled>
+                APEX
+            </label>
+
+            <label>
+                <input type="checkbox" checked disabled>
+                OIC
+            </label>
+
+            <label>
+                <input type="checkbox" checked disabled>
+                BI Publisher
+            </label>
+
+            <label>
+                <input type="checkbox" checked disabled>
+                SQL
+            </label>
+
+        </div>
+
+        <div class="summary card">
+
+            <h2>
+                Resumen de Archivos
+            </h2>
+
+            <div>
+                Visual Builder:
+                <span id="vb_count">0</span>
+            </div>
+
+            <div>
+                APEX:
+                <span id="apex_count">0</span>
+            </div>
+
+            <div>
+                OIC:
+                <span id="oic_count">0</span>
+            </div>
+
+            <div>
+                BI Publisher:
+                <span id="bip_count">0</span>
+            </div>
+
+            <div>
+                SQL:
+                <span id="sql_count">0</span>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="artifacts">
+
+        <details class="accordion">
+
+            <summary>
+                Visual Builder
+            </summary>
+
+            <div class="dropzone">
+
+                <input id="vb_files" type="file" multiple accept=".zip">
+
+            </div>
+
+        </details>
+
+        <details class="accordion">
+
+            <summary>
+                Oracle APEX
+            </summary>
+
+            <div class="dropzone">
+
+                <input id="apex_files" type="file" multiple>
+
+            </div>
+
+        </details>
+
+        <details class="accordion">
+
+            <summary>
+                Oracle Integration Cloud
+            </summary>
+
+            <div class="dropzone">
+
+                <input id="oic_files" type="file" multiple accept=".par,.iar">
+
+            </div>
+
+        </details>
+
+        <details class="accordion">
+
+            <summary>
+                BI Publisher
+            </summary>
+
+            <div class="dropzone">
+
+                <input id="bip_files" type="file" multiple accept=".xdoz,.xdmz,.xdrz">
+
+            </div>
+
+        </details>
+
+        <details class="accordion">
+
+            <summary>
+                Base de Datos Oracle
+            </summary>
+
+            <div class="dropzone">
+
+                <input id="sql_files" type="file" multiple accept=".sql">
+
+            </div>
+
+        </details>
+
+    </section>
+
+    <section class="generate-section">
+
+        <button class="generate-btn" onclick="generateDS140()">
+
+            Generar Documento DS140
+
+        </button>
+
+        <div id="progress-container" style="
+        display:none;
+        margin-top:20px;
+    ">
+
+            <div style="
+            width:100%;
+            height:24px;
+            border:1px solid #ccc;
+            border-radius:6px;
+            overflow:hidden;
+        ">
+
+                <div id="progress-bar" style="
+                width:0%;
+                height:100%;
+                background:#6DBE45;
+                transition:width .3s;
+            ">
+                </div>
+
+            </div>
+
+            <div id="progress-text" style="
+            margin-top:12px;
+            font-weight:bold;
+            font-size:16px;
+        ">
+
+                Iniciando...
+
+            </div>
+
+            <div id="activity-text" style="
+            margin-top:8px;
+            color:#444;
+        ">
+            </div>
+
+            <div id="detail-text" style="
+            margin-top:4px;
+            color:#777;
+            font-size:12px;
+        ">
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+
+    function updateCounter(inputId, counterId) {
+
+        const input =
+            document.getElementById(inputId);
+
+        const counter =
+            document.getElementById(counterId);
+
+        input.addEventListener(
+
+            "change",
+
+            () => {
+
+                counter.textContent =
+                    input.files.length;
+            }
+        );
+    }
+
+    updateCounter(
+        "vb_files",
+        "vb_count"
+    );
+
+    updateCounter(
+        "apex_files",
+        "apex_count"
+    );
+
+    updateCounter(
+        "oic_files",
+        "oic_count"
+    );
+
+    updateCounter(
+        "bip_files",
+        "bip_count"
+    );
+
+    updateCounter(
+        "sql_files",
+        "sql_count"
+    );
+
+</script>
+<script src="js/ds140.js"></script>
