@@ -147,3 +147,28 @@ def browser():
                 "mmdc"
             )
     }
+
+@app.get("/api/playwright")
+def playwright_path():
+
+    import os
+
+    result = []
+
+    for root, dirs, files in os.walk(
+        "/opt/render/.cache"
+    ):
+        for file in files:
+
+            if (
+                "chrome" in file.lower()
+                or "chromium" in file.lower()
+            ):
+                result.append(
+                    os.path.join(
+                        root,
+                        file
+                    )
+                )
+
+    return result
