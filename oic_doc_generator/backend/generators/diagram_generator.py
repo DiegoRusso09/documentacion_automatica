@@ -2,189 +2,55 @@
 # FILE: diagram_generator.py
 # =========================================================
 
-import re
 import os
-import shutil
+import re
 import tempfile
-import subprocess
 
-from oic_doc_generator.backend.utils.mermaid_utils import (
-    sanitize_mermaid_text
-)
+from graphviz import Digraph
 
 
 # =========================================================
-# BUILD MERMAID CODE
+# SANITIZE TEXT
 # =========================================================
 
-def build_mermaid_code(
-    endpoint_name,
-    rows,
-    integration_type="REST"
-):
+def sanitize_text(text):
 
-    lines = []
+    if not text:
+        return "UNKNOWN"
 
-    lines.append(
-        "%%{init: {'theme':'neutral'}}%%"
+    text = str(text)
+
+    text = re.sub(
+        r'["\'<>]',
+        '',
+        text
     )
 
-    lines.append(
-        "sequenceDiagram"
+    return text.strip()
+
+
+# =========================================================
+# DETECT TARGET
+# =========================================================
+
+def detect_target(description):
+
+    if not description:
+        return "SYSTEM"
+
+    match = re.search(
+        r'De tipo ([^,\.]+)',
+        description,
+        re.IGNORECASE
     )
 
-    lines.append(
-        "autonumber"
-    )
+    if match:
 
-    endpoint_clean = sanitize_mermaid_text(
-        endpoint_name
-    )
-
-    # =====================================================
-    # PARTICIPANTS
-    # =====================================================
-
-    if integration_type.lower() == "scheduled":
-
-        lines.append(
-            "participant SCHEDULER"
+        return sanitize_text(
+            match.group(1)
         )
 
-        lines.append(
-            f"participant FLOW as {endpoint_clean}"
-        )
-
-    else:
-
-        lines.append(
-            "participant CLIENT"
-        )
-
-        lines.append(
-            f"participant API as {endpoint_clean}"
-        )
-
-    participants = []
-
-    # =====================================================
-    # DETECT PARTICIPANTS
-    # =====================================================
-
-    for row in rows[1:]:
-
-        desc = row.get(
-            "Descripción de la Acción",
-            ""
-        )
-
-        tipo_match = re.search(
-            r'De tipo ([^,\.]+)',
-            desc
-        )
-
-        participant = "SYSTEM"
-
-        if tipo_match:
-
-            participant = sanitize_mermaid_text(
-                tipo_match.group(1)
-            )
-
-        if participant not in participants:
-
-            participants.append(
-                participant
-            )
-
-    # =====================================================
-    # ADD PARTICIPANTS
-    # =====================================================
-
-    for participant in participants:
-
-        lines.append(
-            f"participant {participant}"
-        )
-
-    # =====================================================
-    # START FLOW
-    # =====================================================
-
-    if integration_type.lower() == "scheduled":
-
-        lines.append(
-            "SCHEDULER->>FLOW: Trigger"
-        )
-
-    else:
-
-        lines.append(
-            "CLIENT->>API: Request"
-        )
-
-    # =====================================================
-    # FLOW ACTIONS
-    # =====================================================
-
-    for row in rows[1:]:
-
-        action = sanitize_mermaid_text(
-            row.get(
-                "Nombre Acción",
-                "ACTION"
-            )
-        )
-
-        desc = row.get(
-            "Descripción de la Acción",
-            ""
-        )
-
-        tipo_match = re.search(
-            r'De tipo ([^,\.]+)',
-            desc
-        )
-
-        target = "SYSTEM"
-
-        if tipo_match:
-
-            target = sanitize_mermaid_text(
-                tipo_match.group(1)
-            )
-
-        if integration_type.lower() == "scheduled":
-
-            lines.append(
-                f"FLOW->>{target}: {action}"
-            )
-
-            lines.append(
-                f"{target}-->>FLOW: Response"
-            )
-
-        else:
-
-            lines.append(
-                f"API->>{target}: {action}"
-            )
-
-            lines.append(
-                f"{target}-->>API: Response"
-            )
-
-    # =====================================================
-    # END FLOW
-    # =====================================================
-
-    if integration_type.lower() != "scheduled":
-
-        lines.append(
-            "API-->>CLIENT: Response"
-        )
-
-    return "\n".join(lines)
+    return "SYSTEM"
 
 
 # =========================================================
@@ -197,136 +63,174 @@ def generate_sequence_diagram_png(
     integration_type="REST"
 ):
 
-    mmdc_path = shutil.which(
-        "mmdc"
-    )
-
-    # =====================================================
-    # WINDOWS FALLBACKS
-    # =====================================================
-
-    if not mmdc_path:
-
-        possible_paths = [
-
-            r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc.cmd",
-
-            r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc"
-
-        ]
-
-        for path in possible_paths:
-
-            if os.path.exists(path):
-
-                mmdc_path = path
-                break
-
-    if not mmdc_path:
-
-        raise Exception(
-            "No se encontró Mermaid CLI (mmdc)"
-        )
-
-    # =====================================================
-    # TEMP FILES
-    # =====================================================
-
     temp_dir = tempfile.mkdtemp()
-
-    mmd_file = os.path.join(
-        temp_dir,
-        "diagram.mmd"
-    )
 
     png_file = os.path.join(
         temp_dir,
         "diagram.png"
     )
 
-    # =====================================================
-    # MERMAID CODE
-    # =====================================================
+    graph = Digraph(
+        name="SequenceDiagram",
+        format="png"
+    )
 
-    mermaid_code = build_mermaid_code(
+    graph.attr(
+        rankdir="LR"
+    )
 
-        endpoint_name,
-        rows,
-        integration_type
+    graph.attr(
+        bgcolor="white"
+    )
 
+    graph.attr(
+        fontsize="10"
+    )
+
+    graph.attr(
+        fontname="Arial"
+    )
+
+    graph.attr(
+        nodesep="0.7"
+    )
+
+    graph.attr(
+        ranksep="1"
+    )
+
+    graph.attr(
+        splines="ortho"
+    )
+
+    graph.attr(
+        pad="0.3"
+    )
+
+    graph.attr(
+        dpi="200"
     )
 
     # =====================================================
-    # WRITE FILE
+    # START NODE
     # =====================================================
 
-    with open(
-        mmd_file,
-        "w",
-        encoding="utf-8"
-    ) as f:
+    if integration_type.lower() == "scheduled":
 
-        f.write(
-            mermaid_code
+        start_node = "SCHEDULER"
+
+        graph.node(
+            start_node,
+            shape="box"
         )
 
-# =====================================================
-# EXECUTE MERMAID CLI
-# =====================================================
-
-    env = os.environ.copy()
-
-    env["PUPPETEER_EXECUTABLE_PATH"] = shutil.which(
-        "chromium"
-    ) or shutil.which(
-        "google-chrome"
-    ) or ""
-
-    print(
-        "PUPPETEER_EXECUTABLE_PATH =",
-        env["PUPPETEER_EXECUTABLE_PATH"]
-    )
-
-    result = subprocess.run(
-
-        [
-            mmdc_path,
-            "-i",
-            mmd_file,
-            "-o",
-            png_file,
-            "-t",
-            "neutral",
-            "-b",
-            "white",
-            "-s",
-            "2"
-        ],
-
-        capture_output=True,
-
-        text=True,
-
-        env=env
-
-    )
-
-    # =====================================================
-    # VALIDATE
-    # =====================================================
-
-    if result.returncode != 0:
-
-        raise Exception(
-            result.stderr
+        graph.node(
+            endpoint_name,
+            shape="box",
+            style="filled",
+            fillcolor="#D9EAD3"
         )
+
+        graph.edge(
+            start_node,
+            endpoint_name,
+            label="Trigger"
+        )
+
+    else:
+
+        start_node = "CLIENT"
+
+        graph.node(
+            start_node,
+            shape="box"
+        )
+
+        graph.node(
+            endpoint_name,
+            shape="box",
+            style="filled",
+            fillcolor="#D9EAD3"
+        )
+
+        graph.edge(
+            start_node,
+            endpoint_name,
+            label="Request"
+        )
+
+    # =====================================================
+    # FLOW
+    # =====================================================
+
+    previous = endpoint_name
+
+    for row in rows[1:]:
+
+        action = sanitize_text(
+
+            row.get(
+                "Nombre Acción",
+                "ACTION"
+            )
+        )
+
+        description = row.get(
+            "Descripción de la Acción",
+            ""
+        )
+
+        target = detect_target(
+            description
+        )
+
+        node_id = (
+            f"{target}_{action}"
+        )
+
+        graph.node(
+
+            node_id,
+
+            label=(
+                f"{target}\n"
+                f"{action}"
+            ),
+
+            shape="box"
+        )
+
+        graph.edge(
+            previous,
+            node_id
+        )
+
+        previous = node_id
+
+    # =====================================================
+    # END
+    # =====================================================
+
+    if integration_type.lower() != "scheduled":
+
+        graph.edge(
+            previous,
+            "CLIENT",
+            label="Response"
+        )
+
+    graph.render(
+        filename="diagram",
+        directory=temp_dir,
+        cleanup=True
+    )
 
     if not os.path.exists(
         png_file
     ):
 
         raise Exception(
-            "Mermaid no generó PNG"
+            "Graphviz no generó PNG"
         )
 
     return png_file

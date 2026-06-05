@@ -112,19 +112,6 @@ def debug():
             ).exists()
     }
 
-@app.get("/api/mmdc")
-def mmdc():
-
-    import shutil
-
-    return {
-
-        "mmdc":
-            shutil.which(
-                "mmdc"
-            )
-    }
-
 @app.get("/api/browser")
 def browser():
 

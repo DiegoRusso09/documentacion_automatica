@@ -91,7 +91,7 @@ from oic_doc_generator.backend.utils.xml_utils import (
     extract_application_from_refuri
 )
 
-from oic_doc_generator.backend.utils.mermaid_utils import (
+from oic_doc_generator.backend.generators.diagram_generator import (
     generate_sequence_diagram_png
 )
 
