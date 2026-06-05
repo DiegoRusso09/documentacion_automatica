@@ -52,27 +52,12 @@ project_root = (
     Path(__file__)
     .resolve()
     .parent
-    .parent
 )
 
 frontend_path = (
 
     project_root
     / "frontend"
-)
-
-app.mount(
-
-    "/static",
-
-    StaticFiles(
-
-        directory=str(
-            frontend_path
-        )
-    ),
-
-    name="static"
 )
 
 # =========================================================
