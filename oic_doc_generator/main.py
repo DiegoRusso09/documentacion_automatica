@@ -20,51 +20,37 @@ from oic_doc_generator.api.routes.ds140 import (
 
 app = FastAPI()
 
-# =========================================================
-# CORS
-# =========================================================
-
 app.add_middleware(
 
     CORSMiddleware,
 
-    allow_origins=[
-        "*"
-    ],
+    allow_origins=["*"],
 
     allow_credentials=True,
 
-    allow_methods=[
-        "*"
-    ],
+    allow_methods=["*"],
 
-    allow_headers=[
-        "*"
-    ]
+    allow_headers=["*"]
 )
 
 # =========================================================
-# FRONTEND
+# PATHS
 # =========================================================
 
-frontend_path = (
+BASE_DIR = Path(__file__).resolve().parent
 
-    Path(__file__)
-    .resolve()
-    .parent
-    / "frontend"
-)
+FRONTEND_DIR = BASE_DIR / "frontend"
 
-print(
-    f"Frontend path: {frontend_path}"
-)
+# =========================================================
+# STATIC
+# =========================================================
 
 app.mount(
 
     "/static",
 
     StaticFiles(
-        directory=str(frontend_path)
+        directory=str(FRONTEND_DIR)
     ),
 
     name="static"
@@ -90,8 +76,7 @@ def home():
 
     return FileResponse(
 
-        frontend_path
-        / "index.html"
+        FRONTEND_DIR / "index.html"
     )
 
 # =========================================================
@@ -102,6 +87,27 @@ def home():
 def health():
 
     return {
-
         "status": "ok"
+    }
+
+@app.get("/api/debug")
+def debug():
+
+    return {
+
+        "base_dir":
+            str(BASE_DIR),
+
+        "frontend_dir":
+            str(FRONTEND_DIR),
+
+        "frontend_exists":
+            FRONTEND_DIR.exists(),
+
+        "css_exists":
+            (
+                FRONTEND_DIR
+                / "css"
+                / "style.css"
+            ).exists()
     }
