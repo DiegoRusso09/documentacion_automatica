@@ -295,7 +295,6 @@ def build_mermaid_code(
 
     return "\n".join(lines)
 
-
 # =========================================================
 # GENERATE MERMAID PNG
 # =========================================================
@@ -343,6 +342,15 @@ def generate_sequence_diagram_png(
             mermaid_code
         )
 
+    env = os.environ.copy()
+
+    env["PUPPETEER_EXECUTABLE_PATH"] = (
+        "/opt/render/.cache/ms-playwright/"
+        "chromium_headless_shell-1223/"
+        "chrome-headless-shell-linux64/"
+        "chrome-headless-shell"
+    )
+
     result = subprocess.run(
 
         [
@@ -354,14 +362,14 @@ def generate_sequence_diagram_png(
             "-t",
             "neutral",
             "-b",
-            "white",
-            "-s",
-            "2"
+            "white"
         ],
 
         capture_output=True,
-        text=True
 
+        text=True,
+
+        env=env
     )
 
     if result.returncode != 0:
