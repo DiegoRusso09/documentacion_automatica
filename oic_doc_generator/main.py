@@ -111,3 +111,16 @@ def debug():
                 / "style.css"
             ).exists()
     }
+
+@app.get("/api/mmdc")
+def mmdc():
+
+    import shutil
+
+    return {
+
+        "mmdc":
+            shutil.which(
+                "mmdc"
+            )
+    }
