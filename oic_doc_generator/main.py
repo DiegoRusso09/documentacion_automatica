@@ -124,3 +124,26 @@ def mmdc():
                 "mmdc"
             )
     }
+
+@app.get("/api/browser")
+def browser():
+
+    import shutil
+
+    return {
+
+        "chromium":
+            shutil.which(
+                "chromium"
+            ),
+
+        "google_chrome":
+            shutil.which(
+                "google-chrome"
+            ),
+
+        "mmdc":
+            shutil.which(
+                "mmdc"
+            )
+    }

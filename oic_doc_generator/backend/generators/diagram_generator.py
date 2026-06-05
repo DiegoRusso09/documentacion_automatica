@@ -270,9 +270,22 @@ def generate_sequence_diagram_png(
             mermaid_code
         )
 
-    # =====================================================
-    # EXECUTE MERMAID CLI
-    # =====================================================
+# =====================================================
+# EXECUTE MERMAID CLI
+# =====================================================
+
+    env = os.environ.copy()
+
+    env["PUPPETEER_EXECUTABLE_PATH"] = shutil.which(
+        "chromium"
+    ) or shutil.which(
+        "google-chrome"
+    ) or ""
+
+    print(
+        "PUPPETEER_EXECUTABLE_PATH =",
+        env["PUPPETEER_EXECUTABLE_PATH"]
+    )
 
     result = subprocess.run(
 
@@ -291,7 +304,10 @@ def generate_sequence_diagram_png(
         ],
 
         capture_output=True,
-        text=True
+
+        text=True,
+
+        env=env
 
     )
 
