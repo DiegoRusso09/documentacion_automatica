@@ -829,14 +829,6 @@ def generate_word_document(
     database_export_info=None,
     job_id=None
 ):
-    
-    print("========== ROWS ==========")
-
-    for row in rows:
-
-        print(row)
-
-    print("==========================")
 
     document = Document()
 
@@ -1577,6 +1569,12 @@ def generate_word_document(
                 # =========================================
                 # TABLE
                 # =========================================
+                print("========== ROWS ==========")
+
+                for row in rows:
+                    print(row)
+
+                print("==========================")
 
                 add_process_table(
                     document,
