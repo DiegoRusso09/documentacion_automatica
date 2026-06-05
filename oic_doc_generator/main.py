@@ -159,3 +159,12 @@ def playwright_path():
                 )
 
     return result
+
+@app.get("/api/graphviz")
+def graphviz_debug():
+
+    import shutil
+
+    return {
+        "dot": shutil.which("dot")
+    }
