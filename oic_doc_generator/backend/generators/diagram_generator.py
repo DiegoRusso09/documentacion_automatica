@@ -169,7 +169,12 @@ def generate_sequence_diagram_png(
     rows,
     integration_type="REST"
 ):
+    print("========== ROWS ==========")
 
+    for row in rows:
+        print(row)
+
+    print("==========================")
     temp_dir = tempfile.mkdtemp()
 
     png_file = os.path.join(
