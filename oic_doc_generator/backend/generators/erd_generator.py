@@ -1,155 +1,184 @@
+# =========================================================
+# FILE: erd_generator.py
+# =========================================================
+
 import os
-import shutil
 import tempfile
-import subprocess
+
+from PIL import (
+    Image,
+    ImageDraw,
+    ImageFont
+)
 
 
 # =========================================================
-# BUILD MERMAID ERD
+# FONT
 # =========================================================
 
-def build_mermaid_erd_code(
-    tables
+def get_font(size=16):
+
+    try:
+
+        return ImageFont.truetype(
+            "arial.ttf",
+            size
+        )
+
+    except Exception:
+
+        return ImageFont.load_default()
+
+
+# =========================================================
+# DRAW TABLE
+# =========================================================
+
+def draw_table(
+    draw,
+    x,
+    y,
+    table
 ):
 
-    lines = [
+    font = get_font(14)
 
-        "erDiagram"
-    ]
+    table_name = table.get(
+        "table_name",
+        "TABLE"
+    )
 
-    # =====================================================
-    # TABLE DEFINITIONS
-    # =====================================================
+    columns = table.get(
+        "columns",
+        []
+    )
 
-    for table in tables:
-
-        table_name = table.get(
-            "table_name",
-            ""
-        )
-
-        if not table_name:
-
-            continue
-
-        pk_columns = set(
-
-            table.get(
-                "primary_keys",
-                []
-            )
-        )
-
-        fk_columns = set(
-
-            fk.get(
-                "column",
-                ""
-            )
-
-            for fk in table.get(
-                "foreign_keys",
-                []
-            )
-        )
-
-        lines.append(
-            f"{table_name} {{"
-        )
-
-        for column in table.get(
-            "columns",
+    pk_columns = set(
+        table.get(
+            "primary_keys",
             []
-        ):
-
-            column_name = column.get(
-                "column_name",
-                ""
-            )
-
-            data_type = column.get(
-                "data_type",
-                "VARCHAR2"
-            )
-
-            tags = []
-
-            if column_name in pk_columns:
-
-                tags.append(
-                    "PK"
-                )
-
-            if column_name in fk_columns:
-
-                tags.append(
-                    "FK"
-                )
-
-            suffix = ""
-
-            if tags:
-
-                suffix = " " + " ".join(tags)
-
-            lines.append(
-
-                f"    {data_type} "
-                f"{column_name}"
-                f"{suffix}"
-            )
-
-        lines.append(
-            "}"
         )
+    )
 
-        lines.append("")
+    fk_columns = set(
 
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
-
-    for table in tables:
-
-        child_table = table.get(
-            "table_name",
+        fk.get(
+            "column",
             ""
         )
 
         for fk in table.get(
             "foreign_keys",
             []
-        ):
+        )
+    )
 
-            parent_table = fk.get(
-                "referenced_table",
-                ""
+    row_height = 25
+
+    width = 350
+
+    height = (
+
+        40
+        +
+        len(columns) * row_height
+    )
+
+    # HEADER
+
+    draw.rectangle(
+
+        [
+            (x, y),
+            (x + width, y + 40)
+        ],
+
+        fill="#D9EAD3",
+
+        outline="black"
+    )
+
+    draw.text(
+
+        (x + 10, y + 10),
+
+        table_name,
+
+        fill="black",
+
+        font=font
+    )
+
+    # BODY
+
+    draw.rectangle(
+
+        [
+            (x, y + 40),
+            (x + width, y + height)
+        ],
+
+        outline="black"
+    )
+
+    current_y = y + 45
+
+    for column in columns:
+
+        column_name = column.get(
+            "column_name",
+            ""
+        )
+
+        data_type = column.get(
+            "data_type",
+            ""
+        )
+
+        tags = []
+
+        if column_name in pk_columns:
+
+            tags.append("PK")
+
+        if column_name in fk_columns:
+
+            tags.append("FK")
+
+        tag_text = ""
+
+        if tags:
+
+            tag_text = (
+                "[" +
+                ",".join(tags) +
+                "] "
             )
 
-            column_name = fk.get(
-                "column",
-                ""
-            )
+        draw.text(
 
-            if not parent_table:
+            (x + 10, current_y),
 
-                continue
+            f"{tag_text}{column_name} ({data_type})",
 
-            lines.append(
+            fill="black",
 
-                f"{parent_table} "
-                f"||--o{{ "
-                f"{child_table} "
-                f": {column_name}"
-            )
+            font=font
+        )
 
-    return "\n".join(
-        lines
+        current_y += row_height
+
+    return (
+
+        x,
+        y,
+        width,
+        height
     )
 
 
 # =========================================================
-# GENERATE PNG
+# GENERATE ERD
 # =========================================================
 
 def generate_erd_diagram(
@@ -160,90 +189,148 @@ def generate_erd_diagram(
 
         return None
 
-    mmdc_path = shutil.which(
-        "mmdc"
-    )
-
-    if not mmdc_path:
-
-        possible_paths = [
-
-            r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc.cmd",
-
-            r"C:\Users\LP-KQ-NEORA\AppData\Roaming\npm\mmdc"
-        ]
-
-        for path in possible_paths:
-
-            if os.path.exists(path):
-
-                mmdc_path = path
-
-                break
-
-    if not mmdc_path:
-
-        raise Exception(
-            "No se encontró Mermaid CLI"
-        )
-
     temp_dir = tempfile.mkdtemp()
-
-    mmd_file = os.path.join(
-        temp_dir,
-        "erd.mmd"
-    )
 
     png_file = os.path.join(
         temp_dir,
         "erd.png"
     )
 
-    mermaid_code = (
-        build_mermaid_erd_code(
-            tables
-        )
+    table_count = len(tables)
+
+    width = 1800
+
+    height = max(
+
+        1200,
+
+        table_count * 250
     )
 
-    with open(
+    image = Image.new(
 
-        mmd_file,
+        "RGB",
 
-        "w",
+        (
+            width,
+            height
+        ),
 
-        encoding="utf-8"
-
-    ) as file:
-
-        file.write(
-            mermaid_code
-        )
-
-    result = subprocess.run(
-
-        [
-            mmdc_path,
-            "-i",
-            mmd_file,
-            "-o",
-            png_file,
-            "-t",
-            "neutral",
-            "-b",
-            "white",
-            "-s",
-            "2"
-        ],
-
-        capture_output=True,
-
-        text=True
+        "white"
     )
 
-    if result.returncode != 0:
+    draw = ImageDraw.Draw(
+        image
+    )
 
-        raise Exception(
-            result.stderr
+    positions = {}
+
+    current_y = 50
+
+    # =====================================================
+    # TABLES
+    # =====================================================
+
+    for table in tables:
+
+        x = 50
+
+        box = draw_table(
+
+            draw,
+
+            x,
+
+            current_y,
+
+            table
         )
+
+        positions[
+            table.get(
+                "table_name"
+            )
+        ] = box
+
+        current_y += (
+            box[3]
+            +
+            60
+        )
+
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+
+    for table in tables:
+
+        child_name = table.get(
+            "table_name"
+        )
+
+        child_box = positions.get(
+            child_name
+        )
+
+        if not child_box:
+
+            continue
+
+        child_x = (
+            child_box[0]
+            +
+            child_box[2]
+        )
+
+        child_y = (
+            child_box[1]
+            +
+            child_box[3] // 2
+        )
+
+        for fk in table.get(
+            "foreign_keys",
+            []
+        ):
+
+            parent_name = fk.get(
+                "referenced_table"
+            )
+
+            parent_box = positions.get(
+                parent_name
+            )
+
+            if not parent_box:
+
+                continue
+
+            parent_x = (
+                parent_box[0]
+                +
+                parent_box[2]
+            )
+
+            parent_y = (
+                parent_box[1]
+                +
+                parent_box[3] // 2
+            )
+
+            draw.line(
+
+                [
+                    (parent_x, parent_y),
+                    (child_x, child_y)
+                ],
+
+                fill="blue",
+
+                width=2
+            )
+
+    image.save(
+        png_file
+    )
 
     return png_file
