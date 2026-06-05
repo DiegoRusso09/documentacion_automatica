@@ -47,17 +47,27 @@ app.add_middleware(
 # FRONTEND
 # =========================================================
 
-project_root = (
+frontend_path = (
 
     Path(__file__)
     .resolve()
     .parent
+    / "frontend"
 )
 
-frontend_path = (
+print(
+    f"Frontend path: {frontend_path}"
+)
 
-    project_root
-    / "frontend"
+app.mount(
+
+    "/static",
+
+    StaticFiles(
+        directory=str(frontend_path)
+    ),
+
+    name="static"
 )
 
 # =========================================================
