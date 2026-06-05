@@ -33,31 +33,43 @@ def sanitize_text(text):
 
     return text.strip()
 
-
 # =========================================================
-# DETECT TARGET
+# DETECT SYSTEM
 # =========================================================
 
-def detect_target(description):
+def detect_system(description):
 
     if not description:
 
-        return "SYSTEM"
+        return None
 
-    match = re.search(
-        r'De tipo ([^,\.]+)',
-        description,
-        re.IGNORECASE
-    )
+    text = description.lower()
 
-    if match:
+    if "dbaas" in text:
 
-        return sanitize_text(
-            match.group(1)
-        )
+        return "DBAAS"
 
-    return "SYSTEM"
+    if "soap" in text:
 
+        return "SOAP"
+
+    if "ftp" in text:
+
+        return "FTP"
+
+    if "rest" in text:
+
+        return "REST"
+
+    if "erp" in text:
+
+        return "ERP"
+
+    if "stagefile" in text:
+
+        return "STAGEFILE"
+
+    return None
 
 # =========================================================
 # LOAD FONT
@@ -76,50 +88,6 @@ def get_font(size=18):
 
         return ImageFont.load_default()
 
-
-# =========================================================
-# DRAW BOX
-# =========================================================
-
-def draw_box(
-    draw,
-    x,
-    y,
-    width,
-    height,
-    text,
-    fill_color="#D9EAD3"
-):
-
-    draw.rectangle(
-
-        [
-            (x, y),
-            (x + width, y + height)
-        ],
-
-        outline="black",
-        fill=fill_color,
-        width=2
-    )
-
-    font = get_font(16)
-
-    draw.multiline_text(
-
-        (
-            x + 10,
-            y + 12
-        ),
-
-        text,
-
-        fill="black",
-
-        font=font
-    )
-
-
 # =========================================================
 # DRAW ARROW
 # =========================================================
@@ -129,39 +97,81 @@ def draw_arrow(
     x1,
     y1,
     x2,
-    y2
+    y2,
+    label=None
 ):
 
     draw.line(
-
-        [
-            (x1, y1),
-            (x2, y2)
-        ],
-
+        [(x1, y1), (x2, y2)],
         fill="black",
-
         width=2
     )
 
     draw.polygon(
-
         [
-
             (x2, y2),
-
             (x2 - 10, y2 - 5),
-
             (x2 - 10, y2 + 5)
-
         ],
-
         fill="black"
     )
 
+    if label:
+
+        font = get_font(14)
+
+        draw.text(
+            (
+                (x1 + x2) / 2 - 30,
+                y1 - 20
+            ),
+            label,
+            fill="black",
+            font=font
+        )
+
 
 # =========================================================
-# GENERATE PNG
+# DRAW LIFELINE
+# =========================================================
+
+def draw_lifeline(
+    draw,
+    x,
+    title,
+    image_height
+):
+
+    font = get_font(16)
+
+    draw.rectangle(
+        [
+            (x - 60, 20),
+            (x + 60, 60)
+        ],
+        outline="black",
+        fill="#D9EAD3",
+        width=2
+    )
+
+    draw.text(
+        (x - 45, 32),
+        title,
+        fill="black",
+        font=font
+    )
+
+    draw.line(
+        [
+            (x, 60),
+            (x, image_height - 40)
+        ],
+        fill="gray",
+        width=1
+    )
+
+    # =========================================================
+# GENERATE UML SEQUENCE PNG
 # =========================================================
 
 def generate_sequence_diagram_png(
@@ -169,12 +179,7 @@ def generate_sequence_diagram_png(
     rows,
     integration_type="REST"
 ):
-    print("========== ROWS ==========")
 
-    for row in rows:
-        print(row)
-
-    print("==========================")
     temp_dir = tempfile.mkdtemp()
 
     png_file = os.path.join(
@@ -182,29 +187,128 @@ def generate_sequence_diagram_png(
         "diagram.png"
     )
 
-    # =====================================================
-    # BUILD STEPS
-    # =====================================================
-
-    steps = []
+    participants = []
 
     if integration_type.lower() == "scheduled":
 
-        steps.append(
+        participants.append(
             "SCHEDULER"
         )
 
     else:
 
-        steps.append(
+        participants.append(
             "CLIENT"
         )
 
-    steps.append(
-        sanitize_text(
-            endpoint_name
-        )
+    participants.append(
+        "API"
     )
+
+    for row in rows[1:]:
+
+        system = detect_system(
+
+            row.get(
+                "Descripción de la Acción",
+                ""
+            )
+        )
+
+        if (
+            system
+            and system not in participants
+        ):
+
+            participants.append(
+                system
+            )
+
+    width = max(
+
+        1200,
+
+        len(participants) * 220
+    )
+
+    height = max(
+
+        800,
+
+        len(rows) * 80 + 200
+    )
+
+    image = Image.new(
+
+        "RGB",
+
+        (width, height),
+
+        "white"
+    )
+
+    draw = ImageDraw.Draw(
+        image
+    )
+
+    positions = {}
+
+    current_x = 120
+
+    for participant in participants:
+
+        positions[participant] = current_x
+
+        draw_lifeline(
+
+            draw,
+
+            current_x,
+
+            participant,
+
+            height
+        )
+
+        current_x += 220
+
+    current_y = 120
+
+    if integration_type.lower() == "scheduled":
+
+        draw_arrow(
+
+            draw,
+
+            positions["SCHEDULER"],
+
+            current_y,
+
+            positions["API"],
+
+            current_y,
+
+            "Trigger"
+        )
+
+    else:
+
+        draw_arrow(
+
+            draw,
+
+            positions["CLIENT"],
+
+            current_y,
+
+            positions["API"],
+
+            current_y,
+
+            "Request"
+        )
+
+    current_y += 80
 
     for row in rows[1:]:
 
@@ -216,141 +320,71 @@ def generate_sequence_diagram_png(
             )
         )
 
-        description = row.get(
-            "Descripción de la Acción",
-            ""
+        system = detect_system(
+
+            row.get(
+                "Descripción de la Acción",
+                ""
+            )
         )
 
-        target = detect_target(
-            description
-        )
+        if not system:
 
-        steps.append(
-            f"{target}\n{action}"
-        )
+            continue
 
-    if integration_type.lower() != "scheduled":
-
-        steps.append(
-            "CLIENT"
-        )
-
-    # =====================================================
-    # IMAGE SIZE
-    # =====================================================
-
-    box_width = 260
-    box_height = 70
-
-    margin_x = 40
-    margin_y = 40
-
-    vertical_gap = 60
-
-    width = 900
-
-    height = (
-
-        len(steps)
-        * (box_height + vertical_gap)
-
-        + 100
-    )
-
-    image = Image.new(
-
-        "RGB",
-
-        (
-            width,
-            height
-        ),
-
-        "white"
-    )
-
-    draw = ImageDraw.Draw(
-        image
-    )
-
-    # =====================================================
-    # DRAW FLOW
-    # =====================================================
-
-    center_x = (
-        width // 2
-    )
-
-    current_y = margin_y
-
-    previous_center = None
-
-    for step in steps:
-
-        x = center_x - (
-            box_width // 2
-        )
-
-        draw_box(
+        draw_arrow(
 
             draw,
 
-            x,
+            positions["API"],
 
             current_y,
 
-            box_width,
+            positions[system],
 
-            box_height,
+            current_y,
 
-            step
+            action
         )
 
-        current_center = (
+        current_y += 50
 
-            center_x,
+        draw_arrow(
 
-            current_y +
-            box_height
+            draw,
+
+            positions[system],
+
+            current_y,
+
+            positions["API"],
+
+            current_y,
+
+            "Response"
         )
 
-        if previous_center:
+        current_y += 50
 
-            draw_arrow(
+    if integration_type.lower() != "scheduled":
 
-                draw,
+        draw_arrow(
 
-                previous_center[0],
+            draw,
 
-                previous_center[1],
+            positions["API"],
 
-                current_center[0],
+            current_y,
 
-                current_y
-            )
+            positions["CLIENT"],
 
-        previous_center = current_center
+            current_y,
 
-        current_y += (
-
-            box_height +
-            vertical_gap
+            "Response"
         )
-
-    # =====================================================
-    # SAVE
-    # =====================================================
 
     image.save(
         png_file
     )
-
-    if not os.path.exists(
-        png_file
-    ):
-
-        raise Exception(
-            "No se pudo generar el diagrama PNG"
-        )
 
     return png_file

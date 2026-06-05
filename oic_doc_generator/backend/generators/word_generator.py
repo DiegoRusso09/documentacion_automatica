@@ -829,6 +829,14 @@ def generate_word_document(
     database_export_info=None,
     job_id=None
 ):
+    
+    print("========== ROWS ==========")
+
+    for row in rows:
+
+        print(row)
+
+    print("==========================")
 
     document = Document()
 
