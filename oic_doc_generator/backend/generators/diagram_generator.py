@@ -6,7 +6,11 @@ import os
 import re
 import tempfile
 
-from graphviz import Digraph
+from PIL import (
+    Image,
+    ImageDraw,
+    ImageFont
+)
 
 
 # =========================================================
@@ -16,6 +20,7 @@ from graphviz import Digraph
 def sanitize_text(text):
 
     if not text:
+
         return "UNKNOWN"
 
     text = str(text)
@@ -36,6 +41,7 @@ def sanitize_text(text):
 def detect_target(description):
 
     if not description:
+
         return "SYSTEM"
 
     match = re.search(
@@ -51,6 +57,107 @@ def detect_target(description):
         )
 
     return "SYSTEM"
+
+
+# =========================================================
+# LOAD FONT
+# =========================================================
+
+def get_font(size=18):
+
+    try:
+
+        return ImageFont.truetype(
+            "arial.ttf",
+            size
+        )
+
+    except Exception:
+
+        return ImageFont.load_default()
+
+
+# =========================================================
+# DRAW BOX
+# =========================================================
+
+def draw_box(
+    draw,
+    x,
+    y,
+    width,
+    height,
+    text,
+    fill_color="#D9EAD3"
+):
+
+    draw.rectangle(
+
+        [
+            (x, y),
+            (x + width, y + height)
+        ],
+
+        outline="black",
+        fill=fill_color,
+        width=2
+    )
+
+    font = get_font(16)
+
+    draw.multiline_text(
+
+        (
+            x + 10,
+            y + 12
+        ),
+
+        text,
+
+        fill="black",
+
+        font=font
+    )
+
+
+# =========================================================
+# DRAW ARROW
+# =========================================================
+
+def draw_arrow(
+    draw,
+    x1,
+    y1,
+    x2,
+    y2
+):
+
+    draw.line(
+
+        [
+            (x1, y1),
+            (x2, y2)
+        ],
+
+        fill="black",
+
+        width=2
+    )
+
+    draw.polygon(
+
+        [
+
+            (x2, y2),
+
+            (x2 - 10, y2 - 5),
+
+            (x2 - 10, y2 + 5)
+
+        ],
+
+        fill="black"
+    )
 
 
 # =========================================================
@@ -70,100 +177,29 @@ def generate_sequence_diagram_png(
         "diagram.png"
     )
 
-    graph = Digraph(
-        name="SequenceDiagram",
-        format="png"
-    )
-
-    graph.attr(
-        rankdir="LR"
-    )
-
-    graph.attr(
-        bgcolor="white"
-    )
-
-    graph.attr(
-        fontsize="10"
-    )
-
-    graph.attr(
-        fontname="Arial"
-    )
-
-    graph.attr(
-        nodesep="0.7"
-    )
-
-    graph.attr(
-        ranksep="1"
-    )
-
-    graph.attr(
-        splines="ortho"
-    )
-
-    graph.attr(
-        pad="0.3"
-    )
-
-    graph.attr(
-        dpi="200"
-    )
-
     # =====================================================
-    # START NODE
+    # BUILD STEPS
     # =====================================================
+
+    steps = []
 
     if integration_type.lower() == "scheduled":
 
-        start_node = "SCHEDULER"
-
-        graph.node(
-            start_node,
-            shape="box"
-        )
-
-        graph.node(
-            endpoint_name,
-            shape="box",
-            style="filled",
-            fillcolor="#D9EAD3"
-        )
-
-        graph.edge(
-            start_node,
-            endpoint_name,
-            label="Trigger"
+        steps.append(
+            "SCHEDULER"
         )
 
     else:
 
-        start_node = "CLIENT"
-
-        graph.node(
-            start_node,
-            shape="box"
+        steps.append(
+            "CLIENT"
         )
 
-        graph.node(
-            endpoint_name,
-            shape="box",
-            style="filled",
-            fillcolor="#D9EAD3"
+    steps.append(
+        sanitize_text(
+            endpoint_name
         )
-
-        graph.edge(
-            start_node,
-            endpoint_name,
-            label="Request"
-        )
-
-    # =====================================================
-    # FLOW
-    # =====================================================
-
-    previous = endpoint_name
+    )
 
     for row in rows[1:]:
 
@@ -184,45 +220,124 @@ def generate_sequence_diagram_png(
             description
         )
 
-        node_id = (
-            f"{target}_{action}"
+        steps.append(
+            f"{target}\n{action}"
         )
-
-        graph.node(
-
-            node_id,
-
-            label=(
-                f"{target}\n"
-                f"{action}"
-            ),
-
-            shape="box"
-        )
-
-        graph.edge(
-            previous,
-            node_id
-        )
-
-        previous = node_id
-
-    # =====================================================
-    # END
-    # =====================================================
 
     if integration_type.lower() != "scheduled":
 
-        graph.edge(
-            previous,
-            "CLIENT",
-            label="Response"
+        steps.append(
+            "CLIENT"
         )
 
-    graph.render(
-        filename="diagram",
-        directory=temp_dir,
-        cleanup=True
+    # =====================================================
+    # IMAGE SIZE
+    # =====================================================
+
+    box_width = 260
+    box_height = 70
+
+    margin_x = 40
+    margin_y = 40
+
+    vertical_gap = 60
+
+    width = 900
+
+    height = (
+
+        len(steps)
+        * (box_height + vertical_gap)
+
+        + 100
+    )
+
+    image = Image.new(
+
+        "RGB",
+
+        (
+            width,
+            height
+        ),
+
+        "white"
+    )
+
+    draw = ImageDraw.Draw(
+        image
+    )
+
+    # =====================================================
+    # DRAW FLOW
+    # =====================================================
+
+    center_x = (
+        width // 2
+    )
+
+    current_y = margin_y
+
+    previous_center = None
+
+    for step in steps:
+
+        x = center_x - (
+            box_width // 2
+        )
+
+        draw_box(
+
+            draw,
+
+            x,
+
+            current_y,
+
+            box_width,
+
+            box_height,
+
+            step
+        )
+
+        current_center = (
+
+            center_x,
+
+            current_y +
+            box_height
+        )
+
+        if previous_center:
+
+            draw_arrow(
+
+                draw,
+
+                previous_center[0],
+
+                previous_center[1],
+
+                current_center[0],
+
+                current_y
+            )
+
+        previous_center = current_center
+
+        current_y += (
+
+            box_height +
+            vertical_gap
+        )
+
+    # =====================================================
+    # SAVE
+    # =====================================================
+
+    image.save(
+        png_file
     )
 
     if not os.path.exists(
@@ -230,7 +345,7 @@ def generate_sequence_diagram_png(
     ):
 
         raise Exception(
-            "Graphviz no generó PNG"
+            "No se pudo generar el diagrama PNG"
         )
 
     return png_file
