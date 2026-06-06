@@ -196,20 +196,21 @@ def playwright_debug():
 @app.get("/api/playwright-check")
 def playwright_check():
 
-    from playwright.sync_api import sync_playwright
+    import os
 
-    result = {}
+    path = (
+        "/opt/render/.cache/ms-playwright/"
+        "chromium-1223/chrome-linux64/chrome"
+    )
 
-    try:
+    return {
 
-        with sync_playwright() as p:
+        "exists":
+            os.path.exists(path),
 
-            result["chromium_path"] = (
-                p.chromium.executable_path
-            )
+        "is_file":
+            os.path.isfile(path),
 
-    except Exception as e:
-
-        result["error"] = str(e)
-
-    return result
+        "path":
+            path
+    }
