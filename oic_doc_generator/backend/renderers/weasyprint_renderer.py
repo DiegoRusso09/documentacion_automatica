@@ -6,27 +6,46 @@ import tempfile
 import shutil
 
 
+# =========================================================
+# RENDER HTML TO IMAGE
+# =========================================================
+
 def render_html_to_image(
     html_content,
     resources_path=None
 ):
-    
-    temp_dir = tempfile.mkdtemp()
+
+    temp_dir = tempfile.mkdtemp(
+        prefix="vb_render_"
+    )
 
     try:
 
+        print("[WEASY] inicio")
+
+        # =================================================
+        # COPY RESOURCES
+        # =================================================
+
         if resources_path:
-            print("[WEASY] inicio")
+
             target_resources = os.path.join(
                 temp_dir,
                 "resources"
             )
 
             shutil.copytree(
+
                 resources_path,
+
                 target_resources,
+
                 dirs_exist_ok=True
             )
+
+        # =================================================
+        # FILES
+        # =================================================
 
         html_file = os.path.join(
             temp_dir,
@@ -43,30 +62,69 @@ def render_html_to_image(
             "page.png"
         )
 
-        print("[WEASY] html guardado")
+        # =================================================
+        # SAVE HTML
+        # =================================================
 
         with open(
+
             html_file,
+
             "w",
+
             encoding="utf-8"
+
         ) as f:
 
             f.write(
                 html_content
             )
 
-        print("[WEASY] generando pdf")
+        print(
+            "[WEASY] html guardado"
+        )
+
+        print(
+            "[WEASY] html size =",
+            len(html_content)
+        )
+
+        print(
+            "[WEASY] html path =",
+            html_file
+        )
+
+        # =================================================
+        # GENERATE PDF
+        # =================================================
+
+        print(
+            "[WEASY] generando pdf"
+        )
 
         HTML(
-            filename=html_file
+            filename=html_file,
+            base_url=temp_dir
         ).write_pdf(
             pdf_file
         )
 
-        print("[WEASY] convirtiendo png")
-        
+        print(
+            "[WEASY] pdf generado"
+        )
+
+        # =================================================
+        # PDF -> PNG
+        # =================================================
+
+        print(
+            "[WEASY] convirtiendo png"
+        )
+
         pages = convert_from_path(
+
             pdf_file,
+
             dpi=200
         )
 
@@ -77,15 +135,24 @@ def render_html_to_image(
             )
 
         pages[0].save(
+
             png_file,
+
             "PNG"
         )
-        
-        print("[WEASY] png generado")
+
+        print(
+            "[WEASY] png generado"
+        )
 
         return png_file
 
     except Exception as e:
+
+        print(
+            "[WEASY] ERROR:",
+            str(e)
+        )
 
         raise Exception(
             f"WeasyPrint Error: {str(e)}"
