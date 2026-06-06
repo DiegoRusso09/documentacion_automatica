@@ -225,15 +225,39 @@ def generate_erd_diagram(
 
     positions = {}
 
-    current_y = 50
+    columns_per_row = 3
 
-    # =====================================================
-    # TABLES
-    # =====================================================
+    table_width = 450
+    table_height = 250
 
-    for table in tables:
+    horizontal_gap = 40
+    vertical_gap = 40
 
-        x = 50
+    for index, table in enumerate(tables):
+
+        col = index % columns_per_row
+
+        row = index // columns_per_row
+
+        x = (
+            50
+            +
+            col *
+            (
+                table_width +
+                horizontal_gap
+            )
+        )
+
+        y = (
+            50
+            +
+            row *
+            (
+                table_height +
+                vertical_gap
+            )
+        )
 
         box = draw_table(
 
@@ -241,7 +265,7 @@ def generate_erd_diagram(
 
             x,
 
-            current_y,
+            y,
 
             table
         )
@@ -251,12 +275,6 @@ def generate_erd_diagram(
                 "table_name"
             )
         ] = box
-
-        current_y += (
-            box[3]
-            +
-            60
-        )
 
     # =====================================================
     # RELATIONSHIPS
