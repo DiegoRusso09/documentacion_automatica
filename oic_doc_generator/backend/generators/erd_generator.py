@@ -3,6 +3,7 @@
 # =========================================================
 
 import os
+import math
 import tempfile
 
 from PIL import (
@@ -73,18 +74,68 @@ def draw_table(
         )
     )
 
+    # =====================================================
+    # SHOW ONLY PK/FK
+    # =====================================================
+
+    display_columns = []
+
+    for column in columns:
+
+        column_name = column.get(
+            "column_name",
+            ""
+        )
+
+        if (
+            column_name in pk_columns
+            or
+            column_name in fk_columns
+        ):
+
+            display_columns.append(
+                column
+            )
+
+    if not display_columns:
+
+        display_columns.append({
+
+            "column_name":
+                "(Sin PK/FK)",
+
+            "data_type":
+                ""
+        })
+
+    hidden_columns = (
+
+        len(columns)
+        -
+        len(display_columns)
+    )
+
+    # =====================================================
+    # SIZE
+    # =====================================================
+
     row_height = 25
 
-    width = 350
+    width = 420
 
     height = (
 
-        40
+        50
         +
-        len(columns) * row_height
+        len(display_columns)
+        * row_height
+        +
+        30
     )
 
+    # =====================================================
     # HEADER
+    # =====================================================
 
     draw.rectangle(
 
@@ -100,7 +151,10 @@ def draw_table(
 
     draw.text(
 
-        (x + 10, y + 10),
+        (
+            x + 10,
+            y + 10
+        ),
 
         table_name,
 
@@ -109,7 +163,9 @@ def draw_table(
         font=font
     )
 
+    # =====================================================
     # BODY
+    # =====================================================
 
     draw.rectangle(
 
@@ -121,9 +177,9 @@ def draw_table(
         outline="black"
     )
 
-    current_y = y + 45
+    current_y = y + 50
 
-    for column in columns:
+    for column in display_columns:
 
         column_name = column.get(
             "column_name",
@@ -139,27 +195,36 @@ def draw_table(
 
         if column_name in pk_columns:
 
-            tags.append("PK")
+            tags.append(
+                "PK"
+            )
 
         if column_name in fk_columns:
 
-            tags.append("FK")
+            tags.append(
+                "FK"
+            )
 
         tag_text = ""
 
         if tags:
 
             tag_text = (
-                "[" +
-                ",".join(tags) +
+                "["
+                +
+                ",".join(tags)
+                +
                 "] "
             )
 
         draw.text(
 
-            (x + 10, current_y),
+            (
+                x + 10,
+                current_y
+            ),
 
-            f"{tag_text}{column_name} ({data_type})",
+            f"{tag_text}{column_name}",
 
             fill="black",
 
@@ -167,6 +232,26 @@ def draw_table(
         )
 
         current_y += row_height
+
+    # =====================================================
+    # ADDITIONAL COLUMNS
+    # =====================================================
+
+    if hidden_columns > 0:
+
+        draw.text(
+
+            (
+                x + 10,
+                current_y
+            ),
+
+            f"({hidden_columns} columnas adicionales)",
+
+            fill="gray",
+
+            font=font
+        )
 
     return (
 
@@ -196,14 +281,16 @@ def generate_erd_diagram(
         "erd.png"
     )
 
-    import math
-
-    table_count = len(tables)
+    table_count = len(
+        tables
+    )
 
     columns_per_row = 3
 
     rows_needed = math.ceil(
-        table_count /
+
+        table_count
+        /
         columns_per_row
     )
 
@@ -213,7 +300,7 @@ def generate_erd_diagram(
 
         1200,
 
-        rows_needed * 350
+        rows_needed * 320
     )
 
     image = Image.new(
@@ -234,36 +321,56 @@ def generate_erd_diagram(
 
     positions = {}
 
-    columns_per_row = 3
+    # =====================================================
+    # GRID LAYOUT
+    # =====================================================
 
-    table_width = 450
-    table_height = 250
+    table_width = 460
 
-    horizontal_gap = 40
-    vertical_gap = 40
+    table_height = 180
 
-    for index, table in enumerate(tables):
+    horizontal_gap = 60
 
-        col = index % columns_per_row
+    vertical_gap = 60
 
-        row = index // columns_per_row
+    for index, table in enumerate(
+        tables
+    ):
+
+        col = (
+            index
+            %
+            columns_per_row
+        )
+
+        row = (
+            index
+            //
+            columns_per_row
+        )
 
         x = (
-            50
+
+            40
             +
-            col *
+            col
+            *
             (
-                table_width +
+                table_width
+                +
                 horizontal_gap
             )
         )
 
         y = (
-            50
+
+            40
             +
-            row *
+            row
+            *
             (
-                table_height +
+                table_height
+                +
                 vertical_gap
             )
         )
@@ -304,15 +411,21 @@ def generate_erd_diagram(
             continue
 
         child_x = (
+
             child_box[0]
             +
             child_box[2]
+            /
+            2
         )
 
         child_y = (
+
             child_box[1]
             +
-            child_box[3] // 2
+            child_box[3]
+            /
+            2
         )
 
         for fk in table.get(
@@ -333,22 +446,34 @@ def generate_erd_diagram(
                 continue
 
             parent_x = (
+
                 parent_box[0]
                 +
                 parent_box[2]
+                /
+                2
             )
 
             parent_y = (
+
                 parent_box[1]
                 +
-                parent_box[3] // 2
+                parent_box[3]
+                /
+                2
             )
 
             draw.line(
 
                 [
-                    (parent_x, parent_y),
-                    (child_x, child_y)
+                    (
+                        parent_x,
+                        parent_y
+                    ),
+                    (
+                        child_x,
+                        child_y
+                    )
                 ],
 
                 fill="blue",
