@@ -196,7 +196,16 @@ def generate_erd_diagram(
         "erd.png"
     )
 
+    import math
+
     table_count = len(tables)
+
+    columns_per_row = 3
+
+    rows_needed = math.ceil(
+        table_count /
+        columns_per_row
+    )
 
     width = 1800
 
@@ -204,7 +213,7 @@ def generate_erd_diagram(
 
         1200,
 
-        table_count * 250
+        rows_needed * 350
     )
 
     image = Image.new(
