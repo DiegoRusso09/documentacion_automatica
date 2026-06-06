@@ -168,3 +168,27 @@ def graphviz_debug():
     return {
         "dot": shutil.which("dot")
     }
+
+@app.get("/api/playwright-debug")
+def playwright_debug():
+
+    import os
+
+    paths = []
+
+    for root, dirs, files in os.walk("/opt/render"):
+
+        for file in files:
+
+            if (
+                "chrome" in file.lower()
+                or "chromium" in file.lower()
+            ):
+
+                paths.append(
+                    os.path.join(root, file)
+                )
+
+    return {
+        "found": paths
+    }
