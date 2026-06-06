@@ -214,3 +214,18 @@ def playwright_check():
         "path":
             path
     }
+
+@app.get("/api/debug-vb")
+def debug_vb():
+
+    import inspect
+
+    from oic_doc_generator.backend.renderers.screenshot_renderer import (
+        render_html_to_image
+    )
+
+    return {
+        "file": inspect.getfile(
+            render_html_to_image
+        )
+    }
