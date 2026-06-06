@@ -192,3 +192,24 @@ def playwright_debug():
     return {
         "found": paths
     }
+
+@app.get("/api/playwright-check")
+def playwright_check():
+
+    from playwright.sync_api import sync_playwright
+
+    result = {}
+
+    try:
+
+        with sync_playwright() as p:
+
+            result["chromium_path"] = (
+                p.chromium.executable_path
+            )
+
+    except Exception as e:
+
+        result["error"] = str(e)
+
+    return result
