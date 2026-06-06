@@ -26,7 +26,7 @@ def load_vb_base_css():
     ).resolve().parent
 
     project_root = (
-        current_dir.parent
+        current_dir.parent.parent
     )
 
     css_path = (
