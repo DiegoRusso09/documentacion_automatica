@@ -128,7 +128,15 @@ def generate_screenshot(
 
     with sync_playwright() as playwright:
 
+        print(
+            "PLAYWRIGHT EXECUTABLE:",
+            playwright.chromium.executable_path
+        )
+
         browser = playwright.chromium.launch(
+
+            executable_path=
+                playwright.chromium.executable_path,
 
             headless=True
         )
