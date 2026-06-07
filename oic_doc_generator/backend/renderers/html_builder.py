@@ -182,8 +182,6 @@ def build_combined_css(
 
     final_css = f"""
 
-    {vb_base_css}
-
     {app_css}
 
     """
