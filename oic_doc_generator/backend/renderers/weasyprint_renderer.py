@@ -102,11 +102,31 @@ def render_html_to_image(
             "[WEASY] generando pdf"
         )
 
+        import time
+
+        start = time.time()
+
+        print(
+            "[WEASY] inicio write_pdf"
+        )
+
         HTML(
             filename=html_file,
             base_url=temp_dir
         ).write_pdf(
             pdf_file
+        )
+
+        print(
+            "[WEASY] fin write_pdf"
+        )
+
+        print(
+            "[WEASY] segundos:",
+            round(
+                time.time() - start,
+                2
+            )
         )
 
         print(

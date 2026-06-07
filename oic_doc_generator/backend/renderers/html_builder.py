@@ -409,4 +409,73 @@ def build_complete_html(
         "[HTML_BUILDER] HTML final construido"
     )
 
+    print(
+        "[HTML_BUILDER] tags:",
+        len(
+            BeautifulSoup(
+                final_html,
+                "html.parser"
+            ).find_all(True)
+        )
+    )
+
+    soup = BeautifulSoup(
+        final_html,
+        "html.parser"
+    )
+
+    print(
+        "[HTML_BUILDER] tags:",
+        len(
+            soup.find_all(True)
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] divs:",
+        len(
+            soup.find_all("div")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] tables:",
+        len(
+            soup.find_all("table")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] trs:",
+        len(
+            soup.find_all("tr")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] tds:",
+        len(
+            soup.find_all("td")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] imgs:",
+        len(
+            soup.find_all("img")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] forms:",
+        len(
+            soup.find_all("form")
+        )
+    )
+
+    print(
+        "[HTML_BUILDER] html size:",
+        len(final_html)
+    )
+
     return final_html
