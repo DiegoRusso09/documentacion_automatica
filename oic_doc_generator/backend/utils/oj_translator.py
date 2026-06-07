@@ -30,6 +30,22 @@ def translate_oj_html(
         soup
     )
 
+    remove_templates(
+        soup
+    )
+
+    flatten_bind_if(
+        soup
+    )
+
+    flatten_bind_for_each(
+        soup
+    )
+
+    remove_oj_options(
+        soup
+    )
+
     # =====================================================
     # TRANSLATE COMPONENTS
     # =====================================================
@@ -132,6 +148,21 @@ min-height:34px;
 font-size:13px;
 """
 
+# =========================================================
+# REMOVE OJ OPTIONS
+# =========================================================
+
+def remove_oj_options(
+    soup
+):
+
+    options = soup.find_all(
+        "oj-option"
+    )
+
+    for option in options:
+
+        option.decompose()
 
 # =========================================================
 # PRESERVE ORIGINAL ATTRIBUTES
@@ -1886,16 +1917,21 @@ def translate_oj_bind_text(
             "span"
         )
 
-        span.string = tag.get(
+        value = tag.get(
             "value",
-            "Texto"
+            ""
         )
+
+        if "[[" in value:
+
+            value = ""
+
+        span.string = value
 
         tag.replace_with(
             span
         )
-
-
+        
 # =========================================================
 # TYPOGRAPHY
 # =========================================================
@@ -1995,3 +2031,79 @@ def move_footer_to_bottom(
             soup.append(
                 footer
             )
+
+# =========================================================
+# REMOVE TEMPLATES
+# =========================================================
+
+def remove_templates(
+    soup
+):
+
+    templates = soup.find_all(
+        "template"
+    )
+
+    for template in templates:
+
+        template.decompose()
+
+# =========================================================
+# FLATTEN BIND IF
+# =========================================================
+
+def flatten_bind_if(
+    soup
+):
+
+    tags = soup.find_all(
+        "oj-bind-if"
+    )
+
+    for tag in tags:
+
+        children = list(
+            tag.contents
+        )
+
+        for child in reversed(
+            children
+        ):
+            tag.insert_after(
+                child
+            )
+
+        tag.decompose()
+
+# =========================================================
+# FLATTEN BIND FOR EACH
+# =========================================================
+
+def flatten_bind_for_each(
+    soup
+):
+
+    tags = soup.find_all(
+        "oj-bind-for-each"
+    )
+
+    for tag in tags:
+
+        template = tag.find(
+            "template"
+        )
+
+        if template:
+
+            children = list(
+                template.contents
+            )
+
+            for child in reversed(
+                children
+            ):
+                tag.insert_after(
+                    child
+                )
+
+        tag.decompose()
