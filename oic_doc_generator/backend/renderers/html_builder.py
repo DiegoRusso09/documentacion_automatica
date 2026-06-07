@@ -476,4 +476,16 @@ def build_complete_html(
         len(final_html)
     )
 
+    soup = BeautifulSoup(
+        final_html,
+        "html.parser"
+    )
+
+    for img in soup.find_all("img"):
+
+        print(
+            "[IMG]",
+            img.get("src")
+        )
+
     return final_html

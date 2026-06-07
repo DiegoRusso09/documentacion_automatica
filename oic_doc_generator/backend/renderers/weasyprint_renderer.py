@@ -6,6 +6,8 @@ import tempfile
 import shutil
 
 
+
+
 # =========================================================
 # RENDER HTML TO IMAGE
 # =========================================================
@@ -42,6 +44,26 @@ def render_html_to_image(
 
                 dirs_exist_ok=True
             )
+
+            for root, dirs, files in os.walk(target_resources):
+
+                for file in files:
+
+                    full = os.path.join(
+                        root,
+                        file
+                    )
+
+                    size_mb = os.path.getsize(full) / 1024 / 1024
+
+                    if size_mb > 1:
+
+                        print(
+                            "[RESOURCE]",
+                            file,
+                            round(size_mb, 2),
+                            "MB"
+                        )
 
         # =================================================
         # FILES
