@@ -578,3 +578,74 @@ def build_page_metadata(
     )
 
     return result
+
+def build_virtual_apps(
+    extraction_metadata
+):
+
+    metadata = build_page_metadata(
+        extraction_metadata
+    )
+
+    pages = metadata.get(
+        "pages",
+        []
+    )
+
+    result = []
+
+    for page in pages:
+
+        result.append({
+
+            "shell_html":
+                metadata.get(
+                    "shell_html",
+                    ""
+                ),
+
+            "app_css":
+                metadata.get(
+                    "app_css",
+                    ""
+                ),
+
+            "resources_path":
+                metadata.get(
+                    "resources_path"
+                ),
+
+            "pages": [
+
+                {
+                    "name":
+                        page.get(
+                            "name"
+                        ),
+
+                    "html":
+                        page.get(
+                            "html"
+                        ),
+
+                    "buttons":
+                        page.get(
+                            "buttons",
+                            []
+                        ),
+
+                    "table_columns":
+                        page.get(
+                            "table_columns",
+                            []
+                        )
+                }
+
+            ]
+        })
+
+    print(
+        f"[VB_PARSER] virtual apps generadas: {len(result)}"
+    )
+
+    return result
