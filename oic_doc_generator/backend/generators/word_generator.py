@@ -1808,6 +1808,31 @@ def generate_word_document(
 
                 page_index = 0
 
+                current_step = 0
+
+                steps_per_page = 5
+
+                total_steps = (
+                    total_pages
+                    * steps_per_page
+                )
+
+
+                total_pages = len(
+                    pages
+                )
+
+                page_index = 0
+
+                current_step = 0
+
+                steps_per_page = 5
+
+                total_steps = (
+                    total_pages
+                    * steps_per_page
+                )
+
                 # =========================================
                 # NO PAGES
                 # =========================================
@@ -1828,20 +1853,19 @@ def generate_word_document(
 
                     page_index += 1
 
-                    update_activity(
-
-                        job_id,
-
-                        f"Renderizando {page.get('name','Pantalla')}",
-
-                        page_index,
-
-                        total_pages
-                    )
-
                     page_name = page.get(
                         "name",
                         f"Pantalla {screen_counter}"
+                    )
+
+                    update_activity(
+                        job_id,
+                        (
+                            f"[{page_index}/{total_pages}] "
+                            f"Iniciando pantalla: {page_name}"
+                        ),
+                        page_index,
+                        total_pages
                     )
 
                     page_html = page.get(
@@ -1885,6 +1909,21 @@ def generate_word_document(
                         # BUILD HTML
                         # =================================
 
+                        update_activity(
+                            job_id,
+                            f"[{page_index}/{total_pages}] Construyendo HTML: {page_name}"
+                        )
+
+                        current_step += 1
+
+                        advance_step(
+                            job_id,
+                            int(
+                                (current_step / total_steps)
+                                * 100
+                            )
+                        )
+
                         complete_html = (
                             build_complete_html(
 
@@ -1904,6 +1943,21 @@ def generate_word_document(
                         # =================================
 
                         try:
+
+                            update_activity(
+                                job_id,
+                                f"[{page_index}/{total_pages}] Generando imagen: {page_name}"
+                            )
+
+                            current_step += 1
+
+                            advance_step(
+                                job_id,
+                                int(
+                                    (current_step / total_steps)
+                                    * 100
+                                )
+                            )
 
                             image_path = render_html_to_image(
                                 html_content=complete_html,
@@ -1933,6 +1987,21 @@ def generate_word_document(
                             )
                         ):
 
+                            update_activity(
+                                job_id,
+                                f"[{page_index}/{total_pages}] Insertando captura: {page_name}"
+                            )
+
+                            current_step += 1
+
+                            advance_step(
+                                job_id,
+                                int(
+                                    (current_step / total_steps)
+                                    * 100
+                                )
+                            )
+
                             add_framed_image(
 
                                 document,
@@ -1953,6 +2022,16 @@ def generate_word_document(
                             )
 
                             if buttons:
+
+                                current_step += 1
+
+                                advance_step(
+                                    job_id,
+                                    int(
+                                        (current_step / total_steps)
+                                        * 100
+                                    )
+                                )
 
                                 document.add_paragraph(
                                     "• Lista de Botones"
@@ -2009,6 +2088,16 @@ def generate_word_document(
                             # =============================
                             # PARAMETERS
                             # =============================
+                            
+                            current_step += 1
+
+                            advance_step(
+                                job_id,
+                                int(
+                                    (current_step / total_steps)
+                                    * 100
+                                )
+                            )
 
                             document.add_paragraph(
                                 "• Lista de Parámetros"
@@ -2057,6 +2146,16 @@ def generate_word_document(
                             # =============================
                             # FIELDS
                             # =============================
+
+                            current_step += 1
+
+                            advance_step(
+                                job_id,
+                                int(
+                                    (current_step / total_steps)
+                                    * 100
+                                )
+                            )
 
                             fields = page.get(
                                 "table_columns",
@@ -2117,6 +2216,11 @@ def generate_word_document(
                                         )
                                     )
 
+                                update_activity(
+                                    job_id,
+                                    f"[{page_index}/{total_pages}] Pantalla completada: {page_name}"
+                                )
+
                         else:
 
                             document.add_paragraph(
@@ -2133,6 +2237,16 @@ def generate_word_document(
                     document.add_page_break()
 
                     screen_counter += 1
+
+                    current_step += 1
+
+                    advance_step(
+                        job_id,
+                        int(
+                            (current_step / total_steps)
+                            * 100
+                        )
+                    )
 
             except Exception as e:
 
