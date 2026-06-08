@@ -19,6 +19,8 @@ def create_job():
 
         "activity": "",
 
+        "object": "",
+
         "current": 0,
 
         "total": 0,
@@ -27,63 +29,12 @@ def create_job():
 
         "error": None,
 
-        "steps": [],
+        "total_points": 0,
 
-        "current_step": 0
+        "completed_points": 0
     }
 
     return job_id
-
-
-def configure_steps(
-    job_id,
-    steps
-):
-
-    jobs[job_id]["steps"] = steps
-
-    jobs[job_id]["current_step"] = 0
-
-
-def advance_step(
-    job_id,
-    description
-):
-
-    job = jobs.get(
-        job_id
-    )
-
-    if not job:
-
-        return
-
-    total_steps = len(
-        job["steps"]
-    )
-
-    if total_steps == 0:
-
-        return
-
-    job["current_step"] += 1
-
-    progress = int(
-
-        (
-            job["current_step"]
-            /
-            total_steps
-        )
-        *
-        100
-    )
-
-    job["progress"] = progress
-
-    job["step"] = description
-
-    job["activity"] = ""
 
 
 def update_activity(
@@ -139,3 +90,71 @@ def get_job(
     return jobs.get(
         job_id
     )
+
+def initialize_progress(
+    job_id,
+    total_points
+):
+
+    job = jobs.get(job_id)
+
+    if not job:
+        return
+
+    job["total_points"] = total_points
+
+    job["completed_points"] = 0
+
+    job["current"] = 0
+
+    job["total"] = total_points
+
+def advance_progress(
+    job_id,
+    component,
+    detail,
+    object_name="",
+    points=1
+):
+
+    job = jobs.get(
+        job_id
+    )
+
+    if not job:
+
+        return
+
+    job["completed_points"] += points
+
+    completed = job["completed_points"]
+
+    total = max(
+        job["total_points"],
+        1
+    )
+
+    progress = int(
+        (
+            completed
+            /
+            total
+        )
+        * 100
+    )
+
+    if progress > 100:
+
+        progress = 100
+
+    job["progress"] = progress
+
+    job["step"] = component
+
+    job["activity"] = detail
+
+    job["object"] = object_name
+
+    job["current"] = completed
+
+    job["total"] = total

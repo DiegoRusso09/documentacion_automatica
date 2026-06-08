@@ -8,7 +8,8 @@ from datetime import datetime
 import os
 
 from oic_doc_generator.api.job_manager import (
-    advance_step,
+    initialize_progress,
+    advance_progress,
     update_activity
 )
 
@@ -989,6 +990,206 @@ def generate_word_document(
     # =====================================================
     # 2 VISIÓN GENERAL
     # =====================================================
+    
+    # =====================================================
+    # CALCULAR TOTAL DE PUNTOS
+    # =====================================================
+
+    total_points = 0
+
+    # -----------------------------------------------------
+    # OIC 2.5
+    # 4 puntos por endpoint
+    # -----------------------------------------------------
+
+    if package_path:
+
+        try:
+
+            iar_files = find_all_iar_files(
+                package_path
+            )
+
+            for iar in iar_files:
+
+                extracted_iar = extract_iar(
+                    iar
+                )
+
+                applications = read_project_xml(
+                    extracted_iar
+                )
+
+                app_map = build_application_map(
+                    applications
+                )
+
+                root = get_project_root(
+                    extracted_iar
+                )
+
+                endpoint_flows = get_endpoint_flows(
+                    root,
+                    app_map
+                )
+
+                total_points += (
+                    len(endpoint_flows)
+                    * 4
+                )
+
+        except:
+
+            pass
+
+    # -----------------------------------------------------
+    # VB
+    # 8 puntos por pantalla
+    # -----------------------------------------------------
+
+    if visual_builder_apps:
+
+        try:
+
+            vb_apps = visual_builder_apps
+
+            if not isinstance(
+                vb_apps,
+                list
+            ):
+                vb_apps = [vb_apps]
+
+            for vb_zip in vb_apps:
+
+                extraction_metadata = (
+                    build_extraction_metadata(
+                        vb_zip
+                    )
+                )
+
+                vb_metadata = (
+                    build_page_metadata(
+                        extraction_metadata
+                    )
+                )
+
+                pages = vb_metadata.get(
+                    "pages",
+                    []
+                )
+
+                total_points += (
+                    len(pages)
+                    * 8
+                )
+
+        except:
+
+            pass
+
+    # -----------------------------------------------------
+    # OIC SERVICIOS
+    # 2 puntos por endpoint
+    # -----------------------------------------------------
+
+    if package_path:
+
+        try:
+
+            iar_files = find_all_iar_files(
+                package_path
+            )
+
+            for iar in iar_files:
+
+                extracted_iar = extract_iar(
+                    iar
+                )
+
+                applications = read_project_xml(
+                    extracted_iar
+                )
+
+                app_map = build_application_map(
+                    applications
+                )
+
+                root = get_project_root(
+                    extracted_iar
+                )
+
+                endpoint_flows = get_endpoint_flows(
+                    root,
+                    app_map
+                )
+
+                total_points += (
+                    len(endpoint_flows)
+                    * 2
+                )
+
+        except:
+
+            pass
+
+    # -----------------------------------------------------
+    # BI REPORTES
+    # 3 puntos por reporte
+    # -----------------------------------------------------
+
+    if bip_files:
+
+        total_points += (
+            len(bip_files)
+            * 3
+        )
+
+    # -----------------------------------------------------
+    # BD
+    # 1 punto por objeto
+    # -----------------------------------------------------
+
+    if database_metadata:
+
+        total_points += len(
+            database_metadata.get(
+                "tables",
+                []
+            )
+        )
+
+        total_points += len(
+            database_metadata.get(
+                "views",
+                []
+            )
+        )
+
+        total_points += len(
+            database_metadata.get(
+                "packages",
+                []
+            )
+        )
+
+        total_points += len(
+            database_metadata.get(
+                "sequences",
+                []
+            )
+        )
+
+    if total_points < 1:
+
+        total_points = 1
+
+    if job_id:
+
+        initialize_progress(
+            job_id,
+            total_points
+        )
+
     document.add_page_break()
     create_header(
         document,
@@ -1775,30 +1976,12 @@ def generate_word_document(
 
                 page_index = 0
 
-                current_step = 0
-
-                steps_per_page = 5
-
-                total_steps = (
-                    total_pages
-                    * steps_per_page
-                )
-
 
                 total_pages = len(
                     pages
                 )
 
                 page_index = 0
-
-                current_step = 0
-
-                steps_per_page = 5
-
-                total_steps = (
-                    total_pages
-                    * steps_per_page
-                )
 
                 # =========================================
                 # NO PAGES
@@ -1876,19 +2059,12 @@ def generate_word_document(
                         # BUILD HTML
                         # =================================
 
-                        update_activity(
+                        advance_progress(
                             job_id,
-                            f"[{page_index}/{total_pages}] Construyendo HTML: {page_name}"
-                        )
-
-                        current_step += 1
-
-                        advance_step(
-                            job_id,
-                            int(
-                                (current_step / total_steps)
-                                * 100
-                            )
+                            component="Visual Builder",
+                            detail="Construyendo HTML",
+                            object_name=page_name,
+                            points=2
                         )
 
                         complete_html = (
@@ -1911,19 +2087,12 @@ def generate_word_document(
 
                         try:
 
-                            update_activity(
+                            advance_progress(
                                 job_id,
-                                f"[{page_index}/{total_pages}] Generando imagen: {page_name}"
-                            )
-
-                            current_step += 1
-
-                            advance_step(
-                                job_id,
-                                int(
-                                    (current_step / total_steps)
-                                    * 100
-                                )
+                                component="Visual Builder",
+                                detail="Generando imagen",
+                                object_name=page_name,
+                                points=3
                             )
 
                             image_path = render_html_to_image(
@@ -1954,19 +2123,12 @@ def generate_word_document(
                             )
                         ):
 
-                            update_activity(
+                            advance_progress(
                                 job_id,
-                                f"[{page_index}/{total_pages}] Insertando captura: {page_name}"
-                            )
-
-                            current_step += 1
-
-                            advance_step(
-                                job_id,
-                                int(
-                                    (current_step / total_steps)
-                                    * 100
-                                )
+                                component="Visual Builder",
+                                detail="Insertando captura",
+                                object_name=page_name,
+                                points=2
                             )
 
                             add_framed_image(
@@ -1989,16 +2151,6 @@ def generate_word_document(
                             )
 
                             if buttons:
-
-                                current_step += 1
-
-                                advance_step(
-                                    job_id,
-                                    int(
-                                        (current_step / total_steps)
-                                        * 100
-                                    )
-                                )
 
                                 document.add_paragraph(
                                     "• Lista de Botones"
@@ -2056,15 +2208,6 @@ def generate_word_document(
                             # PARAMETERS
                             # =============================
                             
-                            current_step += 1
-
-                            advance_step(
-                                job_id,
-                                int(
-                                    (current_step / total_steps)
-                                    * 100
-                                )
-                            )
 
                             document.add_paragraph(
                                 "• Lista de Parámetros"
@@ -2113,16 +2256,6 @@ def generate_word_document(
                             # =============================
                             # FIELDS
                             # =============================
-
-                            current_step += 1
-
-                            advance_step(
-                                job_id,
-                                int(
-                                    (current_step / total_steps)
-                                    * 100
-                                )
-                            )
 
                             fields = page.get(
                                 "table_columns",
@@ -2183,9 +2316,12 @@ def generate_word_document(
                                         )
                                     )
 
-                                update_activity(
+                                advance_progress(
                                     job_id,
-                                    f"[{page_index}/{total_pages}] Pantalla completada: {page_name}"
+                                    component="Visual Builder",
+                                    detail="Pantalla completada",
+                                    object_name=page_name,
+                                    points=1
                                 )
 
                         else:
@@ -2204,16 +2340,6 @@ def generate_word_document(
                     document.add_page_break()
 
                     screen_counter += 1
-
-                    current_step += 1
-
-                    advance_step(
-                        job_id,
-                        int(
-                            (current_step / total_steps)
-                            * 100
-                        )
-                    )
 
             except Exception as e:
 
@@ -2246,11 +2372,15 @@ def generate_word_document(
 
     if job_id and visual_builder_apps:
 
-        advance_step(
+        advance_progress(
 
             job_id,
 
-            "Visual Builder Procesado"
+            component="Visual Builder",
+
+            detail="Procesamiento finalizado",
+
+            object_name="VB"
         )
 
     # =====================================================
@@ -2338,11 +2468,15 @@ def generate_word_document(
 
     if job_id and package_path:
 
-        advance_step(
+        advance_progress(
 
             job_id,
 
-            "Diseño de Interfaces Procesado"
+            component="OIC",
+
+            detail="Diseño de Interfaces completado",
+
+            object_name="Interfaces"
         )
 
     # =====================================================
@@ -2666,11 +2800,15 @@ def generate_word_document(
 
     if job_id:
 
-        advance_step(
+        advance_progress(
 
             job_id,
 
-            "Documento Word Generado"
+            component="Documento",
+
+            detail="Generando archivo final",
+
+            object_name="Word"
         )
 
     output.seek(0)

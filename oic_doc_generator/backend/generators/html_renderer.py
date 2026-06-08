@@ -20,6 +20,10 @@ from oic_doc_generator.backend.utils.oj_translator import (
     translate_oj_html
 )
 
+from oic_doc_generator.api.progress_tracker import (
+    ProgressTracker
+)
+
 
 # =========================================================
 # LOAD VB BASE CSS

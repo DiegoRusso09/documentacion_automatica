@@ -149,55 +149,44 @@ async function checkStatus() {
     const job =
         await response.json();
 
-    const progressBar =
-        document.getElementById(
-            "progress-bar"
-        );
+    const progress =
+        job.progress || 0;
 
-    const progressText =
-        document.getElementById(
-            "progress-text"
-        );
+    const component =
+        job.step || "";
 
-    const activityText =
-        document.getElementById(
-            "activity-text"
-        );
-
-    const detailText =
-        document.getElementById(
-            "detail-text"
-        );
-
-    progressBar.style.width =
-        `${job.progress}%`;
-
-    progressText.innerText =
-        `${job.progress}% - ${job.step}`;
-
-    activityText.innerText =
+    const activity =
         job.activity || "";
 
-    if (
+    const objectName =
+        job.object || "";
 
-        job.current > 0
+    const current =
+        job.current || 0;
 
-        &&
+    const total =
+        job.total || 0;
 
-        job.total > 0
+    document.getElementById(
+        "progress-bar"
+    ).style.width =
+        progress + "%";
 
-    ) {
+    document.getElementById(
+        "progress-text"
+    ).innerText =
+        `${progress}% - ${component}`;
 
-        detailText.innerText =
+    document.getElementById(
+        "activity-text"
+    ).innerText =
+        activity;
 
-            `${job.current} de ${job.total}`;
+    document.getElementById(
+        "detail-text"
+    ).innerText =
+        `${objectName} (${current}/${total})`;
 
-    }
-
-    else {
-
-        detailText.innerText = "";
-    }
 
     if (
         job.status === "completed"
