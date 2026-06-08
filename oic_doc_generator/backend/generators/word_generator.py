@@ -1623,6 +1623,37 @@ def generate_word_document(
                         width=Inches(6.5)
                     )
 
+                    # =================================
+                    # CLEAN TEMP IMAGE
+                    # =================================
+
+                    try:
+
+                        image_dir = os.path.dirname(
+                            image_path
+                        )
+
+                        if os.path.exists(
+                            image_path
+                        ):
+                            os.remove(
+                                image_path
+                            )
+
+                        import shutil
+
+                        shutil.rmtree(
+                            image_dir,
+                            ignore_errors=True
+                        )
+
+                    except Exception as cleanup_error:
+
+                        print(
+                            "[VB CLEANUP]",
+                            cleanup_error
+                        )
+
 
                 # =========================================
                 # FREQUENCY
@@ -2069,6 +2100,7 @@ def generate_word_document(
                         )
 
                     document.add_paragraph("")
+                    document.add_page_break()
 
                     screen_counter += 1
 
@@ -2076,6 +2108,28 @@ def generate_word_document(
 
                 document.add_paragraph(
                     f"Error procesando Visual Builder: {str(e)}"
+                )
+
+            try:
+
+                extraction_root = extraction_metadata.get(
+                    "root_path"
+                )
+
+                if extraction_root:
+
+                    import shutil
+
+                    shutil.rmtree(
+                        extraction_root,
+                        ignore_errors=True
+                    )
+
+            except Exception as cleanup_error:
+
+                print(
+                    "[VB EXTRACT CLEANUP]",
+                    cleanup_error
                 )
 
 
