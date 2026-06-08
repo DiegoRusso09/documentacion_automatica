@@ -354,3 +354,14 @@ border-top:
 
 
 }
+
+.card {
+
+    text-decoration: none;
+
+    color: inherit;
+
+    display: block;
+
+    cursor: pointer;
+}
