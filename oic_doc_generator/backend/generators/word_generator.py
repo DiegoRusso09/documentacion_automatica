@@ -108,7 +108,7 @@ from oic_doc_generator.backend.renderers.html_builder import (
     build_complete_html
 )
 
-from oic_doc_generator.backend.renderers.weasyprint_renderer import (
+from oic_doc_generator.backend.renderers.screenshot_renderer import (
     render_html_to_image
 )
 

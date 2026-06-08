@@ -125,7 +125,7 @@ def generate_screenshot(
     html_path,
     output_png
 ):
-
+    print("[PLAYWRIGHT] launch")
     with sync_playwright() as playwright:
 
         print(
@@ -134,12 +134,10 @@ def generate_screenshot(
         )
 
         browser = playwright.chromium.launch(
-
-            executable_path=
-                playwright.chromium.executable_path,
-
             headless=True
         )
+
+        print("[PLAYWRIGHT] browser started")
 
         page = browser.new_page(
 
@@ -154,20 +152,22 @@ def generate_screenshot(
         # =================================================
         # LOAD FILE
         # =================================================
-
+        
+        print("[PLAYWRIGHT] goto")
         page.goto(
 
             f"file:///{html_path}",
 
             wait_until="networkidle"
         )
+        print("[PLAYWRIGHT] page loaded")
 
         # =================================================
         # WAIT RENDER
         # =================================================
 
         page.wait_for_timeout(
-            3000
+            500
         )
 
         # =================================================
@@ -181,7 +181,8 @@ def generate_screenshot(
         # =================================================
         # SCREENSHOT
         # =================================================
-
+        
+        print("[PLAYWRIGHT] screenshot")
         page.screenshot(
 
             path=output_png,

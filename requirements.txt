@@ -8,5 +8,3 @@ networkx
 matplotlib
 beautifulsoup4
 playwright
-weasyprint
-pdf2image
