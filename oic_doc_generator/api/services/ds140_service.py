@@ -35,10 +35,12 @@ from oic_doc_generator.backend.generators.word_generator import (
 )
 
 from oic_doc_generator.api.job_manager import (
-    configure_steps,
-    advance_step,
+    create_job,
     complete_job,
-    fail_job
+    fail_job,
+    initialize_progress,
+    advance_progress,
+    update_activity
 )
 
 
@@ -89,59 +91,22 @@ def generate_ds140_service(
 
     package_path = None
 
-    progress_steps = []
-
-    if uploaded_par:
-
-        progress_steps.append(
-            "OIC"
-        )
-
-    if vb_files:
-
-        progress_steps.append(
-            "VB"
-        )
-
-    if bip_files:
-
-        progress_steps.append(
-            "BIP"
-        )
-
-    if sql_files:
-
-        progress_steps.append(
-            "SQL"
-        )
-
-    progress_steps.append(
-        "WORD"
-    )
-
-    progress_steps.append(
-        "ZIP"
-    )
-
-    configure_steps(
-
-        job_id,
-
-        progress_steps
-    )
-
     if uploaded_par:
 
         package_path = extract_package(
             uploaded_par
         )
 
-        advance_step(
+    advance_progress(
 
-            job_id,
+        job_id,
 
-            "Integraciones OIC Procesadas"
-        )
+        component="OIC",
+
+        detail="Integraciones procesadas",
+
+        object_name="Package"
+    )
 
     database_metadata = None
 
@@ -175,11 +140,15 @@ def generate_ds140_service(
             )
         )
 
-        advance_step(
+        advance_progress(
 
             job_id,
 
-            "Objetos Base de Datos Procesados"
+            component="OIC",
+
+            detail="Integraciones procesadas",
+
+            object_name="Package"
         )
 
     if bip_files:
@@ -194,11 +163,15 @@ def generate_ds140_service(
             artifact_tree
         )
 
-        advance_step(
+        advance_progress(
 
             job_id,
 
-            "Reportes BI Publisher Procesados"
+            component="BI Publisher",
+
+            detail="Reportes procesados",
+
+            object_name="BIP"
         )
 
     selected_components = []
@@ -367,11 +340,15 @@ def generate_ds140_service(
                     arcname
                 )
 
-    advance_step(
+    advance_progress(
 
         job_id,
 
-        "Entrega ZIP Generada"
+        component="Entrega",
+
+        detail="ZIP generado",
+
+        object_name="entrega.zip"
     )
 
     complete_job(

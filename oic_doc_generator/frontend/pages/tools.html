@@ -1,0 +1,334 @@
+<div class="tools-container">
+
+    <section class="page-header">
+
+        <h1>
+            Tools
+        </h1>
+
+        <p>
+            Utilidades para inspección y extracción de contenido Oracle Cloud
+        </p>
+
+    </section>
+
+    <!-- ========================================= -->
+    <!-- OIC -->
+    <!-- ========================================= -->
+
+    <section class="tool-card">
+
+        <div class="tool-header">
+
+            <h2>
+                Oracle Integration Cloud
+            </h2>
+
+            <p>
+                Extrae y visualiza el contenido interno de archivos .PAR y .IAR
+            </p>
+
+        </div>
+
+        <div class="tool-grid">
+
+            <div class="tool-option">
+
+                <h3>
+                    Archivo .PAR
+                </h3>
+
+                <p>
+                    Muestra la estructura completa del paquete OIC, integraciones, adaptadores, endpoints y artefactos internos.
+                </p>
+
+                <input
+                    id="par_file"
+                    type="file"
+                    accept=".par"
+                >
+
+                <button
+                    class="tool-btn"
+                    onclick="extractParContent()"
+                >
+                    Analizar PAR
+                </button>
+
+            </div>
+
+            <div class="tool-option">
+
+                <h3>
+                    Archivo .IAR
+                </h3>
+
+                <p>
+                    Visualiza el contenido completo de una integración exportada de Oracle Integration Cloud.
+                </p>
+
+                <input
+                    id="iar_file"
+                    type="file"
+                    accept=".iar"
+                >
+
+                <button
+                    class="tool-btn"
+                    onclick="extractIarContent()"
+                >
+                    Analizar IAR
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================================= -->
+    <!-- OTBI / BI Publisher -->
+    <!-- ========================================= -->
+
+    <section class="tool-card">
+
+        <div class="tool-header">
+
+            <h2>
+                Oracle Analytics / BI Publisher
+            </h2>
+
+            <p>
+                Extrae datasets, consultas SQL, parámetros, XSD y metadatos de reportes.
+            </p>
+
+        </div>
+
+        <div class="tool-grid">
+
+            <div class="tool-option full-width">
+
+                <h3>
+                    Reportes OTBI / BI Publisher
+                </h3>
+
+                <p>
+                    Compatible con archivos .XDOZ, .XDMZ y .XDRZ
+                </p>
+
+                <input
+                    id="otbi_file"
+                    type="file"
+                    accept=".xdoz,.xdmz,.xdrz"
+                >
+
+                <button
+                    class="tool-btn"
+                    onclick="extractOtbiContent()"
+                >
+                    Analizar Reporte
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================================= -->
+    <!-- RESULTADO -->
+    <!-- ========================================= -->
+
+    <section class="result-card">
+
+        <h2>
+            Resultado
+        </h2>
+
+        <div
+            id="tool-result"
+            class="result-container"
+        >
+
+            Seleccione un archivo para comenzar.
+
+        </div>
+
+    </section>
+
+</div>
+
+<style>
+
+.tools-container {
+
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 24px;
+}
+
+.page-header {
+
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+
+    margin: 0;
+
+    font-size: 32px;
+}
+
+.page-header p {
+
+    color: #666;
+
+    margin-top: 8px;
+}
+
+.tool-card {
+
+    background: #ffffff;
+
+    border: 1px solid #e5e5e5;
+
+    border-radius: 12px;
+
+    padding: 24px;
+
+    margin-bottom: 24px;
+}
+
+.tool-header {
+
+    margin-bottom: 20px;
+}
+
+.tool-grid {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 20px;
+}
+
+.tool-option {
+
+    border: 1px solid #e0e0e0;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+    background: #fafafa;
+}
+
+.full-width {
+
+    grid-column: 1 / -1;
+}
+
+.tool-option h3 {
+
+    margin-top: 0;
+}
+
+.tool-option p {
+
+    color: #666;
+
+    min-height: 60px;
+}
+
+.tool-option input {
+
+    width: 100%;
+
+    margin-top: 10px;
+
+    margin-bottom: 16px;
+}
+
+.tool-btn {
+
+    width: 100%;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #1976d2;
+
+    color: white;
+
+    padding: 12px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+}
+
+.tool-btn:hover {
+
+    opacity: 0.9;
+}
+
+.result-card {
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+
+    border-radius: 12px;
+
+    padding: 24px;
+}
+
+.result-container {
+
+    margin-top: 16px;
+
+    background: #f5f5f5;
+
+    border-radius: 8px;
+
+    padding: 16px;
+
+    min-height: 300px;
+
+    overflow: auto;
+
+    white-space: pre-wrap;
+
+    font-family: Consolas, monospace;
+}
+
+</style>
+
+<script>
+
+async function extractParContent() {
+
+    alert(
+        "Pendiente implementar endpoint /api/tools/par"
+    );
+}
+
+async function extractIarContent() {
+
+    alert(
+        "Pendiente implementar endpoint /api/tools/iar"
+    );
+}
+
+async function extractOtbiContent() {
+
+    alert(
+        "Pendiente implementar endpoint /api/tools/otbi"
+    );
+}
+
+</script>
