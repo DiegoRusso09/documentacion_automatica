@@ -14,6 +14,10 @@ from fastapi.responses import (
 
 from pathlib import Path
 
+from oic_doc_generator.api.routes.tools import (
+    router as tools_router
+)
+
 from oic_doc_generator.api.routes.ds140 import (
     router as ds140_router
 )
@@ -63,6 +67,13 @@ app.mount(
 app.include_router(
 
     ds140_router,
+
+    prefix="/api"
+)
+
+app.include_router(
+
+    tools_router,
 
     prefix="/api"
 )
