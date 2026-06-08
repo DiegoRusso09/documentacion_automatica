@@ -100,8 +100,7 @@ from oic_doc_generator.backend.parsers.vb_extractor import (
 )
 
 from oic_doc_generator.backend.parsers.vb_parser import (
-    build_page_metadata,
-    build_virtual_apps
+    build_page_metadata
 )
 
 from oic_doc_generator.backend.renderers.html_builder import (
@@ -1748,59 +1747,27 @@ def generate_word_document(
                 # PARSE PAGES
                 # =========================================
 
-                virtual_apps = (
-                    build_virtual_apps(
+                vb_metadata = (
+                    build_page_metadata(
                         extraction_metadata
                     )
                 )
 
-                for vb_metadata in virtual_apps:
-
-                    shell_html = vb_metadata.get(
-                        "shell_html",
-                        ""
-                    )
-
-                    app_css = vb_metadata.get(
-                        "app_css",
-                        ""
-                    )
-
-                    resources_path = vb_metadata.get(
-                        "resources_path"
-                    )
-
-                    pages = vb_metadata.get(
-                        "pages",
-                        []
-                    )
-
-                    page = pages[0]
-
-                    page_name = page.get(
-                        "name",
-                        ""
-                    )
-
-                    page_html = page.get(
-                        "html",
-                        ""
-                    )
-
-                    document.add_paragraph(
-                        page_name
-                    )
-
-                    complete_html = build_complete_html(
-                        shell_html=shell_html,
-                        page_html=page_html,
-                        app_css=app_css
-                    )
-
-                    image_path = render_html_to_image(
-                        html_content=complete_html,
-                        resources_path=resources_path
-                    )
+                shell_html = vb_metadata.get(
+                    "shell_html",
+                    ""
+                )
+                app_css = vb_metadata.get(
+                    "app_css",
+                    ""
+                )
+                resources_path = vb_metadata.get(
+                    "resources_path"
+                )
+                pages = vb_metadata.get(
+                    "pages",
+                    []
+                )
 
                 total_pages = len(
                     pages
