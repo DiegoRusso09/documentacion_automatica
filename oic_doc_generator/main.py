@@ -240,3 +240,91 @@ def debug_vb():
             render_html_to_image
         )
     }
+
+@app.get("/api/deploy-info")
+def deploy_info():
+
+    import os
+    import hashlib
+
+    ds140_path = (
+        FRONTEND_DIR
+        / "pages"
+        / "ds140.html"
+    )
+
+    router_path = (
+        FRONTEND_DIR
+        / "js"
+        / "router.js"
+    )
+
+    ds140_js_path = (
+        FRONTEND_DIR
+        / "js"
+        / "ds140.js"
+    )
+
+    result = {
+
+        "render_git_commit":
+            os.environ.get(
+                "RENDER_GIT_COMMIT",
+                "NO_DISPONIBLE"
+            ),
+
+        "frontend_dir":
+            str(
+                FRONTEND_DIR
+            ),
+
+        "ds140_path":
+            str(
+                ds140_path
+            ),
+
+        "ds140_exists":
+            ds140_path.exists(),
+
+        "router_exists":
+            router_path.exists(),
+
+        "ds140_js_exists":
+            ds140_js_path.exists()
+    }
+
+    if ds140_path.exists():
+
+        content = ds140_path.read_text(
+            encoding="utf-8"
+        )
+
+        result[
+            "ds140_sha256"
+        ] = hashlib.sha256(
+            content.encode(
+                "utf-8"
+            )
+        ).hexdigest()
+
+        result[
+            "ds140_contains_oic"
+        ] = (
+            "Oracle Integration Cloud"
+            in content
+        )
+
+        result[
+            "ds140_contains_oic_dropzone"
+        ] = (
+            "oic_dropzone"
+            in content
+        )
+
+        result[
+            "ds140_preview"
+        ] = content[
+            :2000
+        ]
+
+    return result
