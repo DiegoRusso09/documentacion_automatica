@@ -321,10 +321,32 @@ def deploy_info():
             in content
         )
 
-        result[
-            "ds140_preview"
-        ] = content[
-            :2000
-        ]
+        oic_position = content.find(
+            "Oracle Integration Cloud"
+        )
+
+        if oic_position >= 0:
+
+            start = max(
+                0,
+                oic_position - 500
+            )
+
+            end = min(
+                len(content),
+                oic_position + 2500
+            )
+
+            result[
+                "oic_html"
+            ] = content[
+                start:end
+            ]
+
+        else:
+
+            result[
+                "oic_html"
+            ] = "NO ENCONTRADO"
 
     return result
