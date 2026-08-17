@@ -2,10 +2,15 @@ async function loadPage(page)
 {
     try
     {
+        const version =
+            Date.now();
+
         const response =
             await fetch(
-
-                `/static/pages/${page}.html`
+                `/static/pages/${page}.html?v=${version}`,
+                {
+                    cache: "no-store"
+                }
             );
 
         if (!response.ok)
@@ -22,10 +27,12 @@ async function loadPage(page)
             .getElementById(
                 "app"
             )
-            .innerHTML = html;
+            .innerHTML =
+            html;
 
-        loadPageScripts(
-            page
+        await loadPageScripts(
+            page,
+            version
         );
     }
 
@@ -40,7 +47,6 @@ async function loadPage(page)
                 "app"
             )
             .innerHTML =
-
             `
             <div style="padding:20px">
                 Error cargando página:
@@ -52,49 +58,65 @@ async function loadPage(page)
 
 
 function loadPageScripts(
-    page
+    page,
+    version
 )
 {
-    const oldScripts =
+    return new Promise(
+        resolve =>
+        {
+            const oldScripts =
+                document.querySelectorAll(
+                    ".dynamic-page-script"
+                );
 
-        document.querySelectorAll(
-            ".dynamic-page-script"
-        );
+            oldScripts.forEach(
+                script =>
+                script.remove()
+            );
 
-    oldScripts.forEach(
+            const script =
+                document.createElement(
+                    "script"
+                );
 
-        script => script.remove()
-    );
+            script.src =
+                `/static/js/${page}.js?v=${version}`;
 
-    const script =
-        document.createElement(
-            "script"
-        );
+            script.classList.add(
+                "dynamic-page-script"
+            );
 
-    script.src =
-        `/static/js/${page}.js`;
+            script.onload =
+                () =>
+                {
+                    console.log(
+                        `[ROUTER] ${page}.js cargado`
+                    );
 
-    script.classList.add(
-        "dynamic-page-script"
-    );
+                    resolve();
+                };
 
-    script.onerror = () =>
-    {
-        console.warn(
-            `No existe ${page}.js`
-        );
-    };
+            script.onerror =
+                () =>
+                {
+                    console.warn(
+                        `No existe ${page}.js`
+                    );
 
-    document.body.appendChild(
-        script
+                    resolve();
+                };
+
+            document.body.appendChild(
+                script
+            );
+        }
     );
 }
 
 
 window.addEventListener(
-
     "hashchange",
-
     route
 );
 
@@ -102,15 +124,12 @@ window.addEventListener(
 function route()
 {
     const page =
-
         location.hash
             .replace(
                 "#",
                 ""
             )
-
         ||
-
         "home";
 
     loadPage(
