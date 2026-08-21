@@ -6,6 +6,7 @@
 from io import BytesIO
 from datetime import datetime
 import os
+import tempfile
 
 from oic_doc_generator.api.job_manager import (
     initialize_progress,
@@ -20,6 +21,10 @@ from docx.enum.style import WD_STYLE_TYPE
 
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
+
+from oic_doc_generator.backend.utils.toc_updater import (
+    update_table_of_contents
+)
 
 from oic_doc_generator.backend.generators.database_design_generator import (
     add_database_design_section
@@ -2863,23 +2868,109 @@ def generate_word_document(
         )
 
 
-    output = BytesIO()
+    # =====================================================
+    # SAVE TEMPORARY WORD
+    # =====================================================
 
-    document.save(output)
+    temp_file = tempfile.NamedTemporaryFile(
+        suffix=".docx",
+        delete=False
+    )
 
-    if job_id:
+    temp_path = temp_file.name
 
-        advance_progress(
+    temp_file.close()
 
-            job_id,
 
-            component="Documento",
+    try:
 
-            detail="Generando archivo final",
+        # =================================================
+        # SAVE PYTHON-DOCX DOCUMENT
+        # =================================================
 
-            object_name="Word"
+        document.save(
+            temp_path
         )
 
-    output.seek(0)
 
-    return output
+        # =================================================
+        # UPDATE TABLE OF CONTENTS
+        # =================================================
+
+        print(
+            "[WORD] Actualizando tabla de contenido..."
+        )
+
+
+        update_table_of_contents(
+            temp_path
+        )
+
+
+        print(
+            "[WORD] Tabla de contenido actualizada."
+        )
+
+
+        # =================================================
+        # READ UPDATED DOCUMENT
+        # =================================================
+
+        with open(
+            temp_path,
+            "rb"
+        ) as file:
+
+            output = BytesIO(
+                file.read()
+            )
+
+
+        # =================================================
+        # PROGRESS
+        # =================================================
+
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component="Documento",
+
+                detail="Generando archivo final",
+
+                object_name="Word"
+            )
+
+
+        output.seek(
+            0
+        )
+
+
+        return output
+
+
+    finally:
+
+        # =================================================
+        # CLEAN TEMP DOCUMENT
+        # =================================================
+
+        try:
+
+            if os.path.exists(
+                temp_path
+            ):
+
+                os.remove(
+                    temp_path
+                )
+
+        except Exception as cleanup_error:
+
+            print(
+                "[WORD CLEANUP]",
+                cleanup_error
+            )
