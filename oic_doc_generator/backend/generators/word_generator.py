@@ -1020,7 +1020,10 @@ def generate_word_document(
     run = paragraph.add_run()
 
     fld_char_begin = parse_xml(
-        r'<w:fldChar w:fldCharType="begin" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+        r'<w:fldChar '
+        r'w:fldCharType="begin" '
+        r'w:dirty="true" '
+        r'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
     )
 
     instr_text = parse_xml(
