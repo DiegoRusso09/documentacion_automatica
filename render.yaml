@@ -6,7 +6,7 @@ services:
 
     buildCommand: |
       apt-get update
-      apt-get install -y graphviz
+      apt-get install -y graphviz libreoffice python3-uno
       pip install -r requirements.txt
 
     startCommand: |
