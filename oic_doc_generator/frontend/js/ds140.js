@@ -1,379 +1,447 @@
-let currentJobId = null;
+(() => {
 
-let statusInterval = null;
-
-
-/*
-========================================================
-CONTADORES NORMALES
-========================================================
-*/
-
-function updateCounter(
-    inputId,
-    counterId
-) {
-
-    const input =
-        document.getElementById(
-            inputId
-        );
-
-    const counter =
-        document.getElementById(
-            counterId
-        );
-
-    if (
-        !input ||
-        !counter
-    ) {
-        return;
-    }
-
-    input.addEventListener(
-        "change",
-        () => {
-
-            counter.textContent =
-                input.files.length;
-        }
-    );
-}
-
-
-updateCounter(
-    "vb_files",
-    "vb_count"
-);
-
-updateCounter(
-    "apex_files",
-    "apex_count"
-);
-
-updateCounter(
-    "bip_files",
-    "bip_count"
-);
-
-updateCounter(
-    "sql_files",
-    "sql_count"
-);
-
-
-/*
-========================================================
-OIC DROPZONE
-========================================================
-*/
-
-const oicDropzone =
-    document.getElementById(
-        "oic_dropzone"
-    );
-
-const oicFileInput =
-    document.getElementById(
-        "oic_files"
-    );
-
-const oicFileList =
-    document.getElementById(
-        "oic_file_list"
-    );
-
-const oicLocalCount =
-    document.getElementById(
-        "oic_local_count"
-    );
-
-const oicSummaryCount =
-    document.getElementById(
-        "oic_count"
+    console.log(
+        "[DS140] ds140.js ejecutado"
     );
 
 
-let oicSelectedFiles = [];
+    // =====================================================
+    // VARIABLES DEL PROCESO
+    // =====================================================
+
+    let currentJobId = null;
+
+    let statusInterval = null;
 
 
-/*
-========================================================
-VALIDAR QUE OIC EXISTA
-========================================================
-*/
+    // =====================================================
+    // OIC FILE STORE
+    // =====================================================
 
-if (
-    oicDropzone &&
-    oicFileInput &&
-    oicFileList
-) {
-
-    /*
-    ====================================================
-    CLICK
-    ====================================================
-    */
-
-    oicDropzone.addEventListener(
-        "click",
-        () => {
-
-            oicFileInput.click();
-        }
-    );
+    const oicSelectedFiles = [];
 
 
-    /*
-    ====================================================
-    SELECCIÓN MEDIANTE EXPLORADOR
-    ====================================================
-    */
+    // =====================================================
+    // CONTADORES TRADICIONALES
+    // =====================================================
 
-    oicFileInput.addEventListener(
-        "change",
-        event => {
-
-            addOicFiles(
-                event.target.files
-            );
-
-            /*
-            Permitimos volver a seleccionar
-            el mismo archivo posteriormente.
-            */
-
-            oicFileInput.value = "";
-        }
-    );
-
-
-    /*
-    ====================================================
-    DRAG OVER
-    ====================================================
-    */
-
-    oicDropzone.addEventListener(
-        "dragover",
-        event => {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            oicDropzone.classList.add(
-                "dragover"
-            );
-        }
-    );
-
-
-    /*
-    ====================================================
-    DRAG ENTER
-    ====================================================
-    */
-
-    oicDropzone.addEventListener(
-        "dragenter",
-        event => {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            oicDropzone.classList.add(
-                "dragover"
-            );
-        }
-    );
-
-
-    /*
-    ====================================================
-    DRAG LEAVE
-    ====================================================
-    */
-
-    oicDropzone.addEventListener(
-        "dragleave",
-        event => {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            oicDropzone.classList.remove(
-                "dragover"
-            );
-        }
-    );
-
-
-    /*
-    ====================================================
-    DROP
-    ====================================================
-    */
-
-    oicDropzone.addEventListener(
-        "drop",
-        event => {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            oicDropzone.classList.remove(
-                "dragover"
-            );
-
-            addOicFiles(
-                event.dataTransfer.files
-            );
-        }
-    );
-}
-
-
-/*
-========================================================
-AGREGAR ARCHIVOS OIC
-========================================================
-*/
-
-function addOicFiles(files) {
-
-    for (
-        const file of files
+    function updateCounter(
+        inputId,
+        counterId
     ) {
 
-        const extension =
-            file.name
-                .split(".")
-                .pop()
-                .toLowerCase();
+        const input =
+            document.getElementById(
+                inputId
+            );
 
+        const counter =
+            document.getElementById(
+                counterId
+            );
 
-        /*
-        Solo permitimos .PAR y .IAR
-        */
 
         if (
-            extension !== "par" &&
-            extension !== "iar"
+            !input ||
+            !counter
         ) {
 
-            continue;
+            return;
         }
 
 
-        /*
-        Evitar duplicados
-        */
+        input.addEventListener(
+            "change",
+            () => {
 
-        const exists =
-            oicSelectedFiles.some(
-
-                existing =>
-
-                    existing.name ===
-                    file.name
-
-                    &&
-
-                    existing.size ===
-                    file.size
-            );
-
-
-        if (!exists) {
-
-            oicSelectedFiles.push(
-                file
-            );
-        }
+                counter.textContent =
+                    input.files.length;
+            }
+        );
     }
 
 
-    renderOicFiles();
-}
-
-
-/*
-========================================================
-ELIMINAR ARCHIVO OIC
-========================================================
-*/
-
-function removeOicFile(
-    index
-) {
-
-    oicSelectedFiles.splice(
-        index,
-        1
+    updateCounter(
+        "vb_files",
+        "vb_count"
     );
 
-    renderOicFiles();
-}
+    updateCounter(
+        "apex_files",
+        "apex_count"
+    );
+
+    updateCounter(
+        "bip_files",
+        "bip_count"
+    );
+
+    updateCounter(
+        "sql_files",
+        "sql_count"
+    );
 
 
-/*
-========================================================
-RENDERIZAR LISTA OIC
-========================================================
-*/
+    // =====================================================
+    // OIC DROPZONE
+    // =====================================================
 
-function renderOicFiles() {
+    function initOicDropzone() {
 
-    if (!oicFileList) {
-
-        return;
-    }
+        const section =
+            document.getElementById(
+                "sec-oic"
+            );
 
 
-    oicFileList.innerHTML =
-        "";
+        if (!section) {
+
+            console.error(
+                "[DS140] No existe #sec-oic"
+            );
+
+            return;
+        }
 
 
-    if (
-        oicSelectedFiles.length === 0
-    ) {
+        const dropzone =
+            section.querySelector(
+                ".dropzone"
+            );
 
-        oicFileList.innerHTML = `
 
-            <div class="oic-empty-message">
+        const fileInput =
+            section.querySelector(
+                ".fileInput"
+            );
 
-                No hay archivos seleccionados
 
-            </div>
+        const fileList =
+            section.querySelector(
+                ".file-list"
+            );
 
-        `;
 
-    } else {
+        const counter =
+            section.querySelector(
+                ".counter-val"
+            );
 
-        oicSelectedFiles.forEach(
-            (
-                file,
-                index
-            ) => {
 
-                const div =
-                    document.createElement(
-                        "div"
+        if (
+            !dropzone ||
+            !fileInput ||
+            !fileList ||
+            !counter
+        ) {
+
+            console.error(
+                "[DS140] Estructura OIC incompleta",
+                {
+                    dropzone,
+                    fileInput,
+                    fileList,
+                    counter
+                }
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "[DS140] Dropzone OIC encontrado"
+        );
+
+
+        // =================================================
+        // CLICK
+        // =================================================
+
+        dropzone.addEventListener(
+            "click",
+            () => {
+
+                console.log(
+                    "[DS140] Click en OIC"
+                );
+
+                fileInput.click();
+            }
+        );
+
+
+        // =================================================
+        // SELECTOR DE ARCHIVOS
+        // =================================================
+
+        fileInput.addEventListener(
+            "change",
+            event => {
+
+                console.log(
+                    "[DS140] Selección OIC:",
+                    event.target.files.length
+                );
+
+
+                addOicFiles(
+                    event.target.files
+                );
+
+
+                /*
+                 * Dejamos limpio el input para que
+                 * pueda volver a seleccionarse el
+                 * mismo archivo.
+                 */
+                fileInput.value = "";
+            }
+        );
+
+
+        // =================================================
+        // DRAG ENTER
+        // =================================================
+
+        dropzone.addEventListener(
+            "dragenter",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                dropzone.classList.add(
+                    "dragover"
+                );
+            }
+        );
+
+
+        // =================================================
+        // DRAG OVER
+        // =================================================
+
+        dropzone.addEventListener(
+            "dragover",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                event.dataTransfer.dropEffect =
+                    "copy";
+
+
+                dropzone.classList.add(
+                    "dragover"
+                );
+            }
+        );
+
+
+        // =================================================
+        // DRAG LEAVE
+        // =================================================
+
+        dropzone.addEventListener(
+            "dragleave",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                dropzone.classList.remove(
+                    "dragover"
+                );
+            }
+        );
+
+
+        // =================================================
+        // DROP
+        // =================================================
+
+        dropzone.addEventListener(
+            "drop",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                dropzone.classList.remove(
+                    "dragover"
+                );
+
+
+                const files =
+                    event.dataTransfer.files;
+
+
+                console.log(
+                    "[DS140] Drop OIC:",
+                    files.length
+                );
+
+
+                addOicFiles(
+                    files
+                );
+            }
+        );
+
+
+        // =================================================
+        // ADD FILES
+        // =================================================
+
+        function addOicFiles(
+            files
+        ) {
+
+            for (
+                const file of files
+            ) {
+
+                const extension =
+                    file.name
+                        .split(".")
+                        .pop()
+                        .toLowerCase();
+
+
+                // =========================================
+                // VALIDAR EXTENSIÓN
+                // =========================================
+
+                if (
+                    extension !== "par" &&
+                    extension !== "iar"
+                ) {
+
+                    console.warn(
+                        "[DS140] Archivo ignorado:",
+                        file.name
+                    );
+
+                    continue;
+                }
+
+
+                // =========================================
+                // EVITAR DUPLICADOS
+                // =========================================
+
+                const exists =
+                    oicSelectedFiles.some(
+
+                        current =>
+
+                            current.name ===
+                            file.name
+
+                            &&
+
+                            current.size ===
+                            file.size
+
+                            &&
+
+                            current.lastModified ===
+                            file.lastModified
                     );
 
 
-                div.className =
-                    "oic-file-item";
+                if (!exists) {
+
+                    oicSelectedFiles.push(
+                        file
+                    );
+                }
+            }
 
 
-                div.innerHTML = `
+            renderFiles();
+        }
 
-                    <div class="oic-file-info">
+
+        // =================================================
+        // RENDER
+        // =================================================
+
+        function renderFiles() {
+
+            fileList.innerHTML =
+                "";
+
+
+            if (
+                oicSelectedFiles.length === 0
+            ) {
+
+                fileList.innerHTML = `
+                    <div class="empty-message">
+                        No hay archivos seleccionados
+                    </div>
+                `;
+
+
+                counter.textContent =
+                    "0";
+
+
+                const summaryCounter =
+                    document.getElementById(
+                        "oic_count"
+                    );
+
+
+                if (summaryCounter) {
+
+                    summaryCounter.textContent =
+                        "0";
+                }
+
+
+                return;
+            }
+
+
+            oicSelectedFiles.forEach(
+                (
+                    file,
+                    index
+                ) => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "file-item";
+
+
+                    const info =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    info.className =
+                        "file-info";
+
+
+                    info.innerHTML = `
 
                         <strong>
                             ${index + 1}.
@@ -384,57 +452,558 @@ function renderOicFiles() {
                         <br>
 
                         ${(
-                            file.size /
-                            1024
+                            file.size / 1024
                         ).toFixed(2)} KB
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="oic-remove-btn"
-                        onclick="removeOicFile(${index})"
-                    >
-
-                        ✖
-
-                    </button>
-
-                `;
+                    `;
 
 
-                oicFileList.appendChild(
-                    div
+                    const removeButton =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    removeButton.type =
+                        "button";
+
+
+                    removeButton.className =
+                        "remove-btn";
+
+
+                    removeButton.textContent =
+                        "✖";
+
+
+                    removeButton.addEventListener(
+                        "click",
+                        event => {
+
+                            /*
+                             * Evita que el click del botón
+                             * vuelva a abrir el selector.
+                             */
+
+                            event.preventDefault();
+
+                            event.stopPropagation();
+
+
+                            oicSelectedFiles.splice(
+                                index,
+                                1
+                            );
+
+
+                            renderFiles();
+                        }
+                    );
+
+
+                    item.appendChild(
+                        info
+                    );
+
+
+                    item.appendChild(
+                        removeButton
+                    );
+
+
+                    fileList.appendChild(
+                        item
+                    );
+                }
+            );
+
+
+            counter.textContent =
+                oicSelectedFiles.length;
+
+
+            const summaryCounter =
+                document.getElementById(
+                    "oic_count"
+                );
+
+
+            if (summaryCounter) {
+
+                summaryCounter.textContent =
+                    oicSelectedFiles.length;
+            }
+
+
+            console.log(
+                "[DS140] OIC almacenados:",
+                oicSelectedFiles.length
+            );
+        }
+
+
+        renderFiles();
+    }
+
+
+    // =====================================================
+    // APPEND INPUT FILES
+    // =====================================================
+
+    function appendInputFiles(
+        formData,
+        inputId,
+        parameterName
+    ) {
+
+        const input =
+            document.getElementById(
+                inputId
+            );
+
+
+        if (!input) {
+
+            return;
+        }
+
+
+        for (
+            const file of input.files
+        ) {
+
+            formData.append(
+                parameterName,
+                file
+            );
+        }
+    }
+
+
+    // =====================================================
+    // GENERAR DS140
+    // =====================================================
+
+    async function generateDS140() {
+
+        try {
+
+            const button =
+                document.querySelector(
+                    ".generate-btn"
+                );
+
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+
+                button.innerText =
+                    "Generando...";
+            }
+
+
+            const progressContainer =
+                document.getElementById(
+                    "progress-container"
+                );
+
+
+            const progressBar =
+                document.getElementById(
+                    "progress-bar"
+                );
+
+
+            const progressText =
+                document.getElementById(
+                    "progress-text"
+                );
+
+
+            if (progressContainer) {
+
+                progressContainer.style.display =
+                    "block";
+            }
+
+
+            if (progressBar) {
+
+                progressBar.style.width =
+                    "0%";
+            }
+
+
+            if (progressText) {
+
+                progressText.innerText =
+                    "Iniciando...";
+            }
+
+
+            // =================================================
+            // FORM DATA
+            // =================================================
+
+            const formData =
+                new FormData();
+
+
+            const author =
+                document.getElementById(
+                    "author_name"
+                );
+
+
+            const development =
+                document.getElementById(
+                    "development_name"
+                );
+
+
+            formData.append(
+                "author_name",
+                author
+                    ? author.value
+                    : ""
+            );
+
+
+            formData.append(
+                "development_name",
+                development
+                    ? development.value
+                    : ""
+            );
+
+
+            // =================================================
+            // VISUAL BUILDER
+            // =================================================
+
+            appendInputFiles(
+                formData,
+                "vb_files",
+                "vb_files"
+            );
+
+
+            // =================================================
+            // APEX
+            // =================================================
+
+            appendInputFiles(
+                formData,
+                "apex_files",
+                "apex_files"
+            );
+
+
+            // =================================================
+            // OIC
+            // =================================================
+
+            for (
+                const file of oicSelectedFiles
+            ) {
+
+                formData.append(
+                    "oic_files",
+                    file
                 );
             }
-        );
+
+
+            // =================================================
+            // BI PUBLISHER
+            // =================================================
+
+            appendInputFiles(
+                formData,
+                "bip_files",
+                "bip_files"
+            );
+
+
+            // =================================================
+            // SQL
+            // =================================================
+
+            appendInputFiles(
+                formData,
+                "sql_files",
+                "sql_files"
+            );
+
+
+            console.log(
+                "[DS140] Enviando:",
+                {
+                    oic:
+                        oicSelectedFiles.length
+                }
+            );
+
+
+            // =================================================
+            // START
+            // =================================================
+
+            const response =
+                await fetch(
+
+                    "/api/ds140/start",
+
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+
+                throw new Error(
+                    `Error iniciando proceso (${response.status}): ${errorText}`
+                );
+            }
+
+
+            const result =
+                await response.json();
+
+
+            currentJobId =
+                result.job_id;
+
+
+            if (statusInterval) {
+
+                clearInterval(
+                    statusInterval
+                );
+            }
+
+
+            statusInterval =
+                setInterval(
+
+                    checkStatus,
+
+                    1000
+                );
+
+        }
+        catch(error) {
+
+            console.error(
+                "[DS140]",
+                error
+            );
+
+
+            alert(
+                error.message
+            );
+
+
+            resetButton();
+        }
     }
 
 
-    if (oicLocalCount) {
+    // =====================================================
+    // STATUS
+    // =====================================================
 
-        oicLocalCount.textContent =
-            oicSelectedFiles.length;
+    async function checkStatus() {
+
+        if (!currentJobId) {
+
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+
+                    `/api/ds140/status/${currentJobId}`,
+
+                    {
+                        cache:
+                            "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Error consultando estado: ${response.status}`
+                );
+            }
+
+
+            const job =
+                await response.json();
+
+
+            const progress =
+                job.progress || 0;
+
+
+            const component =
+                job.step || "";
+
+
+            const activity =
+                job.activity || "";
+
+
+            const objectName =
+                job.object || "";
+
+
+            const current =
+                job.current || 0;
+
+
+            const total =
+                job.total || 0;
+
+
+            const progressBar =
+                document.getElementById(
+                    "progress-bar"
+                );
+
+
+            const progressText =
+                document.getElementById(
+                    "progress-text"
+                );
+
+
+            const activityText =
+                document.getElementById(
+                    "activity-text"
+                );
+
+
+            const detailText =
+                document.getElementById(
+                    "detail-text"
+                );
+
+
+            if (progressBar) {
+
+                progressBar.style.width =
+                    `${progress}%`;
+            }
+
+
+            if (progressText) {
+
+                progressText.innerText =
+                    `${progress}% - ${component}`;
+            }
+
+
+            if (activityText) {
+
+                activityText.innerText =
+                    activity;
+            }
+
+
+            if (detailText) {
+
+                detailText.innerText =
+                    `${objectName} (${current}/${total})`;
+            }
+
+
+            // =================================================
+            // COMPLETED
+            // =================================================
+
+            if (
+                job.status === "completed"
+            ) {
+
+                clearInterval(
+                    statusInterval
+                );
+
+
+                statusInterval =
+                    null;
+
+
+                window.location.href =
+
+                    `/api/ds140/download/${currentJobId}`;
+
+
+                resetButton();
+
+
+                return;
+            }
+
+
+            // =================================================
+            // ERROR
+            // =================================================
+
+            if (
+                job.status === "error" ||
+                job.status === "failed"
+            ) {
+
+                clearInterval(
+                    statusInterval
+                );
+
+
+                statusInterval =
+                    null;
+
+
+                alert(
+                    job.error ||
+                    "Error generando documento"
+                );
+
+
+                resetButton();
+            }
+
+        }
+        catch(error) {
+
+            console.error(
+                "[DS140 STATUS]",
+                error
+            );
+        }
     }
 
 
-    if (oicSummaryCount) {
+    // =====================================================
+    // RESET BUTTON
+    // =====================================================
 
-        oicSummaryCount.textContent =
-            oicSelectedFiles.length;
-    }
-}
-
-
-/*
-========================================================
-GENERAR DS140
-========================================================
-*/
-
-async function generateDS140() {
-
-    try {
+    function resetButton() {
 
         const button =
             document.querySelector(
@@ -442,408 +1011,38 @@ async function generateDS140() {
             );
 
 
+        if (!button) {
+
+            return;
+        }
+
+
         button.disabled =
-            true;
+            false;
 
 
         button.innerText =
-            "Generando...";
-
-
-        const progressContainer =
-            document.getElementById(
-                "progress-container"
-            );
-
-
-        const progressBar =
-            document.getElementById(
-                "progress-bar"
-            );
-
-
-        const progressText =
-            document.getElementById(
-                "progress-text"
-            );
-
-
-        progressContainer.style.display =
-            "block";
-
-
-        progressBar.style.width =
-            "0%";
-
-
-        progressText.innerText =
-            "Iniciando...";
-
-
-        /*
-        ====================================================
-        FORM DATA
-        ====================================================
-        */
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-
-            "author_name",
-
-            document.getElementById(
-                "author_name"
-            ).value
-        );
-
-
-        formData.append(
-
-            "development_name",
-
-            document.getElementById(
-                "development_name"
-            ).value
-        );
-
-
-        /*
-        ====================================================
-        VISUAL BUILDER
-        ====================================================
-        */
-
-        const vbInput =
-            document.getElementById(
-                "vb_files"
-            );
-
-
-        if (vbInput) {
-
-            for (
-                const file of vbInput.files
-            ) {
-
-                formData.append(
-                    "vb_files",
-                    file
-                );
-            }
-        }
-
-
-        /*
-        ====================================================
-        APEX
-        ====================================================
-        */
-
-        const apexInput =
-            document.getElementById(
-                "apex_files"
-            );
-
-
-        if (apexInput) {
-
-            for (
-                const file of apexInput.files
-            ) {
-
-                formData.append(
-                    "apex_files",
-                    file
-                );
-            }
-        }
-
-
-        /*
-        ====================================================
-        OIC
-        ====================================================
-        */
-
-        for (
-            const file of oicSelectedFiles
-        ) {
-
-            formData.append(
-                "oic_files",
-                file
-            );
-        }
-
-
-        /*
-        ====================================================
-        BI PUBLISHER
-        ====================================================
-        */
-
-        const bipInput =
-            document.getElementById(
-                "bip_files"
-            );
-
-
-        if (bipInput) {
-
-            for (
-                const file of bipInput.files
-            ) {
-
-                formData.append(
-                    "bip_files",
-                    file
-                );
-            }
-        }
-
-
-        /*
-        ====================================================
-        SQL
-        ====================================================
-        */
-
-        const sqlInput =
-            document.getElementById(
-                "sql_files"
-            );
-
-
-        if (sqlInput) {
-
-            for (
-                const file of sqlInput.files
-            ) {
-
-                formData.append(
-                    "sql_files",
-                    file
-                );
-            }
-        }
-
-
-        /*
-        ====================================================
-        START
-        ====================================================
-        */
-
-        const response =
-            await fetch(
-
-                "/api/ds140/start",
-
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-
-        if (!response.ok) {
-
-            const errorText =
-                await response.text();
-
-
-            throw new Error(
-
-                "Error iniciando proceso: " +
-                errorText
-            );
-        }
-
-
-        const result =
-            await response.json();
-
-
-        currentJobId =
-            result.job_id;
-
-
-        statusInterval =
-            setInterval(
-
-                checkStatus,
-
-                1000
-            );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        alert(
-            error.message
-        );
-
-
-        resetButton();
-    }
-}
-
-
-/*
-========================================================
-STATUS
-========================================================
-*/
-
-async function checkStatus() {
-
-    if (!currentJobId) {
-
-        return;
+            "Generar Documento DS140";
     }
 
 
-    const response =
-        await fetch(
+    // =====================================================
+    // PUBLIC FUNCTIONS
+    // =====================================================
 
-            `/api/ds140/status/${currentJobId}`
-        );
-
-
-    const job =
-        await response.json();
+    window.generateDS140 =
+        generateDS140;
 
 
-    const progress =
-        job.progress || 0;
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    initOicDropzone();
 
 
-    const component =
-        job.step || "";
+    console.log(
+        "[DS140] Inicialización completa"
+    );
 
-
-    const activity =
-        job.activity || "";
-
-
-    const objectName =
-        job.object || "";
-
-
-    const current =
-        job.current || 0;
-
-
-    const total =
-        job.total || 0;
-
-
-    document.getElementById(
-        "progress-bar"
-    ).style.width =
-        progress + "%";
-
-
-    document.getElementById(
-        "progress-text"
-    ).innerText =
-        `${progress}% - ${component}`;
-
-
-    document.getElementById(
-        "activity-text"
-    ).innerText =
-        activity;
-
-
-    document.getElementById(
-        "detail-text"
-    ).innerText =
-        `${objectName} (${current}/${total})`;
-
-
-    /*
-    ====================================================
-    COMPLETED
-    ====================================================
-    */
-
-    if (
-        job.status === "completed"
-    ) {
-
-        clearInterval(
-            statusInterval
-        );
-
-
-        window.location.href =
-
-            `/api/ds140/download/${currentJobId}`;
-
-
-        resetButton();
-    }
-
-
-    /*
-    ====================================================
-    ERROR
-    ====================================================
-    */
-
-    if (
-        job.status === "error"
-    ) {
-
-        clearInterval(
-            statusInterval
-        );
-
-
-        alert(
-            job.error
-        );
-
-
-        resetButton();
-    }
-}
-
-
-/*
-========================================================
-RESET BUTTON
-========================================================
-*/
-
-function resetButton() {
-
-    const button =
-        document.querySelector(
-            ".generate-btn"
-        );
-
-
-    if (!button) {
-
-        return;
-    }
-
-
-    button.disabled =
-        false;
-
-
-    button.innerText =
-        "Generar Documento DS140";
-}
+})();
