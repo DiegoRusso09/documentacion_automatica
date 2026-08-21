@@ -22,8 +22,42 @@ from oic_doc_generator.api.services.ds140_service import (
     generate_ds140_service
 )
 
+
 router = APIRouter()
 
+
+# =========================================================
+# CONVERT UPLOADFILES TO MEMORY FILES
+# =========================================================
+
+async def to_memory_files(
+    uploaded_files
+):
+
+    memory_files = []
+
+    for uploaded_file in uploaded_files:
+
+        content = await uploaded_file.read()
+
+        stream = BytesIO(
+            content
+        )
+
+        stream.name = (
+            uploaded_file.filename
+        )
+
+        memory_files.append(
+            stream
+        )
+
+    return memory_files
+
+
+# =========================================================
+# START DS140
+# =========================================================
 
 @router.post("/ds140/start")
 async def start_ds140(
@@ -32,28 +66,68 @@ async def start_ds140(
 
     development_name: str = Form(...),
 
-    files: list[UploadFile] = File(...)
+    vb_files: list[UploadFile] = File(
+        default=[]
+    ),
+
+    apex_files: list[UploadFile] = File(
+        default=[]
+    ),
+
+    oic_files: list[UploadFile] = File(
+        default=[]
+    ),
+
+    bip_files: list[UploadFile] = File(
+        default=[]
+    ),
+
+    sql_files: list[UploadFile] = File(
+        default=[]
+    )
 ):
 
     job_id = create_job()
 
-    memory_files = []
 
-    for file in files:
+    # =====================================================
+    # COPY FILES WHILE REQUEST IS STILL ACTIVE
+    # =====================================================
 
-        content = await file.read()
-
-        stream = BytesIO(
-            content
+    vb_memory_files = (
+        await to_memory_files(
+            vb_files
         )
+    )
 
-        stream.name = (
-            file.filename
+    apex_memory_files = (
+        await to_memory_files(
+            apex_files
         )
+    )
 
-        memory_files.append(
-            stream
+    oic_memory_files = (
+        await to_memory_files(
+            oic_files
         )
+    )
+
+    bip_memory_files = (
+        await to_memory_files(
+            bip_files
+        )
+    )
+
+    sql_memory_files = (
+        await to_memory_files(
+            sql_files
+        )
+    )
+
+
+    # =====================================================
+    # BACKGROUND PROCESS
+    # =====================================================
 
     asyncio.create_task(
 
@@ -67,15 +141,29 @@ async def start_ds140(
 
             development_name,
 
-            memory_files
+            vb_memory_files,
+
+            apex_memory_files,
+
+            oic_memory_files,
+
+            bip_memory_files,
+
+            sql_memory_files
         )
     )
 
+
     return {
 
-        "job_id": job_id
+        "job_id":
+            job_id
     }
 
+
+# =========================================================
+# STATUS
+# =========================================================
 
 @router.get("/ds140/status/{job_id}")
 def get_status(
@@ -87,6 +175,10 @@ def get_status(
     )
 
 
+# =========================================================
+# DOWNLOAD
+# =========================================================
+
 @router.get("/ds140/download/{job_id}")
 def download_file(
     job_id: str
@@ -96,23 +188,37 @@ def download_file(
         job_id
     )
 
+
     if not job:
 
         return {
-            "error": "job not found"
+
+            "error":
+                "job not found"
         }
 
-    if job["status"] != "completed":
+
+    if (
+        job["status"]
+        !=
+        "completed"
+    ):
 
         return {
-            "error": "job not completed"
+
+            "error":
+                "job not completed"
         }
+
 
     return FileResponse(
 
-        path=job["download"],
+        path=
+            job["download"],
 
-        filename="entrega.zip",
+        filename=
+            "entrega.zip",
 
-        media_type="application/zip"
+        media_type=
+            "application/zip"
     )

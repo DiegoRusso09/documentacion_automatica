@@ -1,5 +1,4 @@
 from pathlib import Path
-from io import BytesIO
 
 import os
 import shutil
@@ -35,82 +34,204 @@ from oic_doc_generator.backend.generators.word_generator import (
 )
 
 from oic_doc_generator.api.job_manager import (
-    create_job,
     complete_job,
-    fail_job,
-    initialize_progress,
-    advance_progress,
-    update_activity
+    advance_progress
 )
 
 
+# =========================================================
+# GENERATE DS140
+# =========================================================
+
 def generate_ds140_service(
+
     job_id,
+
     author_name,
+
     development_name,
-    files
+
+    vb_files,
+
+    apex_files,
+
+    oic_files,
+
+    bip_files,
+
+    sql_files
 ):
 
-    uploaded_par = None
+    # =====================================================
+    # NORMALIZE
+    # =====================================================
 
-    vb_files = []
+    vb_files = (
+        vb_files
+        or
+        []
+    )
 
-    bip_files = []
+    apex_apps = (
+        apex_files
+        or
+        []
+    )
 
-    sql_files = []
+    oic_files = (
+        oic_files
+        or
+        []
+    )
 
-    apex_apps = []
+    bip_files = (
+        bip_files
+        or
+        []
+    )
 
-    for file in files:
+    sql_files = (
+        sql_files
+        or
+        []
+    )
 
-        ext = Path(
-            file.name
-        ).suffix.lower()
 
-        stream = file
-
-        if ext == ".par":
-
-            uploaded_par = stream
-
-        elif ext == ".zip":
-
-            vb_files.append(stream)
-
-        elif ext in [
-            ".xdoz",
-            ".xdmz",
-            ".xdrz"
-        ]:
-
-            bip_files.append(stream)
-
-        elif ext == ".sql":
-
-            sql_files.append(stream)
+    # =====================================================
+    # OIC
+    # =====================================================
 
     package_path = None
 
-    if uploaded_par:
 
-        package_path = extract_package(
-            uploaded_par
+    if oic_files:
+
+        package_path = tempfile.mkdtemp(
+            prefix="oic_package_"
         )
 
-    advance_progress(
 
-        job_id,
+        for oic_file in oic_files:
 
-        component="OIC",
+            extension = Path(
+                oic_file.name
+            ).suffix.lower()
 
-        detail="Integraciones procesadas",
 
-        object_name="Package"
-    )
+            # =================================================
+            # PAR
+            # =================================================
+
+            if extension == ".par":
+
+                oic_file.seek(
+                    0
+                )
+
+
+                extracted_path = (
+                    extract_package(
+                        oic_file
+                    )
+                )
+
+
+                # =============================================
+                # COPY EXTRACTED PAR CONTENT
+                # =============================================
+
+                for root, dirs, files in os.walk(
+                    extracted_path
+                ):
+
+                    for file_name in files:
+
+                        source_path = os.path.join(
+                            root,
+                            file_name
+                        )
+
+
+                        relative_path = os.path.relpath(
+                            source_path,
+                            extracted_path
+                        )
+
+
+                        target_path = os.path.join(
+                            package_path,
+                            relative_path
+                        )
+
+
+                        os.makedirs(
+                            os.path.dirname(
+                                target_path
+                            ),
+                            exist_ok=True
+                        )
+
+
+                        shutil.copy2(
+                            source_path,
+                            target_path
+                        )
+
+
+            # =================================================
+            # IAR
+            # =================================================
+
+            elif extension == ".iar":
+
+                oic_file.seek(
+                    0
+                )
+
+
+                target_path = os.path.join(
+
+                    package_path,
+
+                    os.path.basename(
+                        oic_file.name
+                    )
+                )
+
+
+                with open(
+                    target_path,
+                    "wb"
+                ) as target_file:
+
+                    target_file.write(
+                        oic_file.read()
+                    )
+
+
+        advance_progress(
+
+            job_id,
+
+            component=
+                "OIC",
+
+            detail=
+                "Integraciones procesadas",
+
+            object_name=
+                f"{len(oic_files)} archivo(s)"
+        )
+
+
+    # =====================================================
+    # DATABASE
+    # =====================================================
 
     database_metadata = None
 
     database_export_info = None
+
 
     if sql_files:
 
@@ -120,19 +241,25 @@ def generate_ds140_service(
             )
         )
 
+
         validation = (
             validate_sql_objects(
                 database_metadata
             )
         )
 
+
         if not validation["valid"]:
 
             raise Exception(
+
                 "\n".join(
-                    validation["errors"]
+                    validation[
+                        "errors"
+                    ]
                 )
             )
+
 
         database_export_info = (
             export_database_sql(
@@ -140,16 +267,25 @@ def generate_ds140_service(
             )
         )
 
+
         advance_progress(
 
             job_id,
 
-            component="OIC",
+            component=
+                "Base de Datos",
 
-            detail="Integraciones procesadas",
+            detail=
+                "Objetos SQL procesados",
 
-            object_name="Package"
+            object_name=
+                f"{len(sql_files)} archivo(s)"
         )
+
+
+    # =====================================================
+    # BI PUBLISHER
+    # =====================================================
 
     if bip_files:
 
@@ -159,22 +295,33 @@ def generate_ds140_service(
             )
         )
 
+
         build_bip_metadata(
             artifact_tree
         )
+
 
         advance_progress(
 
             job_id,
 
-            component="BI Publisher",
+            component=
+                "BI Publisher",
 
-            detail="Reportes procesados",
+            detail=
+                "Reportes procesados",
 
-            object_name="BIP"
+            object_name=
+                f"{len(bip_files)} archivo(s)"
         )
 
+
+    # =====================================================
+    # SELECTED COMPONENTS
+    # =====================================================
+
     selected_components = []
+
 
     if vb_files:
 
@@ -182,17 +329,20 @@ def generate_ds140_service(
             "Visual Builder"
         )
 
+
     if apex_apps:
 
         selected_components.append(
             "APEX"
         )
 
-    if uploaded_par:
+
+    if oic_files:
 
         selected_components.append(
             "OIC"
         )
+
 
     if sql_files:
 
@@ -200,11 +350,13 @@ def generate_ds140_service(
             "Objetos BD"
         )
 
+
     if bip_files:
 
         selected_components.append(
             "BI Publisher"
         )
+
 
     # =====================================================
     # GENERATE WORD
@@ -212,52 +364,69 @@ def generate_ds140_service(
 
     document_stream = generate_word_document(
 
-        package_path=package_path,
+        package_path=
+            package_path,
 
-        author_name=author_name,
+        author_name=
+            author_name,
 
-        development_name=development_name,
+        development_name=
+            development_name,
 
-        selected_components=selected_components,
+        selected_components=
+            selected_components,
 
-        visual_builder_apps=vb_files,
+        visual_builder_apps=
+            vb_files,
 
-        apex_apps=apex_apps,
+        apex_apps=
+            apex_apps,
 
-        bip_files=bip_files,
+        bip_files=
+            bip_files,
 
-        database_metadata=database_metadata,
+        database_metadata=
+            database_metadata,
 
-        database_export_info=database_export_info,
+        database_export_info=
+            database_export_info,
 
-        job_id=job_id
+        job_id=
+            job_id
     )
+
 
     # =====================================================
     # DELIVERY FOLDER
     # =====================================================
 
     delivery_folder = tempfile.mkdtemp(
-        prefix="ds140_delivery_"
+        prefix=
+            "ds140_delivery_"
     )
+
 
     # =====================================================
     # SAVE WORD
     # =====================================================
 
     word_path = os.path.join(
+
         delivery_folder,
+
         "NEO-GD-IN-02 DS-140 Especificación de Diseño.docx"
     )
+
 
     with open(
         word_path,
         "wb"
-    ) as f:
+    ) as file:
 
-        f.write(
+        file.write(
             document_stream.getvalue()
         )
+
 
     # =====================================================
     # COPY SQL EXPORTS
@@ -267,10 +436,13 @@ def generate_ds140_service(
 
         sql_source = os.path.join(
 
-            database_export_info["root"],
+            database_export_info[
+                "root"
+            ],
 
             "SQL"
         )
+
 
         sql_target = os.path.join(
 
@@ -278,6 +450,7 @@ def generate_ds140_service(
 
             "SQL"
         )
+
 
         if os.path.exists(
             sql_source
@@ -292,14 +465,18 @@ def generate_ds140_service(
                 dirs_exist_ok=True
             )
 
+
     # =====================================================
     # ZIP DELIVERY
     # =====================================================
 
     zip_path = os.path.join(
+
         delivery_folder,
+
         "entrega.zip"
     )
+
 
     with zipfile.ZipFile(
 
@@ -315,16 +492,24 @@ def generate_ds140_service(
             delivery_folder
         ):
 
-            for file in files:
+            for file_name in files:
 
-                if file == "entrega.zip":
+                if (
+                    file_name
+                    ==
+                    "entrega.zip"
+                ):
 
                     continue
 
+
                 full_path = os.path.join(
+
                     root,
-                    file
+
+                    file_name
                 )
+
 
                 arcname = os.path.relpath(
 
@@ -333,6 +518,7 @@ def generate_ds140_service(
                     delivery_folder
                 )
 
+
                 zip_file.write(
 
                     full_path,
@@ -340,16 +526,25 @@ def generate_ds140_service(
                     arcname
                 )
 
+
+    # =====================================================
+    # COMPLETE
+    # =====================================================
+
     advance_progress(
 
         job_id,
 
-        component="Entrega",
+        component=
+            "Entrega",
 
-        detail="ZIP generado",
+        detail=
+            "ZIP generado",
 
-        object_name="entrega.zip"
+        object_name=
+            "entrega.zip"
     )
+
 
     complete_job(
 
@@ -357,5 +552,6 @@ def generate_ds140_service(
 
         zip_path
     )
+
 
     return zip_path
