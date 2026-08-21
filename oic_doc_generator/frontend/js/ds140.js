@@ -15,89 +15,165 @@
 
 
     // =====================================================
-    // OIC FILE STORE
+    // FILE STORE
     // =====================================================
 
-    const oicSelectedFiles = [];
+    const fileStore = {
+
+        vb: [],
+
+        apex: [],
+
+        oic: [],
+
+        bip: [],
+
+        sql: []
+    };
 
 
     // =====================================================
-    // CONTADORES TRADICIONALES
+    // CONFIGURACIÓN DE COMPONENTES
     // =====================================================
 
-    function updateCounter(
-        inputId,
-        counterId
-    ) {
+    const componentConfig = {
 
-        const input =
-            document.getElementById(
-                inputId
-            );
+        vb: {
 
-        const counter =
-            document.getElementById(
-                counterId
-            );
+            sectionId:
+                "sec-vb",
+
+            inputId:
+                "vb_files",
+
+            summaryCounterId:
+                "vb_count",
+
+            parameterName:
+                "vb_files",
+
+            allowedExtensions:
+                [
+                    "zip"
+                ]
+        },
 
 
-        if (
-            !input ||
-            !counter
-        ) {
+        apex: {
 
-            return;
+            sectionId:
+                "sec-apex",
+
+            inputId:
+                "apex_files",
+
+            summaryCounterId:
+                "apex_count",
+
+            parameterName:
+                "apex_files",
+
+            /*
+             * El HTML original no tenía
+             * restricción de extensión.
+             */
+            allowedExtensions:
+                null
+        },
+
+
+        oic: {
+
+            sectionId:
+                "sec-oic",
+
+            inputId:
+                "oic_files",
+
+            summaryCounterId:
+                "oic_count",
+
+            parameterName:
+                "oic_files",
+
+            allowedExtensions:
+                [
+                    "par",
+                    "iar"
+                ]
+        },
+
+
+        bip: {
+
+            sectionId:
+                "sec-bip",
+
+            inputId:
+                "bip_files",
+
+            summaryCounterId:
+                "bip_count",
+
+            parameterName:
+                "bip_files",
+
+            allowedExtensions:
+                [
+                    "xdoz",
+                    "xdmz",
+                    "xdrz"
+                ]
+        },
+
+
+        sql: {
+
+            sectionId:
+                "sec-sql",
+
+            inputId:
+                "sql_files",
+
+            summaryCounterId:
+                "sql_count",
+
+            parameterName:
+                "sql_files",
+
+            allowedExtensions:
+                [
+                    "sql"
+                ]
         }
 
-
-        input.addEventListener(
-            "change",
-            () => {
-
-                counter.textContent =
-                    input.files.length;
-            }
-        );
-    }
-
-
-    updateCounter(
-        "vb_files",
-        "vb_count"
-    );
-
-    updateCounter(
-        "apex_files",
-        "apex_count"
-    );
-
-    updateCounter(
-        "bip_files",
-        "bip_count"
-    );
-
-    updateCounter(
-        "sql_files",
-        "sql_count"
-    );
+    };
 
 
     // =====================================================
-    // OIC DROPZONE
+    // INICIALIZAR DROPZONE
     // =====================================================
 
-    function initOicDropzone() {
+    function initDropzone(
+        storeKey
+    ) {
+
+        const config =
+            componentConfig[
+                storeKey
+            ];
+
 
         const section =
             document.getElementById(
-                "sec-oic"
+                config.sectionId
             );
 
 
         if (!section) {
 
             console.error(
-                "[DS140] No existe #sec-oic"
+                `[DS140] No existe #${config.sectionId}`
             );
 
             return;
@@ -128,6 +204,18 @@
             );
 
 
+        const summaryCounter =
+            document.getElementById(
+                config.summaryCounterId
+            );
+
+
+        const selectedFiles =
+            fileStore[
+                storeKey
+            ];
+
+
         if (
             !dropzone ||
             !fileInput ||
@@ -136,7 +224,7 @@
         ) {
 
             console.error(
-                "[DS140] Estructura OIC incompleta",
+                `[DS140] Estructura incompleta: ${storeKey}`,
                 {
                     dropzone,
                     fileInput,
@@ -150,7 +238,7 @@
 
 
         console.log(
-            "[DS140] Dropzone OIC encontrado"
+            `[DS140] Dropzone ${storeKey} inicializado`
         );
 
 
@@ -162,40 +250,30 @@
             "click",
             () => {
 
-                console.log(
-                    "[DS140] Click en OIC"
-                );
-
                 fileInput.click();
             }
         );
 
 
         // =================================================
-        // SELECTOR DE ARCHIVOS
+        // FILE SELECTOR
         // =================================================
 
         fileInput.addEventListener(
             "change",
             event => {
 
-                console.log(
-                    "[DS140] Selección OIC:",
-                    event.target.files.length
-                );
-
-
-                addOicFiles(
+                addFiles(
                     event.target.files
                 );
 
 
                 /*
-                 * Dejamos limpio el input para que
-                 * pueda volver a seleccionarse el
-                 * mismo archivo.
+                 * Permite seleccionar nuevamente
+                 * el mismo archivo.
                  */
-                fileInput.value = "";
+                fileInput.value =
+                    "";
             }
         );
 
@@ -282,28 +360,18 @@
                 );
 
 
-                const files =
-                    event.dataTransfer.files;
-
-
-                console.log(
-                    "[DS140] Drop OIC:",
-                    files.length
-                );
-
-
-                addOicFiles(
-                    files
+                addFiles(
+                    event.dataTransfer.files
                 );
             }
         );
 
 
         // =================================================
-        // ADD FILES
+        // AGREGAR ARCHIVOS
         // =================================================
 
-        function addOicFiles(
+        function addFiles(
             files
         ) {
 
@@ -311,11 +379,14 @@
                 const file of files
             ) {
 
+                // =========================================
+                // EXTENSIÓN
+                // =========================================
+
                 const extension =
-                    file.name
-                        .split(".")
-                        .pop()
-                        .toLowerCase();
+                    getFileExtension(
+                        file.name
+                    );
 
 
                 // =========================================
@@ -323,14 +394,17 @@
                 // =========================================
 
                 if (
-                    extension !== "par" &&
-                    extension !== "iar"
+                    config.allowedExtensions &&
+                    !config.allowedExtensions.includes(
+                        extension
+                    )
                 ) {
 
                     console.warn(
-                        "[DS140] Archivo ignorado:",
+                        `[DS140] Archivo rechazado en ${storeKey}:`,
                         file.name
                     );
+
 
                     continue;
                 }
@@ -341,7 +415,7 @@
                 // =========================================
 
                 const exists =
-                    oicSelectedFiles.some(
+                    selectedFiles.some(
 
                         current =>
 
@@ -362,7 +436,7 @@
 
                 if (!exists) {
 
-                    oicSelectedFiles.push(
+                    selectedFiles.push(
                         file
                     );
                 }
@@ -374,7 +448,7 @@
 
 
         // =================================================
-        // RENDER
+        // RENDERIZAR
         // =================================================
 
         function renderFiles() {
@@ -383,25 +457,27 @@
                 "";
 
 
+            // =============================================
+            // SIN ARCHIVOS
+            // =============================================
+
             if (
-                oicSelectedFiles.length === 0
+                selectedFiles.length === 0
             ) {
 
                 fileList.innerHTML = `
+
                     <div class="empty-message">
+
                         No hay archivos seleccionados
+
                     </div>
+
                 `;
 
 
                 counter.textContent =
                     "0";
-
-
-                const summaryCounter =
-                    document.getElementById(
-                        "oic_count"
-                    );
 
 
                 if (summaryCounter) {
@@ -415,7 +491,11 @@
             }
 
 
-            oicSelectedFiles.forEach(
+            // =============================================
+            // ARCHIVOS
+            // =============================================
+
+            selectedFiles.forEach(
                 (
                     file,
                     index
@@ -430,6 +510,10 @@
                     item.className =
                         "file-item";
 
+
+                    // =====================================
+                    // INFO
+                    // =====================================
 
                     const info =
                         document.createElement(
@@ -447,15 +531,22 @@
                             ${index + 1}.
                         </strong>
 
-                        ${file.name}
+                        ${escapeHtml(
+                            file.name
+                        )}
 
                         <br>
 
-                        ${(
-                            file.size / 1024
-                        ).toFixed(2)} KB
+                        ${formatFileSize(
+                            file.size
+                        )}
+
                     `;
 
+
+                    // =====================================
+                    // REMOVE BUTTON
+                    // =====================================
 
                     const removeButton =
                         document.createElement(
@@ -475,21 +566,20 @@
                         "✖";
 
 
+                    removeButton.title =
+                        "Eliminar archivo";
+
+
                     removeButton.addEventListener(
                         "click",
                         event => {
-
-                            /*
-                             * Evita que el click del botón
-                             * vuelva a abrir el selector.
-                             */
 
                             event.preventDefault();
 
                             event.stopPropagation();
 
 
-                            oicSelectedFiles.splice(
+                            selectedFiles.splice(
                                 index,
                                 1
                             );
@@ -499,6 +589,10 @@
                         }
                     );
 
+
+                    // =====================================
+                    // APPEND
+                    // =====================================
 
                     item.appendChild(
                         info
@@ -517,62 +611,149 @@
             );
 
 
+            // =============================================
+            // COUNTERS
+            // =============================================
+
             counter.textContent =
-                oicSelectedFiles.length;
-
-
-            const summaryCounter =
-                document.getElementById(
-                    "oic_count"
-                );
+                selectedFiles.length;
 
 
             if (summaryCounter) {
 
                 summaryCounter.textContent =
-                    oicSelectedFiles.length;
+                    selectedFiles.length;
             }
 
 
             console.log(
-                "[DS140] OIC almacenados:",
-                oicSelectedFiles.length
+                `[DS140] ${storeKey}: ${selectedFiles.length} archivo(s)`
             );
         }
 
+
+        // =================================================
+        // INITIAL RENDER
+        // =================================================
 
         renderFiles();
     }
 
 
     // =====================================================
-    // APPEND INPUT FILES
+    // EXTENSIÓN
     // =====================================================
 
-    function appendInputFiles(
-        formData,
-        inputId,
-        parameterName
+    function getFileExtension(
+        fileName
     ) {
 
-        const input =
-            document.getElementById(
-                inputId
+        const position =
+            fileName.lastIndexOf(
+                "."
             );
 
 
-        if (!input) {
+        if (
+            position === -1
+        ) {
 
-            return;
+            return "";
         }
 
 
+        return fileName
+            .substring(
+                position + 1
+            )
+            .toLowerCase();
+    }
+
+
+    // =====================================================
+    // FORMAT FILE SIZE
+    // =====================================================
+
+    function formatFileSize(
+        bytes
+    ) {
+
+        if (
+            bytes < 1024
+        ) {
+
+            return `${bytes} B`;
+        }
+
+
+        if (
+            bytes <
+            1024 * 1024
+        ) {
+
+            return `${(
+                bytes / 1024
+            ).toFixed(2)} KB`;
+        }
+
+
+        return `${(
+            bytes /
+            1024 /
+            1024
+        ).toFixed(2)} MB`;
+    }
+
+
+    // =====================================================
+    // ESCAPE HTML
+    // =====================================================
+
+    function escapeHtml(
+        value
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            value;
+
+
+        return div.innerHTML;
+    }
+
+
+    // =====================================================
+    // AGREGAR ARCHIVOS A FORMDATA
+    // =====================================================
+
+    function appendStoredFiles(
+        formData,
+        storeKey
+    ) {
+
+        const config =
+            componentConfig[
+                storeKey
+            ];
+
+
+        const files =
+            fileStore[
+                storeKey
+            ];
+
+
         for (
-            const file of input.files
+            const file of files
         ) {
 
             formData.append(
-                parameterName,
+                config.parameterName,
                 file
             );
         }
@@ -603,6 +784,10 @@
                     "Generando...";
             }
 
+
+            // =================================================
+            // PROGRESS
+            // =================================================
 
             const progressContainer =
                 document.getElementById(
@@ -644,7 +829,7 @@
 
 
             // =================================================
-            // FORM DATA
+            // FORMDATA
             // =================================================
 
             const formData =
@@ -680,69 +865,56 @@
 
 
             // =================================================
-            // VISUAL BUILDER
+            // FILES
             // =================================================
 
-            appendInputFiles(
+            appendStoredFiles(
                 formData,
-                "vb_files",
-                "vb_files"
+                "vb"
             );
 
 
-            // =================================================
-            // APEX
-            // =================================================
-
-            appendInputFiles(
+            appendStoredFiles(
                 formData,
-                "apex_files",
-                "apex_files"
+                "apex"
             );
 
 
-            // =================================================
-            // OIC
-            // =================================================
-
-            for (
-                const file of oicSelectedFiles
-            ) {
-
-                formData.append(
-                    "oic_files",
-                    file
-                );
-            }
-
-
-            // =================================================
-            // BI PUBLISHER
-            // =================================================
-
-            appendInputFiles(
+            appendStoredFiles(
                 formData,
-                "bip_files",
-                "bip_files"
+                "oic"
             );
 
 
-            // =================================================
-            // SQL
-            // =================================================
-
-            appendInputFiles(
+            appendStoredFiles(
                 formData,
-                "sql_files",
-                "sql_files"
+                "bip"
+            );
+
+
+            appendStoredFiles(
+                formData,
+                "sql"
             );
 
 
             console.log(
-                "[DS140] Enviando:",
+                "[DS140] Archivos a enviar:",
                 {
+                    vb:
+                        fileStore.vb.length,
+
+                    apex:
+                        fileStore.apex.length,
+
                     oic:
-                        oicSelectedFiles.length
+                        fileStore.oic.length,
+
+                    bip:
+                        fileStore.bip.length,
+
+                    sql:
+                        fileStore.sql.length
                 }
             );
 
@@ -757,8 +929,11 @@
                     "/api/ds140/start",
 
                     {
-                        method: "POST",
-                        body: formData
+                        method:
+                            "POST",
+
+                        body:
+                            formData
                     }
                 );
 
@@ -937,7 +1112,8 @@
             // =================================================
 
             if (
-                job.status === "completed"
+                job.status ===
+                "completed"
             ) {
 
                 clearInterval(
@@ -1035,10 +1211,32 @@
 
 
     // =====================================================
-    // INITIALIZE
+    // INITIALIZACIÓN DE DROPZONES
     // =====================================================
 
-    initOicDropzone();
+    initDropzone(
+        "vb"
+    );
+
+
+    initDropzone(
+        "apex"
+    );
+
+
+    initDropzone(
+        "oic"
+    );
+
+
+    initDropzone(
+        "bip"
+    );
+
+
+    initDropzone(
+        "sql"
+    );
 
 
     console.log(

@@ -116,33 +116,126 @@
 
     <section class="artifacts">
 
-        <details class="accordion">
+        <!-- =====================================================
+            VISUAL BUILDER
+            ===================================================== -->
+
+        <details class="accordion" id="sec-vb">
 
             <summary>
                 Visual Builder
             </summary>
 
-            <div class="dropzone">
+            <div class="section-container">
 
-                <input id="vb_files" type="file" multiple accept=".zip">
+                <p class="section-desc">
+                    Arrastre archivos o selecciónelos manualmente (.zip).
+                </p>
+
+                <div class="dropzone">
+
+                    <h3>
+                        📁 Arrastra archivos aquí
+                    </h3>
+
+                    <p>
+                        o haz clic para seleccionarlos
+                    </p>
+
+                </div>
+
+                <input
+                    id="vb_files"
+                    type="file"
+                    class="fileInput"
+                    multiple
+                    accept=".zip"
+                >
+
+                <div class="counter">
+
+                    Archivos seleccionados:
+
+                    <span class="counter-val">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="file-list">
+
+                    <div class="empty-message">
+                        No hay archivos seleccionados
+                    </div>
+
+                </div>
 
             </div>
 
         </details>
 
-        <details class="accordion">
+
+        <!-- =====================================================
+            ORACLE APEX
+            ===================================================== -->
+
+        <details class="accordion" id="sec-apex">
 
             <summary>
                 Oracle APEX
             </summary>
 
-            <div class="dropzone">
+            <div class="section-container">
 
-                <input id="apex_files" type="file" multiple>
+                <p class="section-desc">
+                    Arrastre archivos o selecciónelos manualmente.
+                </p>
+
+                <div class="dropzone">
+
+                    <h3>
+                        📁 Arrastra archivos aquí
+                    </h3>
+
+                    <p>
+                        o haz clic para seleccionarlos
+                    </p>
+
+                </div>
+
+                <input
+                    id="apex_files"
+                    type="file"
+                    class="fileInput"
+                    multiple
+                >
+
+                <div class="counter">
+
+                    Archivos seleccionados:
+
+                    <span class="counter-val">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="file-list">
+
+                    <div class="empty-message">
+                        No hay archivos seleccionados
+                    </div>
+
+                </div>
 
             </div>
 
         </details>
+
+
+        <!-- =====================================================
+            ORACLE INTEGRATION CLOUD
+            ===================================================== -->
 
         <details class="accordion" id="sec-oic">
 
@@ -168,7 +261,13 @@
 
                 </div>
 
-                <input id="oic_files" type="file" class="fileInput" multiple accept=".par,.iar">
+                <input
+                    id="oic_files"
+                    type="file"
+                    class="fileInput"
+                    multiple
+                    accept=".par,.iar"
+                >
 
                 <div class="counter">
 
@@ -192,29 +291,120 @@
 
         </details>
 
-        <details class="accordion">
+
+        <!-- =====================================================
+            BI PUBLISHER
+            ===================================================== -->
+
+        <details class="accordion" id="sec-bip">
 
             <summary>
                 BI Publisher
             </summary>
 
-            <div class="dropzone">
+            <div class="section-container">
 
-                <input id="bip_files" type="file" multiple accept=".xdoz,.xdmz,.xdrz">
+                <p class="section-desc">
+                    Arrastre archivos o selecciónelos manualmente
+                    (.xdoz, .xdmz, .xdrz).
+                </p>
+
+                <div class="dropzone">
+
+                    <h3>
+                        📁 Arrastra archivos aquí
+                    </h3>
+
+                    <p>
+                        o haz clic para seleccionarlos
+                    </p>
+
+                </div>
+
+                <input
+                    id="bip_files"
+                    type="file"
+                    class="fileInput"
+                    multiple
+                    accept=".xdoz,.xdmz,.xdrz"
+                >
+
+                <div class="counter">
+
+                    Archivos seleccionados:
+
+                    <span class="counter-val">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="file-list">
+
+                    <div class="empty-message">
+                        No hay archivos seleccionados
+                    </div>
+
+                </div>
 
             </div>
 
         </details>
 
-        <details class="accordion">
+
+        <!-- =====================================================
+            BASE DE DATOS
+            ===================================================== -->
+
+        <details class="accordion" id="sec-sql">
 
             <summary>
                 Base de Datos Oracle
             </summary>
 
-            <div class="dropzone">
+            <div class="section-container">
 
-                <input id="sql_files" type="file" multiple accept=".sql">
+                <p class="section-desc">
+                    Arrastre archivos o selecciónelos manualmente (.sql).
+                </p>
+
+                <div class="dropzone">
+
+                    <h3>
+                        📁 Arrastra archivos aquí
+                    </h3>
+
+                    <p>
+                        o haz clic para seleccionarlos
+                    </p>
+
+                </div>
+
+                <input
+                    id="sql_files"
+                    type="file"
+                    class="fileInput"
+                    multiple
+                    accept=".sql"
+                >
+
+                <div class="counter">
+
+                    Archivos seleccionados:
+
+                    <span class="counter-val">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="file-list">
+
+                    <div class="empty-message">
+                        No hay archivos seleccionados
+                    </div>
+
+                </div>
 
             </div>
 
