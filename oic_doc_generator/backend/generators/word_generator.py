@@ -874,30 +874,38 @@ def generate_word_document(
 
     document = Document()
 
-
     # =====================================================
     # ACTUALIZAR CAMPOS AUTOMÁTICAMENTE AL ABRIR WORD
     # =====================================================
 
     settings = document.settings.element
 
-    update_fields = settings.find(
+
+    existing_update_fields = settings.find(
         qn("w:updateFields")
     )
 
-    if update_fields is None:
 
-        update_fields = OxmlElement(
-            "w:updateFields"
+    if existing_update_fields is not None:
+
+        settings.remove(
+            existing_update_fields
         )
 
-        settings.append(
-            update_fields
-        )
+
+    update_fields = OxmlElement(
+        "w:updateFields"
+    )
+
 
     update_fields.set(
         qn("w:val"),
-        "true"
+        "1"
+    )
+
+
+    settings.append(
+        update_fields
     )
 
 
