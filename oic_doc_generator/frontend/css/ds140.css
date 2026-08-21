@@ -260,3 +260,109 @@ cursor:pointer;
     color: #777;
     font-style: italic;
 }
+
+
+
+.section-container {
+    margin: 20px;
+}
+
+.section-desc {
+    color: #666;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.dropzone {
+    border: 3px dashed #3498db;
+    border-radius: 10px;
+
+    padding: 35px;
+    margin: 0;
+
+    min-height: 100px;
+
+    display: block;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    background: #f8f9fa;
+
+    transition: all .3s;
+}
+
+.dropzone:hover {
+    background: #eef7ff;
+}
+
+.dropzone.dragover {
+    border-color: #2ecc71;
+    background: #eafaf1;
+}
+
+.dropzone h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.dropzone p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.fileInput {
+    display: none;
+}
+
+.counter {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.file-list {
+    margin-top: 15px;
+}
+
+.file-item {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px;
+    margin-bottom: 8px;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    background: white;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: white;
+
+    border: none;
+    border-radius: 4px;
+
+    width: 32px;
+    height: 32px;
+
+    cursor: pointer;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+}
+
+.empty-message {
+    color: #777;
+    font-style: italic;
+}

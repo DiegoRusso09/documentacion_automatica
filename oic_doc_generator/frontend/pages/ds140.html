@@ -150,14 +150,13 @@
                 Oracle Integration Cloud
             </summary>
 
-            <div class="oic-upload-container">
+            <div class="section-container">
 
-                <p class="oic-upload-description">
-                    Arrastre integraciones o paquetes OIC (.PAR, .IAR)
-                    o haga clic para seleccionarlos.
+                <p class="section-desc">
+                    Arrastre archivos o selecciónelos manualmente (.par, .iar).
                 </p>
 
-                <div id="oic_dropzone" class="oic-dropzone">
+                <div class="dropzone">
 
                     <h3>
                         📁 Arrastra archivos aquí
@@ -169,16 +168,21 @@
 
                 </div>
 
-                <input id="oic_files" type="file" multiple accept=".par,.iar" style="display:none;">
+                <input id="oic_files" type="file" class="fileInput" multiple accept=".par,.iar">
 
-                <div class="oic-local-counter">
+                <div class="counter">
+
                     Archivos seleccionados:
-                    <span id="oic_local_count">0</span>
+
+                    <span class="counter-val">
+                        0
+                    </span>
+
                 </div>
 
-                <div id="oic_file_list" class="oic-file-list">
+                <div class="file-list">
 
-                    <div class="oic-empty-message">
+                    <div class="empty-message">
                         No hay archivos seleccionados
                     </div>
 
@@ -277,6 +281,3 @@
     </section>
 
 </div>
-
-
-<script src="js/ds140.js"></script>
