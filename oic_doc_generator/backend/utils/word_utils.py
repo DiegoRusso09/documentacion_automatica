@@ -8,7 +8,8 @@ import re
 
 from docx.shared import (
     Pt,
-    RGBColor
+    RGBColor,
+    Cm
 )
 
 from docx.enum.text import (
@@ -855,6 +856,565 @@ def _apply_heading_numbering(
 
 
 # =========================================================
+# GET TABLE OF CONTENTS STATE
+# =========================================================
+
+def _get_toc_state(
+    document
+):
+
+    state = getattr(
+        document,
+        "_ds140_toc_state",
+        None
+    )
+
+
+    if state is not None:
+
+        return state
+
+
+    state = {
+
+        "entries": [],
+
+        "bookmark_counter": 1
+    }
+
+
+    setattr(
+        document,
+        "_ds140_toc_state",
+        state
+    )
+
+
+    return state
+
+
+# =========================================================
+# REGISTER HEADING FOR TABLE OF CONTENTS
+# =========================================================
+
+def _register_toc_heading(
+    document,
+    paragraph,
+    run,
+    number_text,
+    title,
+    level
+):
+
+    state = _get_toc_state(
+        document
+    )
+
+
+    bookmark_id = (
+        state[
+            "bookmark_counter"
+        ]
+    )
+
+
+    state[
+        "bookmark_counter"
+    ] += 1
+
+
+    bookmark_name = (
+        f"ds140_heading_{bookmark_id}"
+    )
+
+
+    # =====================================================
+    # BOOKMARK START
+    # =====================================================
+
+    bookmark_start = OxmlElement(
+        "w:bookmarkStart"
+    )
+
+
+    bookmark_start.set(
+        qn("w:id"),
+        str(
+            bookmark_id
+        )
+    )
+
+
+    bookmark_start.set(
+        qn("w:name"),
+        bookmark_name
+    )
+
+
+    # =====================================================
+    # BOOKMARK END
+    # =====================================================
+
+    bookmark_end = OxmlElement(
+        "w:bookmarkEnd"
+    )
+
+
+    bookmark_end.set(
+        qn("w:id"),
+        str(
+            bookmark_id
+        )
+    )
+
+
+    # =====================================================
+    # PLACE BOOKMARK AROUND TITLE
+    # =====================================================
+
+    run._r.addprevious(
+        bookmark_start
+    )
+
+
+    run._r.addnext(
+        bookmark_end
+    )
+
+
+    # =====================================================
+    # REGISTER ENTRY
+    # =====================================================
+
+    state[
+        "entries"
+    ].append({
+
+        "number":
+            number_text,
+
+        "title":
+            title,
+
+        "text":
+            f"{number_text} {title}",
+
+        "level":
+            level,
+
+        "bookmark":
+            bookmark_name
+    })
+
+
+# =========================================================
+# CREATE INTERNAL HYPERLINK
+# =========================================================
+
+def _add_internal_hyperlink(
+    paragraph,
+    text,
+    bookmark_name,
+    bold=False
+):
+
+    hyperlink = OxmlElement(
+        "w:hyperlink"
+    )
+
+
+    hyperlink.set(
+        qn("w:anchor"),
+        bookmark_name
+    )
+
+
+    hyperlink.set(
+        qn("w:history"),
+        "1"
+    )
+
+
+    # =====================================================
+    # RUN
+    # =====================================================
+
+    run = OxmlElement(
+        "w:r"
+    )
+
+
+    run_properties = OxmlElement(
+        "w:rPr"
+    )
+
+
+    # =====================================================
+    # FONT
+    # =====================================================
+
+    fonts = OxmlElement(
+        "w:rFonts"
+    )
+
+
+    fonts.set(
+        qn("w:ascii"),
+        "Arial"
+    )
+
+
+    fonts.set(
+        qn("w:hAnsi"),
+        "Arial"
+    )
+
+
+    fonts.set(
+        qn("w:eastAsia"),
+        "Arial"
+    )
+
+
+    run_properties.append(
+        fonts
+    )
+
+
+    # =====================================================
+    # FONT SIZE 10 PT
+    # =====================================================
+
+    font_size = OxmlElement(
+        "w:sz"
+    )
+
+
+    font_size.set(
+        qn("w:val"),
+        "20"
+    )
+
+
+    run_properties.append(
+        font_size
+    )
+
+
+    font_size_complex = OxmlElement(
+        "w:szCs"
+    )
+
+
+    font_size_complex.set(
+        qn("w:val"),
+        "20"
+    )
+
+
+    run_properties.append(
+        font_size_complex
+    )
+
+
+    # =====================================================
+    # BLACK COLOR
+    # =====================================================
+
+    color = OxmlElement(
+        "w:color"
+    )
+
+
+    color.set(
+        qn("w:val"),
+        "000000"
+    )
+
+
+    run_properties.append(
+        color
+    )
+
+
+    # =====================================================
+    # NO UNDERLINE
+    # =====================================================
+
+    underline = OxmlElement(
+        "w:u"
+    )
+
+
+    underline.set(
+        qn("w:val"),
+        "none"
+    )
+
+
+    run_properties.append(
+        underline
+    )
+
+
+    # =====================================================
+    # BOLD TOP LEVEL
+    # =====================================================
+
+    if bold:
+
+        bold_element = OxmlElement(
+            "w:b"
+        )
+
+
+        run_properties.append(
+            bold_element
+        )
+
+
+    run.append(
+        run_properties
+    )
+
+
+    # =====================================================
+    # TEXT
+    # =====================================================
+
+    text_element = OxmlElement(
+        "w:t"
+    )
+
+
+    text_element.text = (
+        text
+    )
+
+
+    run.append(
+        text_element
+    )
+
+
+    hyperlink.append(
+        run
+    )
+
+
+    paragraph._p.append(
+        hyperlink
+    )
+
+
+# =========================================================
+# CREATE TABLE OF CONTENTS PLACEHOLDER
+# =========================================================
+
+def create_toc_table(
+    document
+):
+
+    table = document.add_table(
+        rows=1,
+        cols=1
+    )
+
+
+    table.autofit = True
+
+
+    # =====================================================
+    # REMOVE TABLE BORDERS
+    # =====================================================
+
+    table_properties = (
+        table
+        ._tbl
+        .tblPr
+    )
+
+
+    borders = OxmlElement(
+        "w:tblBorders"
+    )
+
+
+    for border_name in [
+
+        "top",
+        "left",
+        "bottom",
+        "right",
+        "insideH",
+        "insideV"
+
+    ]:
+
+        border = OxmlElement(
+            f"w:{border_name}"
+        )
+
+
+        border.set(
+            qn("w:val"),
+            "nil"
+        )
+
+
+        borders.append(
+            border
+        )
+
+
+    table_properties.append(
+        borders
+    )
+
+
+    return table
+
+
+# =========================================================
+# POPULATE TABLE OF CONTENTS
+# =========================================================
+
+def populate_toc_table(
+    document,
+    table
+):
+
+    state = _get_toc_state(
+        document
+    )
+
+
+    entries = state.get(
+        "entries",
+        []
+    )
+
+
+    # =====================================================
+    # FIRST DEFAULT ROW
+    # =====================================================
+
+    first_cell = (
+        table
+        .rows[0]
+        .cells[0]
+    )
+
+
+    first_paragraph = (
+        first_cell
+        .paragraphs[0]
+    )
+
+
+    if not entries:
+
+        run = first_paragraph.add_run(
+            "No se encontraron secciones."
+        )
+
+        run.font.name = (
+            "Arial"
+        )
+
+        run.font.size = Pt(
+            10
+        )
+
+        return
+
+
+    # =====================================================
+    # CREATE ENTRIES
+    # =====================================================
+
+    for index, entry in enumerate(
+        entries
+    ):
+
+        if index == 0:
+
+            paragraph = (
+                first_paragraph
+            )
+
+        else:
+
+            row = (
+                table
+                .add_row()
+            )
+
+
+            paragraph = (
+                row
+                .cells[0]
+                .paragraphs[0]
+            )
+
+
+        level = entry.get(
+            "level",
+            1
+        )
+
+
+        # =================================================
+        # INDENT ACCORDING TO LEVEL
+        # =================================================
+
+        paragraph.paragraph_format.left_indent = Cm(
+            (
+                level - 1
+            )
+            *
+            0.75
+        )
+
+
+        paragraph.paragraph_format.space_before = Pt(
+            0
+        )
+
+
+        paragraph.paragraph_format.space_after = Pt(
+            3
+        )
+
+
+        paragraph.paragraph_format.keep_together = (
+            True
+        )
+
+
+        # =================================================
+        # CLICKABLE ENTRY
+        # =================================================
+
+        _add_internal_hyperlink(
+
+            paragraph,
+
+            entry[
+                "text"
+            ],
+
+            entry[
+                "bookmark"
+            ],
+
+            bold=(
+                level == 1
+            )
+        )
+
+
+# =========================================================
 # CREATE HEADER
 # =========================================================
 
@@ -1068,6 +1628,25 @@ def create_header(
 
         run = p.add_run(
             title
+        )
+
+        # =================================================
+        # REGISTER IN TABLE OF CONTENTS
+        # =================================================
+
+        _register_toc_heading(
+
+            document,
+
+            p,
+
+            run,
+
+            number_text,
+
+            title,
+
+            level
         )
 
 

@@ -6,7 +6,6 @@
 from io import BytesIO
 from datetime import datetime
 import os
-import tempfile
 
 from oic_doc_generator.api.job_manager import (
     initialize_progress,
@@ -21,10 +20,6 @@ from docx.enum.style import WD_STYLE_TYPE
 
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
-
-from oic_doc_generator.backend.utils.toc_updater import (
-    update_table_of_contents
-)
 
 from oic_doc_generator.backend.generators.database_design_generator import (
     add_database_design_section
@@ -122,7 +117,9 @@ from oic_doc_generator.backend.renderers.screenshot_renderer import (
 
 from oic_doc_generator.backend.utils.word_utils import (
     create_header,
-    add_description_box
+    add_description_box,
+    create_toc_table,
+    populate_toc_table
 )
 
 # =========================================================
@@ -1020,44 +1017,15 @@ def generate_word_document(
         "Tabla de Contenido"
     )
 
-    paragraph = document.add_paragraph()
 
-    run = paragraph.add_run()
+    # =====================================================
+    # TABLE OF CONTENTS
+    # =====================================================
 
-    fld_char_begin = parse_xml(
-        r'<w:fldChar '
-        r'w:fldCharType="begin" '
-        r'w:dirty="true" '
-        r'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+    toc_table = create_toc_table(
+        document
     )
 
-    instr_text = parse_xml(
-        r'<w:instrText xml:space="preserve" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"> TOC \o "1-3" \h \z \u </w:instrText>'
-    )
-
-    fld_char_separate = parse_xml(
-        r'<w:fldChar w:fldCharType="separate" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
-    )
-
-    fld_char_end = parse_xml(
-        r'<w:fldChar w:fldCharType="end" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
-    )
-
-    run._r.append(
-        fld_char_begin
-    )
-
-    run._r.append(
-        instr_text
-    )
-
-    run._r.append(
-        fld_char_separate
-    )
-
-    run._r.append(
-        fld_char_end
-    )
 
     document.add_page_break()
 
@@ -2869,108 +2837,43 @@ def generate_word_document(
 
 
     # =====================================================
-    # SAVE TEMPORARY WORD
+    # POPULATE TABLE OF CONTENTS
     # =====================================================
 
-    temp_file = tempfile.NamedTemporaryFile(
-        suffix=".docx",
-        delete=False
+    populate_toc_table(
+        document,
+        toc_table
     )
 
-    temp_path = temp_file.name
 
-    temp_file.close()
+    # =====================================================
+    # SAVE WORD
+    # =====================================================
+
+    output = BytesIO()
+
+    document.save(
+        output
+    )
 
 
-    try:
+    if job_id:
 
-        # =================================================
-        # SAVE PYTHON-DOCX DOCUMENT
-        # =================================================
+        advance_progress(
 
-        document.save(
-            temp_path
+            job_id,
+
+            component="Documento",
+
+            detail="Generando archivo final",
+
+            object_name="Word"
         )
 
 
-        # =================================================
-        # UPDATE TABLE OF CONTENTS
-        # =================================================
-
-        print(
-            "[WORD] Actualizando tabla de contenido..."
-        )
+    output.seek(
+        0
+    )
 
 
-        # update_table_of_contents(
-        #     temp_path
-        # )
-
-
-        print(
-            "[WORD] Tabla de contenido actualizada."
-        )
-
-
-        # =================================================
-        # READ UPDATED DOCUMENT
-        # =================================================
-
-        with open(
-            temp_path,
-            "rb"
-        ) as file:
-
-            output = BytesIO(
-                file.read()
-            )
-
-
-        # =================================================
-        # PROGRESS
-        # =================================================
-
-        if job_id:
-
-            advance_progress(
-
-                job_id,
-
-                component="Documento",
-
-                detail="Generando archivo final",
-
-                object_name="Word"
-            )
-
-
-        output.seek(
-            0
-        )
-
-
-        return output
-
-
-    finally:
-
-        # =================================================
-        # CLEAN TEMP DOCUMENT
-        # =================================================
-
-        try:
-
-            if os.path.exists(
-                temp_path
-            ):
-
-                os.remove(
-                    temp_path
-                )
-
-        except Exception as cleanup_error:
-
-            print(
-                "[WORD CLEANUP]",
-                cleanup_error
-            )
+    return output
