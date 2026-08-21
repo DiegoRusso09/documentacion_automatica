@@ -28,6 +28,10 @@ from docx.oxml.ns import (
     nsdecls
 )
 
+from oic_doc_generator.backend.utils.word_utils import (
+    create_header as create_shared_header
+)
+
 # =========================================================
 # APPLY HEADER STYLE
 # =========================================================
@@ -77,33 +81,11 @@ def create_header(
     size=16
 ):
 
-    # =====================================================
-    # HD1
-    # =====================================================
-
-    if text.startswith("5\t"):
-
-        p = document.add_paragraph(
-            style="HD1"
-        )
-
-    # =====================================================
-    # HD2
-    # =====================================================
-
-    else:
-
-        p = document.add_paragraph(
-            style="HD2"
-        )
-
-    run = p.add_run(text)
-
-    run.bold = True
-
-    run.font.name = "Arial"
-
-    run.font.size = Pt(size)
+    return create_shared_header(
+        document,
+        text,
+        size=size
+    )
 
 
 # =========================================================

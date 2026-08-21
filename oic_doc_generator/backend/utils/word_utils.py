@@ -13,7 +13,9 @@ from docx.shared import (
 )
 
 from docx.enum.text import (
-    WD_PARAGRAPH_ALIGNMENT
+    WD_PARAGRAPH_ALIGNMENT,
+    WD_TAB_ALIGNMENT,
+    WD_TAB_LEADER
 )
 
 from docx.oxml import (
@@ -1014,20 +1016,17 @@ def _register_toc_heading(
 def _add_internal_hyperlink(
     paragraph,
     text,
-    bookmark_name,
-    bold=False
+    bookmark_name
 ):
 
     hyperlink = OxmlElement(
         "w:hyperlink"
     )
 
-
     hyperlink.set(
         qn("w:anchor"),
         bookmark_name
     )
-
 
     hyperlink.set(
         qn("w:history"),
@@ -1035,14 +1034,9 @@ def _add_internal_hyperlink(
     )
 
 
-    # =====================================================
-    # RUN
-    # =====================================================
-
     run = OxmlElement(
         "w:r"
     )
-
 
     run_properties = OxmlElement(
         "w:rPr"
@@ -1057,24 +1051,20 @@ def _add_internal_hyperlink(
         "w:rFonts"
     )
 
-
     fonts.set(
         qn("w:ascii"),
         "Arial"
     )
-
 
     fonts.set(
         qn("w:hAnsi"),
         "Arial"
     )
 
-
     fonts.set(
         qn("w:eastAsia"),
         "Arial"
     )
-
 
     run_properties.append(
         fonts
@@ -1082,55 +1072,50 @@ def _add_internal_hyperlink(
 
 
     # =====================================================
-    # FONT SIZE 10 PT
+    # FONT SIZE
+    # 9 PT = 18 half-points
     # =====================================================
 
-    font_size = OxmlElement(
+    size = OxmlElement(
         "w:sz"
     )
 
-
-    font_size.set(
+    size.set(
         qn("w:val"),
-        "20"
+        "18"
     )
-
 
     run_properties.append(
-        font_size
+        size
     )
 
 
-    font_size_complex = OxmlElement(
+    size_cs = OxmlElement(
         "w:szCs"
     )
 
-
-    font_size_complex.set(
+    size_cs.set(
         qn("w:val"),
-        "20"
+        "18"
     )
 
-
     run_properties.append(
-        font_size_complex
+        size_cs
     )
 
 
     # =====================================================
-    # BLACK COLOR
+    # BLACK
     # =====================================================
 
     color = OxmlElement(
         "w:color"
     )
 
-
     color.set(
         qn("w:val"),
         "000000"
     )
-
 
     run_properties.append(
         color
@@ -1145,32 +1130,14 @@ def _add_internal_hyperlink(
         "w:u"
     )
 
-
     underline.set(
         qn("w:val"),
         "none"
     )
 
-
     run_properties.append(
         underline
     )
-
-
-    # =====================================================
-    # BOLD TOP LEVEL
-    # =====================================================
-
-    if bold:
-
-        bold_element = OxmlElement(
-            "w:b"
-        )
-
-
-        run_properties.append(
-            bold_element
-        )
 
 
     run.append(
@@ -1178,19 +1145,13 @@ def _add_internal_hyperlink(
     )
 
 
-    # =====================================================
-    # TEXT
-    # =====================================================
-
     text_element = OxmlElement(
         "w:t"
     )
 
-
     text_element.text = (
         text
     )
-
 
     run.append(
         text_element
@@ -1201,9 +1162,171 @@ def _add_internal_hyperlink(
         run
     )
 
-
     paragraph._p.append(
         hyperlink
+    )
+
+
+# =========================================================
+# ADD PAGE REFERENCE FIELD
+# =========================================================
+
+def _add_pageref_field(
+    paragraph,
+    bookmark_name
+):
+
+    run = paragraph.add_run()
+
+
+    # =====================================================
+    # FIELD BEGIN
+    # =====================================================
+
+    field_begin = OxmlElement(
+        "w:fldChar"
+    )
+
+    field_begin.set(
+        qn("w:fldCharType"),
+        "begin"
+    )
+
+    field_begin.set(
+        qn("w:dirty"),
+        "true"
+    )
+
+
+    # =====================================================
+    # FIELD INSTRUCTION
+    # =====================================================
+
+    instruction = OxmlElement(
+        "w:instrText"
+    )
+
+    instruction.set(
+        qn("xml:space"),
+        "preserve"
+    )
+
+    instruction.text = (
+        f" PAGEREF {bookmark_name} \\h "
+    )
+
+
+    # =====================================================
+    # FIELD SEPARATOR
+    # =====================================================
+
+    field_separator = OxmlElement(
+        "w:fldChar"
+    )
+
+    field_separator.set(
+        qn("w:fldCharType"),
+        "separate"
+    )
+
+
+    # =====================================================
+    # INITIAL RESULT
+    # =====================================================
+
+    result_run = OxmlElement(
+        "w:r"
+    )
+
+    result_properties = OxmlElement(
+        "w:rPr"
+    )
+
+
+    fonts = OxmlElement(
+        "w:rFonts"
+    )
+
+    fonts.set(
+        qn("w:ascii"),
+        "Arial"
+    )
+
+    fonts.set(
+        qn("w:hAnsi"),
+        "Arial"
+    )
+
+    result_properties.append(
+        fonts
+    )
+
+
+    size = OxmlElement(
+        "w:sz"
+    )
+
+    size.set(
+        qn("w:val"),
+        "18"
+    )
+
+    result_properties.append(
+        size
+    )
+
+
+    result_run.append(
+        result_properties
+    )
+
+
+    result_text = OxmlElement(
+        "w:t"
+    )
+
+    # Word reemplazará este valor al actualizar el campo.
+    result_text.text = "1"
+
+    result_run.append(
+        result_text
+    )
+
+
+    # =====================================================
+    # FIELD END
+    # =====================================================
+
+    field_end = OxmlElement(
+        "w:fldChar"
+    )
+
+    field_end.set(
+        qn("w:fldCharType"),
+        "end"
+    )
+
+
+    run._r.append(
+        field_begin
+    )
+
+    run._r.append(
+        instruction
+    )
+
+    run._r.append(
+        field_separator
+    )
+
+    paragraph._p.append(
+        result_run
+    )
+
+    end_run = paragraph.add_run()
+
+    end_run._r.append(
+        field_end
     )
 
 
@@ -1215,64 +1338,49 @@ def create_toc_table(
     document
 ):
 
-    table = document.add_table(
-        rows=1,
-        cols=1
+    # =====================================================
+    # CONTENT LABEL
+    # =====================================================
+
+    content_title = document.add_paragraph()
+
+    content_title.paragraph_format.space_before = Pt(
+        18
+    )
+
+    content_title.paragraph_format.space_after = Pt(
+        4
     )
 
 
-    table.autofit = True
+    run = content_title.add_run(
+        "Contenido"
+    )
+
+    run.bold = True
+
+    run.font.name = (
+        "Arial"
+    )
+
+    run.font.size = Pt(
+        11
+    )
+
+    run.font.color.rgb = RGBColor(
+        47,
+        85,
+        151
+    )
 
 
     # =====================================================
-    # REMOVE TABLE BORDERS
+    # PLACEHOLDER
     # =====================================================
 
-    table_properties = (
-        table
-        ._tbl
-        .tblPr
-    )
+    placeholder = document.add_paragraph()
 
-
-    borders = OxmlElement(
-        "w:tblBorders"
-    )
-
-
-    for border_name in [
-
-        "top",
-        "left",
-        "bottom",
-        "right",
-        "insideH",
-        "insideV"
-
-    ]:
-
-        border = OxmlElement(
-            f"w:{border_name}"
-        )
-
-
-        border.set(
-            qn("w:val"),
-            "nil"
-        )
-
-
-        borders.append(
-            border
-        )
-
-
-    table_properties.append(
-        borders
-    )
-
-
-    return table
+    return placeholder
 
 
 # =========================================================
@@ -1283,6 +1391,10 @@ def populate_toc_table(
     document,
     table
 ):
+
+    # "table" ahora realmente es el paragraph placeholder.
+    placeholder = table
+
 
     state = _get_toc_state(
         document
@@ -1295,26 +1407,14 @@ def populate_toc_table(
     )
 
 
-    # =====================================================
-    # FIRST DEFAULT ROW
-    # =====================================================
-
-    first_cell = (
-        table
-        .rows[0]
-        .cells[0]
-    )
-
-
-    first_paragraph = (
-        first_cell
-        .paragraphs[0]
-    )
-
-
     if not entries:
 
-        run = first_paragraph.add_run(
+        paragraph = (
+            placeholder
+            .insert_paragraph_before()
+        )
+
+        run = paragraph.add_run(
             "No se encontraron secciones."
         )
 
@@ -1323,96 +1423,226 @@ def populate_toc_table(
         )
 
         run.font.size = Pt(
-            10
+            9
         )
 
         return
 
 
     # =====================================================
+    # AVAILABLE PAGE WIDTH
+    # =====================================================
+
+    section = document.sections[
+        0
+    ]
+
+
+    available_width = (
+
+        section.page_width
+
+        -
+
+        section.left_margin
+
+        -
+
+        section.right_margin
+    )
+
+
+    # Leave a little space before right margin.
+    page_number_position = (
+
+        available_width
+
+        -
+
+        Cm(
+            0.15
+        )
+    )
+
+
+    # =====================================================
     # CREATE ENTRIES
     # =====================================================
 
-    for index, entry in enumerate(
-        entries
-    ):
+    for entry in entries:
 
-        if index == 0:
+        number_text = entry.get(
+            "number",
+            ""
+        )
 
-            paragraph = (
-                first_paragraph
-            )
-
-        else:
-
-            row = (
-                table
-                .add_row()
-            )
-
-
-            paragraph = (
-                row
-                .cells[0]
-                .paragraphs[0]
-            )
-
+        title = entry.get(
+            "title",
+            ""
+        )
 
         level = entry.get(
             "level",
             1
         )
 
-
-        # =================================================
-        # INDENT ACCORDING TO LEVEL
-        # =================================================
-
-        paragraph.paragraph_format.left_indent = Cm(
-            (
-                level - 1
-            )
-            *
-            0.75
+        bookmark = entry.get(
+            "bookmark",
+            ""
         )
 
+
+        paragraph = (
+            placeholder
+            .insert_paragraph_before()
+        )
+
+
+        # =================================================
+        # BASIC FORMAT
+        # =================================================
 
         paragraph.paragraph_format.space_before = Pt(
             0
         )
 
-
         paragraph.paragraph_format.space_after = Pt(
-            3
+            2
         )
 
-
-        paragraph.paragraph_format.keep_together = (
-            True
+        paragraph.paragraph_format.line_spacing = (
+            1
         )
 
 
         # =================================================
-        # CLICKABLE ENTRY
+        # LEVEL POSITION
+        # =================================================
+
+        if level == 1:
+
+            paragraph.paragraph_format.left_indent = Cm(
+                0
+            )
+
+            title_position = Cm(
+                0.85
+            )
+
+        else:
+
+            paragraph.paragraph_format.left_indent = Cm(
+                0.35
+            )
+
+            title_position = Cm(
+                1.65
+            )
+
+
+        # =================================================
+        # TAB STOPS
+        # =================================================
+
+        tab_stops = (
+            paragraph
+            .paragraph_format
+            .tab_stops
+        )
+
+
+        # Position where title begins after section number.
+        if number_text:
+
+            tab_stops.add_tab_stop(
+
+                title_position,
+
+                WD_TAB_ALIGNMENT.LEFT
+            )
+
+
+        # Right tab with dot leader.
+        tab_stops.add_tab_stop(
+
+            page_number_position,
+
+            WD_TAB_ALIGNMENT.RIGHT,
+
+            WD_TAB_LEADER.DOTS
+        )
+
+
+        # =================================================
+        # NUMBER
+        # =================================================
+
+        if number_text:
+
+            number_run = paragraph.add_run(
+                number_text
+            )
+
+            number_run.font.name = (
+                "Arial"
+            )
+
+            number_run.font.size = Pt(
+                9
+            )
+
+
+            number_run.add_tab()
+
+
+        # =================================================
+        # TITLE / INTERNAL LINK
         # =================================================
 
         _add_internal_hyperlink(
 
             paragraph,
 
-            entry[
-                "text"
-            ],
+            title,
 
-            entry[
-                "bookmark"
-            ],
-
-            bold=(
-                level == 1
-            )
+            bookmark
         )
 
+
+        # =================================================
+        # DOT LEADER
+        # =================================================
+
+        separator_run = (
+            paragraph.add_run()
+        )
+
+        separator_run.add_tab()
+
+
+        # =================================================
+        # PAGE NUMBER
+        # =================================================
+
+        _add_pageref_field(
+
+            paragraph,
+
+            bookmark
+        )
+
+
+    # =====================================================
+    # REMOVE PLACEHOLDER
+    # =====================================================
+
+    placeholder_element = (
+        placeholder._element
+    )
+
+    placeholder_element.getparent().remove(
+        placeholder_element
+    )
 
 # =========================================================
 # CREATE HEADER
@@ -1682,6 +1912,27 @@ def create_header(
         run = p.add_run(
             text
         )
+
+        # =================================================
+        # TABLE OF CONTENTS TITLE
+        # =================================================
+
+        if text == "Tabla de Contenido":
+
+            _register_toc_heading(
+
+                document,
+
+                p,
+
+                run,
+
+                "",
+
+                text,
+
+                1
+            )
 
 
     # =====================================================
