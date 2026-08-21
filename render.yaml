@@ -1,10 +1,7 @@
 services:
   - type: web
-
     name: documentacion-automatica
-
     runtime: python
-
     plan: free
 
     buildCommand: |
@@ -13,7 +10,7 @@ services:
       pip install -r requirements.txt
 
     startCommand: |
-      uvicorn oic_doc_generator.main:app --host 0.0.0.0 --port $PORT
+      uvicorn oic_doc_generator.main:app --host 0.0.0.0 --port $PORT --workers 1
 
     envVars:
       - key: PYTHON_VERSION
