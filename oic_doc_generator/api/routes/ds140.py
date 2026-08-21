@@ -2,7 +2,8 @@ from fastapi import (
     APIRouter,
     UploadFile,
     File,
-    Form
+    Form,
+    HTTPException
 )
 
 from fastapi.responses import (
@@ -12,10 +13,12 @@ from fastapi.responses import (
 from io import BytesIO
 
 import asyncio
+import traceback
 
 from oic_doc_generator.api.job_manager import (
     create_job,
-    get_job
+    get_job,
+    fail_job
 )
 
 from oic_doc_generator.api.services.ds140_service import (
@@ -56,6 +59,84 @@ async def to_memory_files(
 
 
 # =========================================================
+# BACKGROUND WORKER
+# =========================================================
+
+def run_ds140_job(
+
+    job_id,
+
+    author_name,
+
+    development_name,
+
+    vb_files,
+
+    apex_files,
+
+    oic_files,
+
+    bip_files,
+
+    sql_files
+):
+
+    try:
+
+        print(
+            f"[DS140] Iniciando job {job_id}"
+        )
+
+        generate_ds140_service(
+
+            job_id,
+
+            author_name,
+
+            development_name,
+
+            vb_files,
+
+            apex_files,
+
+            oic_files,
+
+            bip_files,
+
+            sql_files
+        )
+
+        print(
+            f"[DS140] Job {job_id} finalizado"
+        )
+
+    except Exception as error:
+
+        print(
+            "========================================"
+        )
+
+        print(
+            f"[DS140 ERROR] Job: {job_id}"
+        )
+
+        print(
+            f"[DS140 ERROR] {error}"
+        )
+
+        traceback.print_exc()
+
+        print(
+            "========================================"
+        )
+
+        fail_job(
+            job_id,
+            error
+        )
+
+
+# =========================================================
 # START DS140
 # =========================================================
 
@@ -89,9 +170,13 @@ async def start_ds140(
 
     job_id = create_job()
 
+    print(
+        f"[DS140] Job creado: {job_id}"
+    )
+
 
     # =====================================================
-    # COPY FILES WHILE REQUEST IS STILL ACTIVE
+    # COPY FILES WHILE REQUEST IS ACTIVE
     # =====================================================
 
     vb_memory_files = (
@@ -125,6 +210,27 @@ async def start_ds140(
     )
 
 
+    print(
+        "[DS140] Archivos recibidos:",
+        {
+            "vb":
+                len(vb_memory_files),
+
+            "apex":
+                len(apex_memory_files),
+
+            "oic":
+                len(oic_memory_files),
+
+            "bip":
+                len(bip_memory_files),
+
+            "sql":
+                len(sql_memory_files)
+        }
+    )
+
+
     # =====================================================
     # BACKGROUND PROCESS
     # =====================================================
@@ -133,7 +239,7 @@ async def start_ds140(
 
         asyncio.to_thread(
 
-            generate_ds140_service,
+            run_ds140_job,
 
             job_id,
 
@@ -170,9 +276,27 @@ def get_status(
     job_id: str
 ):
 
-    return get_job(
+    job = get_job(
         job_id
     )
+
+
+    if job is None:
+
+        print(
+            f"[DS140 STATUS] Job no encontrado: {job_id}"
+        )
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail=
+                f"Job no encontrado: {job_id}"
+        )
+
+
+    return job
 
 
 # =========================================================
@@ -191,11 +315,12 @@ def download_file(
 
     if not job:
 
-        return {
+        raise HTTPException(
 
-            "error":
-                "job not found"
-        }
+            status_code=404,
+
+            detail="Job no encontrado"
+        )
 
 
     if (
@@ -204,11 +329,12 @@ def download_file(
         "completed"
     ):
 
-        return {
+        raise HTTPException(
 
-            "error":
-                "job not completed"
-        }
+            status_code=409,
+
+            detail="Job todavía no completado"
+        )
 
 
     return FileResponse(

@@ -1021,14 +1021,25 @@
 
             if (!response.ok) {
 
+                const errorText =
+                    await response.text();
+
                 throw new Error(
-                    `Error consultando estado: ${response.status}`
+                    `Error consultando estado (${response.status}): ${errorText}`
                 );
             }
 
 
             const job =
                 await response.json();
+
+
+            if (!job) {
+
+                throw new Error(
+                    "El backend no encontró el proceso de generación."
+                );
+            }
 
 
             const progress =
@@ -1171,6 +1182,25 @@
                 "[DS140 STATUS]",
                 error
             );
+
+
+            if (statusInterval) {
+
+                clearInterval(
+                    statusInterval
+                );
+
+                statusInterval =
+                    null;
+            }
+
+
+            alert(
+                error.message
+            );
+
+
+            resetButton();
         }
     }
 
