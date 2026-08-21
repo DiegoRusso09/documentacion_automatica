@@ -2902,9 +2902,9 @@ def generate_word_document(
         )
 
 
-        update_table_of_contents(
-            temp_path
-        )
+        # update_table_of_contents(
+        #     temp_path
+        # )
 
 
         print(
