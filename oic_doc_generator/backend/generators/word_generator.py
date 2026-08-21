@@ -29,7 +29,10 @@ from docx.enum.text import (
     WD_PARAGRAPH_ALIGNMENT
 )
 
-from docx.oxml import parse_xml
+from docx.oxml import (
+    parse_xml,
+    OxmlElement
+)
 
 from docx.oxml.ns import (
     nsdecls,
@@ -255,6 +258,24 @@ def create_custom_styles(
 
         pPr = style.element.get_or_add_pPr()
 
+        # ================================================
+        # OUTLINE LEVEL 1
+        # Word lo reconocerá como Título nivel 1
+        # ================================================
+
+        outline_level = OxmlElement(
+            "w:outlineLvl"
+        )
+
+        outline_level.set(
+            qn("w:val"),
+            "0"
+        )
+
+        pPr.append(
+            outline_level
+        )
+
         border_xml = parse_xml(r'''
             <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
                 <w:top
@@ -289,6 +310,24 @@ def create_custom_styles(
         # ================================================
 
         pPr = style.element.get_or_add_pPr()
+
+        # ================================================
+        # OUTLINE LEVEL 2
+        # Word lo reconocerá como Título nivel 2
+        # ================================================
+
+        outline_level = OxmlElement(
+            "w:outlineLvl"
+        )
+
+        outline_level.set(
+            qn("w:val"),
+            "1"
+        )
+
+        pPr.append(
+            outline_level
+        )
 
         border_xml = parse_xml(r'''
             <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
