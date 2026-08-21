@@ -1,368 +1,603 @@
-.ds140-container{
+/* =========================================================
+   DS140 - CONTENEDOR GENERAL
+   ========================================================= */
 
-max-width:1400px;
-
-margin:auto;
-
-padding:40px;
-
+.ds140-container {
+    max-width: 1400px;
+    margin: auto;
+    padding: 40px;
 }
 
-.card{
 
-background:white;
+/* =========================================================
+   CARDS
+   ========================================================= */
 
-border-radius:12px;
-
-padding:25px;
-
-box-shadow:
-    0 4px 10px rgba(
-        0,
-        0,
-        0,
-        .08
-    );
-
-}
-
-.page-header{
-
-margin-bottom:30px;
-
-}
-
-.page-header h1{
-
-color:#C74634;
-
-}
-
-.form-grid{
-
-display:grid;
-
-grid-template-columns:
-    repeat(
-        2,
-        1fr
-    );
-
-gap:20px;
-
-}
-
-.form-grid input{
-
-width:100%;
-
-padding:10px;
-
-}
-
-.top-layout{
-
-margin-top:30px;
-
-display:grid;
-
-grid-template-columns:
-    1fr 1fr;
-
-gap:25px;
-
-}
-
-.components{
-
-display:flex;
-
-flex-direction:column;
-
-gap:15px;
-
-}
-
-.summary{
-
-display:flex;
-
-flex-direction:column;
-
-gap:12px;
-
-}
-
-.artifacts{
-
-margin-top:30px;
-
-}
-
-.accordion{
-
-background:white;
-
-margin-bottom:15px;
-
-border-radius:10px;
-
-overflow:hidden;
-
-box-shadow:
-    0 4px 10px rgba(
-        0,
-        0,
-        0,
-        .06
-    );
-
-}
-
-.accordion summary{
-
-padding:18px;
-
-cursor:pointer;
-
-font-weight:600;
-
-}
-
-.dropzone{
-
-margin:20px;
-
-border:2px dashed #cfd8dc;
-
-border-radius:8px;
-
-min-height:120px;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-color:#888;
-
-}
-
-.generate-section{
-
-text-align:center;
-
-margin-top:40px;
-
-}
-
-.generate-btn{
-
-background:#C74634;
-
-color:white;
-
-border:none;
-
-padding:15px 40px;
-
-border-radius:8px;
-
-font-size:16px;
-
-cursor:pointer;
-
-}
-.oic-upload-container {
-    padding: 20px;
-}
-
-.oic-upload-description {
-    color: #666;
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-
-.oic-dropzone {
-    border: 3px dashed #3498db;
-    border-radius: 10px;
-    padding: 35px;
-    text-align: center;
-    cursor: pointer;
-    background: #f8f9fa;
-    transition: all .3s;
-}
-
-.oic-dropzone:hover {
-    background: #eef7ff;
-}
-
-.oic-dropzone.dragover {
-    border-color: #2ecc71;
-    background: #eafaf1;
-}
-
-.oic-dropzone h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-}
-
-.oic-dropzone p {
-    margin-bottom: 0;
-}
-
-.oic-local-counter {
-    margin-top: 15px;
-    font-weight: bold;
-}
-
-.oic-file-list {
-    margin-top: 15px;
-}
-
-.oic-file-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 10px;
-    margin-bottom: 8px;
-
-    border: 1px solid #ddd;
-    border-radius: 6px;
-
+.card {
     background: white;
+
+    border-radius: 12px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 4px 12px rgba(
+            0,
+            0,
+            0,
+            0.08
+        );
 }
 
-.oic-file-info {
-    flex: 1;
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.page-header {
+    margin-bottom: 30px;
 }
 
-.oic-remove-btn {
-    background: #dc3545;
-    color: white;
+.page-header h1 {
+    margin-bottom: 8px;
 
-    border: none;
-    border-radius: 4px;
+    color: #C74634;
+}
 
-    width: 32px;
-    height: 32px;
+.page-header p {
+    margin: 0;
+
+    color: #666;
+}
+
+
+/* =========================================================
+   INFORMACIÓN DEL PROYECTO
+   ========================================================= */
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            1fr
+        );
+
+    gap: 20px;
+}
+
+.form-grid label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: 600;
+}
+
+.form-grid input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 11px 12px;
+
+    border: 1px solid #d4d8dc;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+        border-color .2s,
+        box-shadow .2s;
+}
+
+.form-grid input:focus {
+    border-color: #C74634;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            199,
+            70,
+            52,
+            0.10
+        );
+}
+
+
+/* =========================================================
+   COMPONENTES / RESUMEN
+   ========================================================= */
+
+.top-layout {
+    margin-top: 30px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 25px;
+}
+
+.components {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+}
+
+.summary {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   ARTEFACTOS
+   ========================================================= */
+
+.artifacts {
+    margin-top: 30px;
+}
+
+
+/* =========================================================
+   ACCORDION
+   ========================================================= */
+
+.accordion {
+    background: white;
+
+    margin-bottom: 15px;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 3px 10px rgba(
+            0,
+            0,
+            0,
+            0.06
+        );
+}
+
+.accordion summary {
+    padding: 18px;
 
     cursor: pointer;
+
+    font-weight: 600;
+
+    user-select: none;
+
+    transition:
+        background .2s;
 }
 
-.oic-remove-btn:hover {
-    background: #c82333;
+.accordion summary:hover {
+    background: #fafafa;
 }
 
-.oic-empty-message {
-    color: #777;
-    font-style: italic;
+.accordion[open] summary {
+    border-bottom:
+        1px solid #eeeeee;
 }
 
 
+/* =========================================================
+   CONTENIDO DEL ACCORDION
+   ========================================================= */
 
 .section-container {
-    margin: 20px;
+    padding: 22px;
+
+    margin: 0;
 }
 
 .section-desc {
+    margin:
+        0
+        0
+        16px
+        0;
+
     color: #666;
-    margin-top: 0;
-    margin-bottom: 15px;
+
     font-size: 14px;
 }
 
-.dropzone {
-    border: 3px dashed #3498db;
-    border-radius: 10px;
 
-    padding: 35px;
+/* =========================================================
+   DROPZONE
+   ========================================================= */
+
+.accordion .dropzone {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    min-height: 145px;
+
     margin: 0;
 
-    min-height: 100px;
+    padding: 30px;
 
-    display: block;
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 6px;
+
+    border:
+        2px dashed
+        #b9c4cc;
+
+    border-radius: 10px;
+
+    background: #fafbfc;
+
+    color: #69757d;
 
     text-align: center;
 
     cursor: pointer;
 
-    background: #f8f9fa;
-
-    transition: all .3s;
+    transition:
+        border-color .2s,
+        background .2s,
+        transform .2s;
 }
 
-.dropzone:hover {
-    background: #eef7ff;
+
+/* =========================================================
+   DROPZONE HOVER
+   ========================================================= */
+
+.accordion .dropzone:hover {
+    border-color: #C74634;
+
+    background: #fff7f5;
 }
 
-.dropzone.dragover {
-    border-color: #2ecc71;
-    background: #eafaf1;
+
+/* =========================================================
+   DROPZONE DRAG
+   ========================================================= */
+
+.accordion .dropzone.dragover {
+    border-color: #2e9d59;
+
+    background: #edf9f1;
+
+    transform:
+        scale(1.005);
 }
 
-.dropzone h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
+
+/* =========================================================
+   DROPZONE TEXTOS
+   ========================================================= */
+
+.accordion .dropzone h3 {
+    margin: 0;
+
+    font-size: 17px;
+
+    font-weight: 600;
+
+    color: #505a60;
 }
 
-.dropzone p {
-    margin-top: 0;
-    margin-bottom: 0;
+.accordion .dropzone p {
+    margin: 0;
+
+    font-size: 14px;
+
+    color: #7b858c;
 }
 
-.fileInput {
-    display: none;
+
+/* =========================================================
+   INPUT FILE OCULTO
+   ========================================================= */
+
+.accordion input.fileInput {
+    display: none !important;
 }
 
-.counter {
-    margin-top: 15px;
-    font-weight: bold;
+
+/* =========================================================
+   CONTADOR
+   ========================================================= */
+
+.accordion .counter {
+    margin-top: 18px;
+
+    padding-bottom: 10px;
+
+    color: #4d555a;
+
+    font-size: 14px;
+
+    font-weight: 600;
 }
 
-.file-list {
-    margin-top: 15px;
+.accordion .counter-val {
+    color: #C74634;
+
+    font-weight: 700;
 }
 
-.file-item {
+
+/* =========================================================
+   LISTA DE ARCHIVOS
+   ========================================================= */
+
+.accordion .file-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   ARCHIVO
+   ========================================================= */
+
+.accordion .file-item {
     display: flex;
 
     justify-content: space-between;
+
     align-items: center;
 
-    padding: 10px;
-    margin-bottom: 8px;
+    gap: 20px;
 
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 12px 14px;
 
-    background: white;
+    border:
+        1px solid
+        #e1e5e8;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 1px 3px rgba(
+            0,
+            0,
+            0,
+            0.04
+        );
+
+    transition:
+        border-color .2s,
+        box-shadow .2s;
 }
 
-.file-info {
+.accordion .file-item:hover {
+    border-color: #c8cfd4;
+
+    box-shadow:
+        0 2px 6px rgba(
+            0,
+            0,
+            0,
+            0.06
+        );
+}
+
+
+/* =========================================================
+   INFORMACIÓN DEL ARCHIVO
+   ========================================================= */
+
+.accordion .file-info {
     flex: 1;
+
+    min-width: 0;
+
+    color: #353b3f;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+    word-break: break-word;
 }
 
-.remove-btn {
-    background: #dc3545;
-    color: white;
+.accordion .file-info strong {
+    color: #C74634;
+}
+
+
+/* =========================================================
+   BOTÓN ELIMINAR
+   ========================================================= */
+
+.accordion .remove-btn {
+    flex-shrink: 0;
+
+    width: 34px;
+
+    height: 34px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: 0;
 
     border: none;
-    border-radius: 4px;
 
-    width: 32px;
-    height: 32px;
+    border-radius: 6px;
+
+    background: #f3f4f5;
+
+    color: #b42318;
+
+    font-size: 15px;
+
+    font-weight: bold;
 
     cursor: pointer;
+
+    transition:
+        background .2s,
+        color .2s,
+        transform .1s;
 }
 
-.remove-btn:hover {
-    background: #c82333;
+.accordion .remove-btn:hover {
+    background: #b42318;
+
+    color: white;
 }
 
-.empty-message {
-    color: #777;
+.accordion .remove-btn:active {
+    transform:
+        scale(.95);
+}
+
+
+/* =========================================================
+   SIN ARCHIVOS
+   ========================================================= */
+
+.accordion .empty-message {
+    padding: 14px;
+
+    border-radius: 7px;
+
+    background: #f8f9fa;
+
+    color: #899197;
+
+    font-size: 13px;
+
     font-style: italic;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   GENERAR
+   ========================================================= */
+
+.generate-section {
+    margin-top: 40px;
+
+    text-align: center;
+}
+
+.generate-btn {
+    min-width: 275px;
+
+    padding:
+        15px
+        40px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #C74634;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background .2s,
+        transform .1s,
+        box-shadow .2s;
+}
+
+.generate-btn:hover {
+    background: #b83d2d;
+
+    box-shadow:
+        0 4px 10px rgba(
+            199,
+            70,
+            52,
+            .25
+        );
+}
+
+.generate-btn:active {
+    transform:
+        translateY(1px);
+}
+
+.generate-btn:disabled {
+    opacity: .6;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+    max-width: 800px
+) {
+
+    .ds140-container {
+        padding: 20px;
+    }
+
+    .form-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .top-layout {
+        grid-template-columns:
+            1fr;
+    }
+
+    .accordion .dropzone {
+        min-height: 120px;
+
+        padding: 25px 15px;
+    }
+
+    .generate-btn {
+        width: 100%;
+
+        min-width: 0;
+    }
+
 }
