@@ -144,13 +144,7 @@
 
                 </div>
 
-                <input
-                    id="vb_files"
-                    type="file"
-                    class="fileInput"
-                    multiple
-                    accept=".zip"
-                >
+                <input id="vb_files" type="file" class="fileInput" multiple accept=".zip">
 
                 <div class="counter">
 
@@ -203,12 +197,7 @@
 
                 </div>
 
-                <input
-                    id="apex_files"
-                    type="file"
-                    class="fileInput"
-                    multiple
-                >
+                <input id="apex_files" type="file" class="fileInput" multiple>
 
                 <div class="counter">
 
@@ -261,13 +250,7 @@
 
                 </div>
 
-                <input
-                    id="oic_files"
-                    type="file"
-                    class="fileInput"
-                    multiple
-                    accept=".par,.iar"
-                >
+                <input id="oic_files" type="file" class="fileInput" multiple accept=".par,.iar">
 
                 <div class="counter">
 
@@ -321,13 +304,7 @@
 
                 </div>
 
-                <input
-                    id="bip_files"
-                    type="file"
-                    class="fileInput"
-                    multiple
-                    accept=".xdoz,.xdmz,.xdrz"
-                >
+                <input id="bip_files" type="file" class="fileInput" multiple accept=".xdoz,.xdmz,.xdrz">
 
                 <div class="counter">
 
@@ -380,13 +357,7 @@
 
                 </div>
 
-                <input
-                    id="sql_files"
-                    type="file"
-                    class="fileInput"
-                    multiple
-                    accept=".sql"
-                >
+                <input id="sql_files" type="file" class="fileInput" multiple accept=".sql">
 
                 <div class="counter">
 
@@ -418,6 +389,10 @@
 
             Generar Documento DS140
 
+        </button>
+
+        <button type="button" class="register-objects-btn" onclick="openRegisterObjectsDialog()">
+            Registrar Objetos
         </button>
 
         <div id="progress-container" style="
@@ -469,5 +444,109 @@
         </div>
 
     </section>
+
+    <dialog id="register-objects-dialog" class="register-dialog">
+
+        <div class="register-dialog-content">
+
+            <div class="register-dialog-header">
+
+                <h2>
+                    Registrar Objetos
+                </h2>
+
+            </div>
+
+
+            <div class="register-dialog-body">
+
+                <div class="register-form-grid">
+
+                    <div class="register-field">
+
+                        <label for="register_author">
+                            Autor
+                        </label>
+
+                        <input id="register_author" type="text" placeholder="Ingrese el autor">
+
+                    </div>
+
+
+                    <div class="register-field">
+
+                        <label for="register_development_name">
+                            Nombre de desarrollo
+                        </label>
+
+                        <input id="register_development_name" type="text"
+                            placeholder="Ingrese el nombre del desarrollo">
+
+                    </div>
+
+
+                    <div class="register-field">
+
+                        <label for="register_company">
+                            Empresa
+                        </label>
+
+                        <input id="register_company" type="text" placeholder="Ingrese la empresa">
+
+                    </div>
+
+
+                    <div id="register_schema_container" class="register-field" style="display:none;">
+
+                        <label for="register_schema">
+                            Esquema
+                        </label>
+
+                        <input id="register_schema" type="text" placeholder="Ingrese el esquema">
+
+                    </div>
+
+
+                    <div class="register-field">
+
+                        <label for="register_ticket">
+                            Número de ticket
+                        </label>
+
+                        <input id="register_ticket" type="text" placeholder="Ej. TEC-5245">
+
+                    </div>
+
+                </div>
+
+
+                <div id="register-response" class="register-response" style="display:none;">
+                </div>
+
+            </div>
+
+
+            <div class="register-dialog-actions">
+
+                <button type="button" class="register-dialog-btn register-confirm-btn" onclick="registerObjects()">
+                    Registrar Objetos
+                </button>
+
+
+                <button type="button" class="register-dialog-btn download-matrix-btn" onclick="downloadMatrix()">
+                    Descargar Matriz
+                </button>
+
+
+                <button type="button" class="register-dialog-btn cancel-register-btn"
+                    onclick="closeRegisterObjectsDialog()">
+                    Cancelar
+                </button>
+
+            </div>
+
+        </div>
+
+    </dialog>
 
 </div>

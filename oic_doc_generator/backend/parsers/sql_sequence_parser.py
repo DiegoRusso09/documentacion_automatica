@@ -76,7 +76,15 @@ def extract_sequences(
         \s+
         ([A-Z0-9_\."]+)
         (.*?)
-        ;
+        (?=
+            \n\s*/\s*\n
+            |
+            \n-+\n
+            |
+            CREATE\s+SEQUENCE
+            |
+            \Z
+        )
         """,
 
         flags=
@@ -87,9 +95,11 @@ def extract_sequences(
             re.VERBOSE
     )
 
+
     matches = pattern.finditer(
         sql_text
     )
+
 
     for match in matches:
 
@@ -100,21 +110,29 @@ def extract_sequences(
             .strip()
         )
 
+
+        sequence_body = (
+            match.group(2)
+            .strip()
+        )
+
+
         full_sql = (
+
             "CREATE SEQUENCE "
             + match.group(1)
-            + match.group(2)
-            + ";"
+            + " "
+            + sequence_body
         )
+
 
         result.append(
 
             parse_sequence(
-
                 sequence_name,
-
                 full_sql
             )
         )
+
 
     return result

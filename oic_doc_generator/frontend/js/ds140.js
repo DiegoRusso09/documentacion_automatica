@@ -160,7 +160,7 @@
 
         const config =
             componentConfig[
-                storeKey
+            storeKey
             ];
 
 
@@ -212,7 +212,7 @@
 
         const selectedFiles =
             fileStore[
-                storeKey
+            storeKey
             ];
 
 
@@ -532,14 +532,14 @@
                         </strong>
 
                         ${escapeHtml(
-                            file.name
-                        )}
+                        file.name
+                    )}
 
                         <br>
 
                         ${formatFileSize(
-                            file.size
-                        )}
+                        file.size
+                    )}
 
                     `;
 
@@ -738,13 +738,13 @@
 
         const config =
             componentConfig[
-                storeKey
+            storeKey
             ];
 
 
         const files =
             fileStore[
-                storeKey
+            storeKey
             ];
 
 
@@ -975,7 +975,7 @@
                 );
 
         }
-        catch(error) {
+        catch (error) {
 
             console.error(
                 "[DS140]",
@@ -1176,7 +1176,7 @@
             }
 
         }
-        catch(error) {
+        catch (error) {
 
             console.error(
                 "[DS140 STATUS]",
@@ -1233,12 +1233,375 @@
 
 
     // =====================================================
+    // ABRIR DIALOG REGISTRAR OBJETOS
+    // =====================================================
+
+    function openRegisterObjectsDialog() {
+
+        const dialog =
+            document.getElementById(
+                "register-objects-dialog"
+            );
+
+
+        const authorSource =
+            document.getElementById(
+                "author_name"
+            );
+
+
+        const developmentSource =
+            document.getElementById(
+                "development_name"
+            );
+
+
+        const authorTarget =
+            document.getElementById(
+                "register_author"
+            );
+
+
+        const developmentTarget =
+            document.getElementById(
+                "register_development_name"
+            );
+
+
+        const schemaContainer =
+            document.getElementById(
+                "register_schema_container"
+            );
+
+
+        if (!dialog) {
+
+            console.error(
+                "[DS140] No existe el diálogo de registro"
+            );
+
+            return;
+        }
+
+
+        // =============================================
+        // PRECARGAR AUTOR
+        // =============================================
+
+        if (authorTarget) {
+
+            authorTarget.value =
+                authorSource
+                    ? authorSource.value
+                    : "";
+        }
+
+
+        // =============================================
+        // PRECARGAR NOMBRE DESARROLLO
+        // =============================================
+
+        if (developmentTarget) {
+
+            developmentTarget.value =
+                developmentSource
+                    ? developmentSource.value
+                    : "";
+        }
+
+
+        // =============================================
+        // MOSTRAR ESQUEMA SOLO SI HAY SQL O APEX
+        // =============================================
+
+        const requiresSchema =
+
+            fileStore.sql.length > 0
+
+            ||
+
+            fileStore.apex.length > 0;
+
+
+        if (schemaContainer) {
+
+            schemaContainer.style.display =
+                requiresSchema
+                    ? "block"
+                    : "none";
+        }
+
+
+        dialog.showModal();
+    }
+
+
+    // =====================================================
+    // CERRAR DIALOG REGISTRAR OBJETOS
+    // =====================================================
+
+    function closeRegisterObjectsDialog() {
+
+        const dialog =
+            document.getElementById(
+                "register-objects-dialog"
+            );
+
+
+        const fields = [
+
+            "register_author",
+
+            "register_development_name",
+
+            "register_company",
+
+            "register_schema",
+
+            "register_ticket"
+        ];
+
+
+        fields.forEach(
+            fieldId => {
+
+                const field =
+                    document.getElementById(
+                        fieldId
+                    );
+
+
+                if (field) {
+
+                    field.value =
+                        "";
+                }
+            }
+        );
+
+
+        const responseContainer =
+            document.getElementById(
+                "register-response"
+            );
+
+
+        if (responseContainer) {
+
+            responseContainer.innerHTML =
+                "";
+
+            responseContainer.style.display =
+                "none";
+        }
+
+
+        if (dialog) {
+
+            dialog.close();
+        }
+    }
+
+
+    // =====================================================
+    // OBTENER DATOS DEL DIALOG
+    // =====================================================
+
+    function getRegisterFormData() {
+
+        const requiresSchema =
+            fileStore.sql.length > 0 ||
+            fileStore.apex.length > 0;
+
+
+        const data = {
+
+            autor:
+                document
+                    .getElementById("register_author")
+                    ?.value.trim() || "",
+
+            nombre_desarrollo:
+                document
+                    .getElementById("register_development_name")
+                    ?.value.trim() || "",
+
+            empresa:
+                document
+                    .getElementById("register_company")
+                    ?.value.trim() || "",
+
+            esquema:
+                document
+                    .getElementById("register_schema")
+                    ?.value.trim() || "",
+
+            numero_ticket:
+                document
+                    .getElementById("register_ticket")
+                    ?.value.trim() || "",
+
+            requiresSchema:
+                requiresSchema
+        };
+
+
+        return data;
+    }
+
+    // =====================================================
+    // REGISTRAR OBJETOS
+    // =====================================================
+
+    async function registerObjects() {
+
+        const data =
+            getRegisterFormData();
+
+
+        if (!data.autor) {
+
+            alert(
+                "Debe ingresar el autor."
+            );
+
+            return;
+        }
+
+
+        if (!data.nombre_desarrollo) {
+
+            alert(
+                "Debe ingresar el nombre de desarrollo."
+            );
+
+            return;
+        }
+
+
+        if (!data.empresa) {
+
+            alert(
+                "Debe ingresar la empresa."
+            );
+
+            return;
+        }
+
+
+        if (
+            data.requiresSchema &&
+            !data.esquema
+        ) {
+
+            alert(
+                "Debe ingresar el esquema."
+            );
+
+            return;
+        }
+
+
+        if (!data.numero_ticket) {
+
+            alert(
+                "Debe ingresar el número de ticket."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "[MATRIZ] Datos válidos:",
+            data
+        );
+
+
+        const responseContainer =
+            document.getElementById(
+                "register-response"
+            );
+
+
+        if (responseContainer) {
+
+            responseContainer.style.display =
+                "block";
+
+            responseContainer.innerHTML = `
+            <strong>
+                Validación correcta
+            </strong>
+
+            <br><br>
+
+            Los datos están listos para registrar los objetos.
+        `;
+        }
+    }
+
+    // =====================================================
+    // DESCARGAR MATRIZ
+    // =====================================================
+
+    function downloadMatrix() {
+
+        const ticket =
+            document
+                .getElementById(
+                    "register_ticket"
+                )
+                ?.value.trim();
+
+
+        if (!ticket) {
+
+            alert(
+                "Debe ingresar el número de ticket."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "[MATRIZ] Ticket para futura descarga:",
+            ticket
+        );
+
+
+        alert(
+            "La descarga de matriz se implementará posteriormente."
+        );
+    }
+
+    // =====================================================
     // PUBLIC FUNCTIONS
     // =====================================================
 
     window.generateDS140 =
         generateDS140;
 
+
+    window.generateDS140 =
+        generateDS140;
+
+
+    window.openRegisterObjectsDialog =
+        openRegisterObjectsDialog;
+
+
+    window.closeRegisterObjectsDialog =
+        closeRegisterObjectsDialog;
+
+
+    window.registerObjects =
+        registerObjects;
+
+
+    window.downloadMatrix =
+        downloadMatrix;
 
     // =====================================================
     // INITIALIZACIÓN DE DROPZONES

@@ -247,45 +247,97 @@ def extract_tables(
 
     result = []
 
-    pattern = re.compile(
 
-        r'CREATE\s+TABLE\s+([A-Z0-9_\."]+)\s*\((.*?)\)\s*;',
+    create_pattern = re.compile(
 
-        flags=re.IGNORECASE | re.DOTALL
+        r"""
+        CREATE
+        \s+
+        TABLE
+        \s+
+        ([A-Z0-9_\."]+)
+        \s*
+        \(
+        """,
+
+        flags=
+            re.IGNORECASE
+            |
+            re.VERBOSE
     )
 
-    matches = pattern.findall(
-        sql_text
+
+    matches = list(
+        create_pattern.finditer(
+            sql_text
+        )
     )
 
-    for match in matches:
+
+    for index, match in enumerate(
+        matches
+    ):
 
         table_name = (
-            match[0]
+            match.group(1)
             .replace('"', '')
             .split(".")[-1]
             .strip()
         )
 
-        table_body = match[1]
 
-        full_sql = (
+        body_start = match.end()
 
-            f"CREATE TABLE "
-            f"{table_name} "
-            f"({table_body});"
-        )
+        level = 1
+
+        position = body_start
+
+
+        while (
+            position < len(sql_text)
+            and
+            level > 0
+        ):
+
+            char = sql_text[position]
+
+            if char == "(":
+
+                level += 1
+
+            elif char == ")":
+
+                level -= 1
+
+
+            position += 1
+
+
+        if level != 0:
+
+            continue
+
+
+        table_body = sql_text[
+            body_start:
+            position - 1
+        ]
+
+
+        full_sql = sql_text[
+            match.start():
+            position
+        ].strip()
+
 
         result.append(
 
             parse_create_table(
-
                 table_name,
-
                 table_body,
-
                 full_sql
             )
         )
+
 
     return result

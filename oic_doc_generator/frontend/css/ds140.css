@@ -601,3 +601,281 @@
     }
 
 }
+
+/* =========================================================
+   BOTÓN REGISTRAR OBJETOS
+   ========================================================= */
+
+.register-objects-btn {
+    min-width: 275px;
+
+    margin-top: 18px;
+
+    padding:
+        15px
+        40px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #2f6fad;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background .2s,
+        transform .1s,
+        box-shadow .2s;
+}
+
+.register-objects-btn:hover {
+    background: #285f94;
+
+    box-shadow:
+        0 4px 10px
+        rgba(
+            47,
+            111,
+            173,
+            .25
+        );
+}
+
+.register-objects-btn:active {
+    transform:
+        translateY(1px);
+}
+
+/* =========================================================
+   DIALOG REGISTRAR OBJETOS
+   ========================================================= */
+
+.register-dialog {
+    width: min(
+        760px,
+        calc(100% - 40px)
+    );
+
+    padding: 0;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background: white;
+
+    box-shadow:
+        0 20px 60px
+        rgba(
+            0,
+            0,
+            0,
+            .25
+        );
+}
+
+.register-dialog::backdrop {
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            .45
+        );
+}
+
+.register-dialog-content {
+    padding: 0;
+}
+
+.register-dialog-header {
+    padding:
+        22px
+        26px;
+
+    border-bottom:
+        1px solid #eeeeee;
+}
+
+.register-dialog-header h2 {
+    margin: 0;
+
+    color: #C74634;
+}
+
+.register-dialog-body {
+    padding:
+        25px
+        26px;
+}
+
+.register-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            1fr
+        );
+
+    gap: 20px;
+}
+
+.register-field label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: 600;
+}
+
+.register-field input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding:
+        11px
+        12px;
+
+    border:
+        1px solid
+        #d4d8dc;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+.register-field input:focus {
+    border-color:
+        #C74634;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            199,
+            70,
+            52,
+            .10
+        );
+}
+
+/* =========================================================
+   RESPUESTA REGISTRO
+   ========================================================= */
+
+.register-response {
+    margin-top: 24px;
+
+    padding: 16px;
+
+    border:
+        1px solid
+        #dfe4e8;
+
+    border-radius: 8px;
+
+    background: #f8f9fa;
+
+    text-align: left;
+}
+
+
+/* =========================================================
+   ACCIONES DEL DIALOG
+   ========================================================= */
+
+.register-dialog-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    padding:
+        18px
+        26px;
+
+    border-top:
+        1px solid #eeeeee;
+}
+
+.register-dialog-btn {
+    padding:
+        11px
+        18px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.register-confirm-btn {
+    background: #C74634;
+
+    color: white;
+}
+
+.register-confirm-btn:hover {
+    background: #b83d2d;
+}
+
+.download-matrix-btn {
+    background: #2f6fad;
+
+    color: white;
+}
+
+.download-matrix-btn:hover {
+    background: #285f94;
+}
+
+.cancel-register-btn {
+    background: #eceff1;
+
+    color: #444;
+}
+
+.cancel-register-btn:hover {
+    background: #dfe3e6;
+}
+
+
+/* =========================================================
+   RESPONSIVE DIALOG
+   ========================================================= */
+
+@media (
+    max-width: 700px
+) {
+
+    .register-form-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .register-dialog-actions {
+        flex-direction: column;
+    }
+
+    .register-dialog-btn {
+        width: 100%;
+    }
+
+}

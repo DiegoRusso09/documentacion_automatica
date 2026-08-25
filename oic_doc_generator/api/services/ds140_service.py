@@ -241,6 +241,35 @@ def generate_ds140_service(
             )
         )
 
+        print(
+            "[SQL METADATA]",
+            {
+                "tables":
+                    len(
+                        database_metadata.get(
+                            "tables",
+                            []
+                        )
+                    ),
+
+                "sequences":
+                    len(
+                        database_metadata.get(
+                            "sequences",
+                            []
+                        )
+                    ),
+
+                "packages":
+                    len(
+                        database_metadata.get(
+                            "packages",
+                            []
+                        )
+                    )
+            }
+        )
+
 
         validation = (
             validate_sql_objects(
