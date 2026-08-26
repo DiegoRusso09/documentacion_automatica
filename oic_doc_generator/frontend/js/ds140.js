@@ -1231,178 +1231,6 @@
             "Generar Documento DS140";
     }
 
-
-    // =====================================================
-    // ABRIR DIALOG REGISTRAR OBJETOS
-    // =====================================================
-
-    function openRegisterObjectsDialog() {
-
-        const dialog =
-            document.getElementById(
-                "register-objects-dialog"
-            );
-
-
-        const authorSource =
-            document.getElementById(
-                "author_name"
-            );
-
-
-        const developmentSource =
-            document.getElementById(
-                "development_name"
-            );
-
-
-        const authorTarget =
-            document.getElementById(
-                "register_author"
-            );
-
-
-        const developmentTarget =
-            document.getElementById(
-                "register_development_name"
-            );
-
-
-        const schemaContainer =
-            document.getElementById(
-                "register_schema_container"
-            );
-
-
-        if (!dialog) {
-
-            console.error(
-                "[DS140] No existe el diálogo de registro"
-            );
-
-            return;
-        }
-
-
-        // =============================================
-        // PRECARGAR AUTOR
-        // =============================================
-
-        if (authorTarget) {
-
-            authorTarget.value =
-                authorSource
-                    ? authorSource.value
-                    : "";
-        }
-
-
-        // =============================================
-        // PRECARGAR NOMBRE DESARROLLO
-        // =============================================
-
-        if (developmentTarget) {
-
-            developmentTarget.value =
-                developmentSource
-                    ? developmentSource.value
-                    : "";
-        }
-
-
-        // =============================================
-        // MOSTRAR ESQUEMA SOLO SI HAY SQL O APEX
-        // =============================================
-
-        const requiresSchema =
-
-            fileStore.sql.length > 0
-
-            ||
-
-            fileStore.apex.length > 0;
-
-
-        if (schemaContainer) {
-
-            schemaContainer.style.display =
-                requiresSchema
-                    ? "block"
-                    : "none";
-        }
-
-
-        dialog.showModal();
-    }
-
-
-    // =====================================================
-    // CERRAR DIALOG REGISTRAR OBJETOS
-    // =====================================================
-
-    function closeRegisterObjectsDialog() {
-
-        const dialog =
-            document.getElementById(
-                "register-objects-dialog"
-            );
-
-
-        const fields = [
-
-            "register_author",
-
-            "register_development_name",
-
-            "register_company",
-
-            "register_schema",
-
-            "register_ticket"
-        ];
-
-
-        fields.forEach(
-            fieldId => {
-
-                const field =
-                    document.getElementById(
-                        fieldId
-                    );
-
-
-                if (field) {
-
-                    field.value =
-                        "";
-                }
-            }
-        );
-
-
-        const responseContainer =
-            document.getElementById(
-                "register-response"
-            );
-
-
-        if (responseContainer) {
-
-            responseContainer.innerHTML =
-                "";
-
-            responseContainer.style.display =
-                "none";
-        }
-
-
-        if (dialog) {
-
-            dialog.close();
-        }
-    }
-
-
     // =====================================================
     // OBTENER DATOS DEL DIALOG
     // =====================================================
@@ -1579,10 +1407,19 @@
 
     function openRegisterDialog() {
 
+        console.log(
+            "[MATRIZ] openRegisterDialog ejecutado"
+        );
+
         const dialog =
             document.getElementById(
                 "register-dialog"
             );
+
+        console.log(
+            "[MATRIZ] dialog encontrado:",
+            dialog
+        );
 
         const author =
             document.getElementById(
@@ -1635,7 +1472,8 @@
         }
 
         if (dialog) {
-            dialog.style.display = "flex";
+            dialog.style.display =
+                "flex";
         }
     }
 
@@ -1661,15 +1499,6 @@
 
     window.generateDS140 =
         generateDS140;
-
-
-    window.openRegisterObjectsDialog =
-        openRegisterObjectsDialog;
-
-
-    window.closeRegisterObjectsDialog =
-        closeRegisterObjectsDialog;
-
 
     window.registerObjects =
         registerObjects;
