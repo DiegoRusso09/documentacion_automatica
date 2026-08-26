@@ -15,6 +15,10 @@ from oic_doc_generator.backend.parsers.sql_package_parser import (
     extract_packages
 )
 
+from oic_doc_generator.backend.parsers.sql_view_parser import (
+    extract_views
+)
+
 
 # =========================================================
 # READ SQL FILE
@@ -66,7 +70,9 @@ def parse_single_sql_file(
 
         "sequences": [],
 
-        "packages": []
+        "packages": [],
+
+        "views": []
     }
 
     sql_text = read_sql_file(
@@ -98,6 +104,14 @@ def parse_single_sql_file(
     # =====================================================
 
     result["packages"] = extract_packages(
+        sql_text
+    )
+
+    # =====================================================
+    # VIEWS
+    # =====================================================
+
+    result["views"] = extract_views(
         sql_text
     )
 
@@ -308,6 +322,43 @@ def merge_packages(
     )
 
 # =========================================================
+# MERGE VIEWS
+# =========================================================
+
+def merge_views(
+    all_views
+):
+
+    result = {}
+
+
+    for view in all_views:
+
+        view_name = str(
+            view.get(
+                "view_name",
+                ""
+            )
+        ).upper()
+
+
+        if not view_name:
+
+            continue
+
+
+        if view_name not in result:
+
+            result[
+                view_name
+            ] = view
+
+
+    return list(
+        result.values()
+    )
+
+# =========================================================
 # PARSE SQL FILES
 # =========================================================
 
@@ -323,6 +374,8 @@ def parse_sql_files(
 
         "packages": [],
 
+        "views": [],
+
         "warnings": []
     }
 
@@ -335,6 +388,8 @@ def parse_sql_files(
     all_sequences = []
 
     all_packages = []
+
+    all_views = []
 
     # =====================================================
     # ITERATE FILES
@@ -365,6 +420,13 @@ def parse_sql_files(
             all_packages.extend(
                 parsed.get(
                     "packages",
+                    []
+                )
+            )
+
+            all_views.extend(
+                parsed.get(
+                    "views",
                     []
                 )
             )
@@ -400,6 +462,10 @@ def parse_sql_files(
 
     result["packages"] = merge_packages(
         all_packages
+    )
+
+    result["views"] = merge_views(
+        all_views
     )
 
     return result
@@ -486,6 +552,18 @@ def build_database_metadata(
         "all_packages":
             sql_metadata.get(
                 "packages",
+                []
+            ),
+
+        "views":
+            sql_metadata.get(
+                "views",
+                []
+            ),
+
+        "all_views":
+            sql_metadata.get(
+                "views",
                 []
             ),
 

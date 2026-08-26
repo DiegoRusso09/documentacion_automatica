@@ -266,10 +266,17 @@ def generate_ds140_service(
                             "packages",
                             []
                         )
+                    ),
+
+                "views":
+                    len(
+                        database_metadata.get(
+                            "views",
+                            []
+                        )
                     )
             }
         )
-
 
         validation = (
             validate_sql_objects(
