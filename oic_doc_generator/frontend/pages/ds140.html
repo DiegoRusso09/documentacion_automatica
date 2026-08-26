@@ -385,15 +385,18 @@
 
     <section class="generate-section">
 
-        <button class="generate-btn" onclick="generateDS140()">
+        <div class="action-buttons">
 
-            Generar Documento DS140
+            <button class="generate-btn" onclick="generateDS140()">
 
-        </button>
+                Generar Documento DS140
 
-        <button type="button" class="register-objects-btn" onclick="openRegisterObjectsDialog()">
-            Registrar Objetos
-        </button>
+            </button>
+
+            <button type="button" class="register-objects-btn" onclick="openRegisterObjectsDialog()">
+                Registrar Objetos
+            </button>
+        </div>
 
         <div id="progress-container" style="
         display:none;
@@ -483,17 +486,19 @@
             </div>
 
             <div class="custom-dialog-footer">
-                <button type="button" class="register-btn" onclick="openRegisterDialog()">
+
+                <button type="button" class="dialog-primary-btn" onclick="registerObjects()">
                     Registrar Objetos
                 </button>
 
-                <button type="button" class="dialog-secondary-btn">
+                <button type="button" class="dialog-secondary-btn" onclick="downloadMatrix()">
                     Descargar Matriz
                 </button>
 
                 <button type="button" class="dialog-cancel-btn" onclick="closeRegisterDialog()">
                     Cancelar
                 </button>
+
             </div>
         </div>
     </div>
