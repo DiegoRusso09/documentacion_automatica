@@ -138,6 +138,18 @@ def create_job():
         job
     )
 
+    print(
+        "[JOB DEBUG]",
+        {
+            "job_id": job_id,
+            "jobs_dir": JOBS_DIR,
+            "job_path": _get_job_path(job_id),
+            "exists": os.path.exists(
+                _get_job_path(job_id)
+            ),
+            "pid": os.getpid()
+        }
+    )
 
     print(
         f"[JOB] Creado: {job_id}"
@@ -159,6 +171,17 @@ def get_job(
         job_id
     )
 
+    print(
+        "[JOB GET DEBUG]",
+        {
+            "job_id": job_id,
+            "job_path": job_path,
+            "exists": os.path.exists(
+                job_path
+            ),
+            "pid": os.getpid()
+        }
+    )
 
     if not os.path.exists(
         job_path
