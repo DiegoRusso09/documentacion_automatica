@@ -1229,6 +1229,20 @@ def generate_word_document(
             )
         )
 
+        total_points += len(
+            database_metadata.get(
+                "indexes",
+                []
+            )
+        )
+
+        total_points += len(
+            database_metadata.get(
+                "triggers",
+                []
+            )
+        )
+
     if total_points < 1:
 
         total_points = 1

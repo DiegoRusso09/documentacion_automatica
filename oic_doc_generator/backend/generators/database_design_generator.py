@@ -252,21 +252,6 @@ def add_sequences_section(
         []
     )
 
-    total_points += len(
-        database_metadata.get(
-            "indexes",
-            []
-        )
-    )
-
-
-    total_points += len(
-        database_metadata.get(
-            "triggers",
-            []
-        )
-    )
-
     if not sequences:
 
         document.add_paragraph(
