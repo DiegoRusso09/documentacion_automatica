@@ -252,6 +252,21 @@ def add_sequences_section(
         []
     )
 
+    total_points += len(
+        database_metadata.get(
+            "indexes",
+            []
+        )
+    )
+
+
+    total_points += len(
+        database_metadata.get(
+            "triggers",
+            []
+        )
+    )
+
     if not sequences:
 
         document.add_paragraph(
@@ -565,6 +580,292 @@ def add_functions_section(
             package
         )
 
+# =========================================================
+# SECTION 7.5 VIEWS
+# =========================================================
+
+def add_views_section(
+    document,
+    database_metadata,
+    database_export_info
+):
+
+    create_header(
+        document,
+        "7.5\tVistas"
+    )
+
+    views = database_metadata.get(
+        "views",
+        []
+    )
+
+    if not views:
+
+        document.add_paragraph(
+            "No se encontraron vistas."
+        )
+
+        return
+
+    table = document.add_table(
+        rows=1,
+        cols=3
+    )
+
+    table.style = "Table Grid"
+
+    header = table.rows[0].cells
+
+    header[0].text = "Nombre"
+    header[1].text = "Descripción"
+    header[2].text = "Script"
+
+    view_files = (
+        database_export_info.get(
+            "view_files",
+            {}
+        )
+        if database_export_info
+        else {}
+    )
+
+    for view in views:
+
+        row = table.add_row().cells
+
+        view_name = view.get(
+            "view_name",
+            ""
+        )
+
+        row[0].text = view_name
+
+        row[1].text = str(
+            view.get(
+                "description",
+                ""
+            )
+        )
+
+        script_path = view_files.get(
+            view_name,
+            ""
+        )
+
+        if script_path:
+
+            row[2].text = os.path.join(
+                "SQL",
+                "Vistas",
+                os.path.basename(
+                    script_path
+                )
+            )
+
+        else:
+
+            row[2].text = ""
+
+    document.add_paragraph("")
+
+
+# =========================================================
+# SECTION 7.6 INDEXES
+# =========================================================
+
+def add_indexes_section(
+    document,
+    database_metadata,
+    database_export_info
+):
+
+    create_header(
+        document,
+        "7.6\tÍndices"
+    )
+
+    indexes = database_metadata.get(
+        "indexes",
+        []
+    )
+
+    if not indexes:
+
+        document.add_paragraph(
+            "No se encontraron índices."
+        )
+
+        return
+
+    table = document.add_table(
+        rows=1,
+        cols=4
+    )
+
+    table.style = "Table Grid"
+
+    header = table.rows[0].cells
+
+    header[0].text = "Nombre"
+    header[1].text = "Tabla"
+    header[2].text = "Tipo"
+    header[3].text = "Script"
+
+    index_files = (
+        database_export_info.get(
+            "index_files",
+            {}
+        )
+        if database_export_info
+        else {}
+    )
+
+    for index in indexes:
+
+        row = table.add_row().cells
+
+        index_name = index.get(
+            "index_name",
+            ""
+        )
+
+        row[0].text = index_name
+
+        row[1].text = str(
+            index.get(
+                "table_name",
+                ""
+            )
+        )
+
+        row[2].text = str(
+            index.get(
+                "index_type",
+                ""
+            )
+        )
+
+        script_path = index_files.get(
+            index_name,
+            ""
+        )
+
+        if script_path:
+
+            row[3].text = os.path.join(
+                "SQL",
+                "Indices",
+                os.path.basename(
+                    script_path
+                )
+            )
+
+        else:
+
+            row[3].text = ""
+
+    document.add_paragraph("")
+
+
+# =========================================================
+# SECTION 7.7 TRIGGERS
+# =========================================================
+
+def add_triggers_section(
+    document,
+    database_metadata,
+    database_export_info
+):
+
+    create_header(
+        document,
+        "7.7\tTriggers"
+    )
+
+    triggers = database_metadata.get(
+        "triggers",
+        []
+    )
+
+    if not triggers:
+
+        document.add_paragraph(
+            "No se encontraron triggers."
+        )
+
+        return
+
+    table = document.add_table(
+        rows=1,
+        cols=4
+    )
+
+    table.style = "Table Grid"
+
+    header = table.rows[0].cells
+
+    header[0].text = "Nombre"
+    header[1].text = "Tabla"
+    header[2].text = "Evento"
+    header[3].text = "Script"
+
+    trigger_files = (
+        database_export_info.get(
+            "trigger_files",
+            {}
+        )
+        if database_export_info
+        else {}
+    )
+
+    for trigger in triggers:
+
+        row = table.add_row().cells
+
+        trigger_name = trigger.get(
+            "trigger_name",
+            ""
+        )
+
+        row[0].text = trigger_name
+
+        row[1].text = str(
+            trigger.get(
+                "table_name",
+                ""
+            )
+        )
+
+        events = trigger.get(
+            "events",
+            []
+        )
+
+        row[2].text = ", ".join(
+            events
+        )
+
+        script_path = trigger_files.get(
+            trigger_name,
+            ""
+        )
+
+        if script_path:
+
+            row[3].text = os.path.join(
+                "SQL",
+                "Triggers",
+                os.path.basename(
+                    script_path
+                )
+            )
+
+        else:
+
+            row[3].text = ""
+
+    document.add_paragraph("")
 
 # =========================================================
 # MAIN SECTION
@@ -616,4 +917,24 @@ def add_database_design_section(
     add_functions_section(
         document,
         database_metadata
+    )
+
+    add_views_section(
+        document,
+        database_metadata,
+        database_export_info
+    )
+
+
+    add_indexes_section(
+        document,
+        database_metadata,
+        database_export_info
+    )
+
+
+    add_triggers_section(
+        document,
+        database_metadata,
+        database_export_info
     )

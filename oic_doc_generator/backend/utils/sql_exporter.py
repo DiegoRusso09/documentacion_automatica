@@ -45,6 +45,21 @@ def create_delivery_folder():
         "Packages"
     )
 
+    views_folder = os.path.join(
+        sql_folder,
+        "Vistas"
+    )
+
+    indexes_folder = os.path.join(
+        sql_folder,
+        "Indices"
+    )
+
+    triggers_folder = os.path.join(
+        sql_folder,
+        "Triggers"
+    )
+
     os.makedirs(
         sequences_folder,
         exist_ok=True
@@ -52,6 +67,21 @@ def create_delivery_folder():
 
     os.makedirs(
         packages_folder,
+        exist_ok=True
+    )
+
+    os.makedirs(
+        views_folder,
+        exist_ok=True
+    )
+
+    os.makedirs(
+        indexes_folder,
+        exist_ok=True
+    )
+
+    os.makedirs(
+        triggers_folder,
         exist_ok=True
     )
 
@@ -67,7 +97,16 @@ def create_delivery_folder():
             sequences_folder,
 
         "packages":
-            packages_folder
+            packages_folder,
+
+        "views":
+            views_folder,
+
+        "indexes":
+            indexes_folder,
+
+        "triggers":
+            triggers_folder
     }
 
 
@@ -307,6 +346,206 @@ def export_packages(
 
     return result
 
+# =========================================================
+# EXPORT VIEW SQL
+# =========================================================
+
+def export_view_sql(
+    view,
+    output_folder
+):
+
+    view_name = safe_file_name(
+        view.get(
+            "view_name",
+            "view"
+        )
+    )
+
+    file_path = os.path.join(
+        output_folder,
+        f"{view_name}.sql"
+    )
+
+    sql_text = view.get(
+        "sql",
+        ""
+    )
+
+    with open(
+        file_path,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            sql_text
+        )
+
+    return file_path
+
+
+# =========================================================
+# EXPORT ALL VIEWS
+# =========================================================
+
+def export_views(
+    views,
+    output_folder
+):
+
+    result = {}
+
+    for view in views:
+
+        file_path = export_view_sql(
+            view,
+            output_folder
+        )
+
+        result[
+            view.get(
+                "view_name",
+                ""
+            )
+        ] = file_path
+
+    return result
+
+
+# =========================================================
+# EXPORT INDEX SQL
+# =========================================================
+
+def export_index_sql(
+    index,
+    output_folder
+):
+
+    index_name = safe_file_name(
+        index.get(
+            "index_name",
+            "index"
+        )
+    )
+
+    file_path = os.path.join(
+        output_folder,
+        f"{index_name}.sql"
+    )
+
+    sql_text = index.get(
+        "sql",
+        ""
+    )
+
+    with open(
+        file_path,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            sql_text
+        )
+
+    return file_path
+
+
+# =========================================================
+# EXPORT ALL INDEXES
+# =========================================================
+
+def export_indexes(
+    indexes,
+    output_folder
+):
+
+    result = {}
+
+    for index in indexes:
+
+        file_path = export_index_sql(
+            index,
+            output_folder
+        )
+
+        result[
+            index.get(
+                "index_name",
+                ""
+            )
+        ] = file_path
+
+    return result
+
+
+# =========================================================
+# EXPORT TRIGGER SQL
+# =========================================================
+
+def export_trigger_sql(
+    trigger,
+    output_folder
+):
+
+    trigger_name = safe_file_name(
+        trigger.get(
+            "trigger_name",
+            "trigger"
+        )
+    )
+
+    file_path = os.path.join(
+        output_folder,
+        f"{trigger_name}.sql"
+    )
+
+    sql_text = trigger.get(
+        "sql",
+        ""
+    )
+
+    with open(
+        file_path,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(
+            sql_text
+        )
+
+    return file_path
+
+
+# =========================================================
+# EXPORT ALL TRIGGERS
+# =========================================================
+
+def export_triggers(
+    triggers,
+    output_folder
+):
+
+    result = {}
+
+    for trigger in triggers:
+
+        file_path = export_trigger_sql(
+            trigger,
+            output_folder
+        )
+
+        result[
+            trigger.get(
+                "trigger_name",
+                ""
+            )
+        ] = file_path
+
+    return result
+
 
 # =========================================================
 # EXPORT DATABASE SQL
@@ -318,6 +557,11 @@ def export_database_sql(
 
     folders = create_delivery_folder()
 
+
+    # =====================================================
+    # SEQUENCES
+    # =====================================================
+
     sequence_files = export_sequences(
 
         metadata.get(
@@ -327,6 +571,11 @@ def export_database_sql(
 
         folders["sequences"]
     )
+
+
+    # =====================================================
+    # PACKAGES
+    # =====================================================
 
     package_files = export_packages(
 
@@ -338,6 +587,52 @@ def export_database_sql(
         folders["packages"]
     )
 
+
+    # =====================================================
+    # VIEWS
+    # =====================================================
+
+    view_files = export_views(
+
+        metadata.get(
+            "views",
+            []
+        ),
+
+        folders["views"]
+    )
+
+
+    # =====================================================
+    # INDEXES
+    # =====================================================
+
+    index_files = export_indexes(
+
+        metadata.get(
+            "indexes",
+            []
+        ),
+
+        folders["indexes"]
+    )
+
+
+    # =====================================================
+    # TRIGGERS
+    # =====================================================
+
+    trigger_files = export_triggers(
+
+        metadata.get(
+            "triggers",
+            []
+        ),
+
+        folders["triggers"]
+    )
+
+
     return {
 
         "root":
@@ -347,7 +642,16 @@ def export_database_sql(
             sequence_files,
 
         "package_files":
-            package_files
+            package_files,
+
+        "view_files":
+            view_files,
+
+        "index_files":
+            index_files,
+
+        "trigger_files":
+            trigger_files
     }
 
 
