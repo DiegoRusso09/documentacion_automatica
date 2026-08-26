@@ -445,108 +445,57 @@
 
     </section>
 
-    <dialog id="register-objects-dialog" class="register-dialog">
+    <div id="register-dialog" class="custom-dialog-overlay" style="display:none;">
+        <div class="custom-dialog">
+            <div class="custom-dialog-header">
+                <h2>Registrar Objetos</h2>
+            </div>
 
-        <div class="register-dialog-content">
+            <div class="custom-dialog-body">
 
-            <div class="register-dialog-header">
+                <div class="dialog-form-group">
+                    <label for="dialog_author">Autor</label>
+                    <input id="dialog_author" type="text">
+                </div>
 
-                <h2>
-                    Registrar Objetos
-                </h2>
+                <div class="dialog-form-group">
+                    <label for="dialog_development_name">Nombre de desarrollo</label>
+                    <input id="dialog_development_name" type="text">
+                </div>
+
+                <div class="dialog-form-group">
+                    <label for="dialog_company">Empresa</label>
+                    <input id="dialog_company" type="text" placeholder="Ingrese la empresa">
+                </div>
+
+                <div class="dialog-form-group" id="schema-group" style="display:none;">
+                    <label for="dialog_schema">Esquema</label>
+                    <input id="dialog_schema" type="text" placeholder="Ingrese el esquema">
+                </div>
+
+                <div class="dialog-form-group">
+                    <label for="dialog_ticket">Número de ticket</label>
+                    <input id="dialog_ticket" type="text" placeholder="Ej. TEC-5245">
+                </div>
+
+                <div id="register-response" class="register-response" style="display:none;"></div>
 
             </div>
 
-
-            <div class="register-dialog-body">
-
-                <div class="register-form-grid">
-
-                    <div class="register-field">
-
-                        <label for="register_author">
-                            Autor
-                        </label>
-
-                        <input id="register_author" type="text" placeholder="Ingrese el autor">
-
-                    </div>
-
-
-                    <div class="register-field">
-
-                        <label for="register_development_name">
-                            Nombre de desarrollo
-                        </label>
-
-                        <input id="register_development_name" type="text"
-                            placeholder="Ingrese el nombre del desarrollo">
-
-                    </div>
-
-
-                    <div class="register-field">
-
-                        <label for="register_company">
-                            Empresa
-                        </label>
-
-                        <input id="register_company" type="text" placeholder="Ingrese la empresa">
-
-                    </div>
-
-
-                    <div id="register_schema_container" class="register-field" style="display:none;">
-
-                        <label for="register_schema">
-                            Esquema
-                        </label>
-
-                        <input id="register_schema" type="text" placeholder="Ingrese el esquema">
-
-                    </div>
-
-
-                    <div class="register-field">
-
-                        <label for="register_ticket">
-                            Número de ticket
-                        </label>
-
-                        <input id="register_ticket" type="text" placeholder="Ej. TEC-5245">
-
-                    </div>
-
-                </div>
-
-
-                <div id="register-response" class="register-response" style="display:none;">
-                </div>
-
-            </div>
-
-
-            <div class="register-dialog-actions">
-
-                <button type="button" class="register-dialog-btn register-confirm-btn" onclick="registerObjects()">
+            <div class="custom-dialog-footer">
+                <button type="button" class="dialog-primary-btn">
                     Registrar Objetos
                 </button>
 
-
-                <button type="button" class="register-dialog-btn download-matrix-btn" onclick="downloadMatrix()">
+                <button type="button" class="dialog-secondary-btn">
                     Descargar Matriz
                 </button>
 
-
-                <button type="button" class="register-dialog-btn cancel-register-btn"
-                    onclick="closeRegisterObjectsDialog()">
+                <button type="button" class="dialog-cancel-btn" onclick="closeRegisterDialog()">
                     Cancelar
                 </button>
-
             </div>
-
         </div>
-
-    </dialog>
+    </div>
 
 </div>
