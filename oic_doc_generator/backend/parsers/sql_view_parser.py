@@ -1,31 +1,4 @@
-# =========================================================
-# FILE:
-# oic_doc_generator/backend/parsers/sql_view_parser.py
-# =========================================================
-
 import re
-
-
-# =========================================================
-# PARSE VIEW
-# =========================================================
-
-def parse_view(
-    view_name,
-    view_sql
-):
-
-    return {
-
-        "view_name":
-            view_name,
-
-        "description":
-            "",
-
-        "sql":
-            view_sql.strip()
-    }
 
 
 # =========================================================
@@ -37,18 +10,6 @@ def extract_views(
 ):
 
     result = []
-
-
-    # =====================================================
-    # DETECTAR INICIO DE CADA VIEW
-    #
-    # Soporta ejemplos como:
-    #
-    # CREATE VIEW ...
-    # CREATE OR REPLACE VIEW ...
-    # CREATE OR REPLACE FORCE VIEW ...
-    # CREATE OR REPLACE FORCE EDITIONABLE VIEW ...
-    # =====================================================
 
     pattern = re.compile(
 
@@ -69,17 +30,12 @@ def extract_views(
             re.VERBOSE
     )
 
-
     matches = list(
         pattern.finditer(
             sql_text
         )
     )
 
-
-    # =====================================================
-    # RECORRER VISTAS
-    # =====================================================
 
     for index, match in enumerate(
         matches
@@ -98,19 +54,7 @@ def extract_views(
         )
 
 
-        # =================================================
-        # FINAL DEL BLOQUE
-        #
-        # Inicialmente tomamos como límite:
-        # - siguiente CREATE VIEW
-        # - fin del archivo
-        # =================================================
-
-        if (
-            index + 1
-            <
-            len(matches)
-        ):
+        if index + 1 < len(matches):
 
             end_position = (
                 matches[
@@ -121,9 +65,7 @@ def extract_views(
         else:
 
             end_position = (
-                len(
-                    sql_text
-                )
+                len(sql_text)
             )
 
 
@@ -136,52 +78,52 @@ def extract_views(
         )
 
 
-        # =================================================
-        # SI EXISTE "/" COMO SEPARADOR ORACLE,
-        # CORTAR ALLÍ.
-        # =================================================
+        # =============================================
+        # ELIMINAR SEPARADOR / Y COMENTARIOS
+        # DEL SIGUIENTE DDL
+        # =============================================
 
-        separator = re.search(
+        delimiter = re.search(
 
             r"""
             \n
             \s*
-            /
-            \s*
-            (?=
-                \n
+            (?:
+                /
                 |
-                \Z
+                -{20,}
             )
             """,
 
             view_sql,
 
             flags=
-                re.IGNORECASE
-                |
                 re.VERBOSE
         )
 
 
-        if separator:
+        if delimiter:
 
             view_sql = (
                 view_sql[
                     :
-                    separator.start()
+                    delimiter.start()
                 ]
                 .strip()
             )
 
 
-        result.append(
+        result.append({
 
-            parse_view(
+            "view_name":
                 view_name,
+
+            "description":
+                "",
+
+            "sql":
                 view_sql
-            )
-        )
+        })
 
 
     return result

@@ -19,6 +19,13 @@ from oic_doc_generator.backend.parsers.sql_view_parser import (
     extract_views
 )
 
+from oic_doc_generator.backend.parsers.sql_index_parser import (
+    extract_indexes
+)
+
+from oic_doc_generator.backend.parsers.sql_trigger_parser import (
+    extract_triggers
+)
 
 # =========================================================
 # READ SQL FILE
@@ -72,7 +79,11 @@ def parse_single_sql_file(
 
         "packages": [],
 
-        "views": []
+        "views": [],
+
+        "indexes": [],
+
+        "triggers": []
     }
 
     sql_text = read_sql_file(
@@ -112,6 +123,24 @@ def parse_single_sql_file(
     # =====================================================
 
     result["views"] = extract_views(
+        sql_text
+    )
+
+
+    # =====================================================
+    # INDEXES
+    # =====================================================
+
+    result["indexes"] = extract_indexes(
+        sql_text
+    )
+
+
+    # =====================================================
+    # TRIGGERS
+    # =====================================================
+
+    result["triggers"] = extract_triggers(
         sql_text
     )
 
@@ -331,28 +360,86 @@ def merge_views(
 
     result = {}
 
-
     for view in all_views:
 
-        view_name = str(
+        name = str(
             view.get(
                 "view_name",
                 ""
             )
         ).upper()
 
-
-        if not view_name:
+        if not name:
 
             continue
 
+        if name not in result:
 
-        if view_name not in result:
+            result[name] = view
 
-            result[
-                view_name
-            ] = view
+    return list(
+        result.values()
+    )
 
+
+# =========================================================
+# MERGE INDEXES
+# =========================================================
+
+def merge_indexes(
+    all_indexes
+):
+
+    result = {}
+
+    for index in all_indexes:
+
+        name = str(
+            index.get(
+                "index_name",
+                ""
+            )
+        ).upper()
+
+        if not name:
+
+            continue
+
+        if name not in result:
+
+            result[name] = index
+
+    return list(
+        result.values()
+    )
+
+
+# =========================================================
+# MERGE TRIGGERS
+# =========================================================
+
+def merge_triggers(
+    all_triggers
+):
+
+    result = {}
+
+    for trigger in all_triggers:
+
+        name = str(
+            trigger.get(
+                "trigger_name",
+                ""
+            )
+        ).upper()
+
+        if not name:
+
+            continue
+
+        if name not in result:
+
+            result[name] = trigger
 
     return list(
         result.values()
@@ -376,6 +463,10 @@ def parse_sql_files(
 
         "views": [],
 
+        "indexes": [],
+
+        "triggers": [],
+
         "warnings": []
     }
 
@@ -390,6 +481,10 @@ def parse_sql_files(
     all_packages = []
 
     all_views = []
+
+    all_indexes = []
+
+    all_triggers = []
 
     # =====================================================
     # ITERATE FILES
@@ -431,6 +526,22 @@ def parse_sql_files(
                 )
             )
 
+
+            all_indexes.extend(
+                parsed.get(
+                    "indexes",
+                    []
+                )
+            )
+
+
+            all_triggers.extend(
+                parsed.get(
+                    "triggers",
+                    []
+                )
+            )
+
         except Exception as e:
 
             file_name = getattr(
@@ -466,6 +577,14 @@ def parse_sql_files(
 
     result["views"] = merge_views(
         all_views
+    )
+
+    result["indexes"] = merge_indexes(
+        all_indexes
+    )
+
+    result["triggers"] = merge_triggers(
+        all_triggers
     )
 
     return result
@@ -564,6 +683,30 @@ def build_database_metadata(
         "all_views":
             sql_metadata.get(
                 "views",
+                []
+            ),
+
+        "indexes":
+            sql_metadata.get(
+                "indexes",
+                []
+            ),
+
+        "all_indexes":
+            sql_metadata.get(
+                "indexes",
+                []
+            ),
+
+        "triggers":
+            sql_metadata.get(
+                "triggers",
+                []
+            ),
+
+        "all_triggers":
+            sql_metadata.get(
+                "triggers",
                 []
             ),
 

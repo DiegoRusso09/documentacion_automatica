@@ -274,6 +274,22 @@ def generate_ds140_service(
                             "views",
                             []
                         )
+                    ),
+
+                "indexes":
+                    len(
+                        database_metadata.get(
+                            "indexes",
+                            []
+                        )
+                    ),
+
+                "triggers":
+                    len(
+                        database_metadata.get(
+                            "triggers",
+                            []
+                        )
                     )
             }
         )
