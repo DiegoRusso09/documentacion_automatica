@@ -879,3 +879,173 @@
     }
 
 }
+
+/* =========================================================
+   BOTONES DE ACCIÓN
+   ========================================================= */
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.register-btn {
+    min-width: 220px;
+    padding: 15px 30px;
+    border: 1px solid #C74634;
+    border-radius: 8px;
+    background: white;
+    color: #C74634;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.register-btn:hover {
+    background: #fff7f5;
+    box-shadow: 0 4px 10px rgba(199, 70, 52, .15);
+}
+
+/* =========================================================
+   DIALOG / MODAL
+   ========================================================= */
+
+.custom-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 9999;
+}
+
+.custom-dialog {
+    width: 100%;
+    max-width: 560px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+}
+
+.custom-dialog-header {
+    padding: 20px 24px 10px 24px;
+    border-bottom: 1px solid #ececec;
+}
+
+.custom-dialog-header h2 {
+    margin: 0;
+    color: #222;
+    font-size: 26px;
+}
+
+.custom-dialog-body {
+    padding: 22px 24px;
+}
+
+.dialog-form-group {
+    margin-bottom: 16px;
+}
+
+.dialog-form-group label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+    color: #333;
+}
+
+.dialog-form-group input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #d4d8dc;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+}
+
+.dialog-form-group input:focus {
+    border-color: #C74634;
+    box-shadow: 0 0 0 3px rgba(199, 70, 52, 0.10);
+}
+
+.register-response {
+    margin-top: 20px;
+    padding: 14px;
+    border: 1px solid #e4e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #333;
+    min-height: 60px;
+}
+
+.custom-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 18px 24px 24px 24px;
+    border-top: 1px solid #ececec;
+}
+
+.dialog-primary-btn,
+.dialog-secondary-btn,
+.dialog-cancel-btn {
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.dialog-primary-btn {
+    border: none;
+    background: #C74634;
+    color: white;
+}
+
+.dialog-primary-btn:hover {
+    background: #b83d2d;
+}
+
+.dialog-secondary-btn {
+    border: 1px solid #C74634;
+    background: white;
+    color: #C74634;
+}
+
+.dialog-secondary-btn:hover {
+    background: #fff7f5;
+}
+
+.dialog-cancel-btn {
+    border: 1px solid #d0d5dd;
+    background: white;
+    color: #344054;
+}
+
+.dialog-cancel-btn:hover {
+    background: #f9fafb;
+}
+
+@media (max-width: 800px) {
+    .custom-dialog {
+        max-width: 100%;
+    }
+
+    .custom-dialog-footer {
+        flex-direction: column;
+    }
+
+    .dialog-primary-btn,
+    .dialog-secondary-btn,
+    .dialog-cancel-btn {
+        width: 100%;
+    }
+}

@@ -1576,6 +1576,81 @@
         );
     }
 
+
+    function openRegisterDialog() {
+
+        const dialog =
+            document.getElementById(
+                "register-dialog"
+            );
+
+        const author =
+            document.getElementById(
+                "author_name"
+            );
+
+        const development =
+            document.getElementById(
+                "development_name"
+            );
+
+        const dialogAuthor =
+            document.getElementById(
+                "dialog_author"
+            );
+
+        const dialogDevelopment =
+            document.getElementById(
+                "dialog_development_name"
+            );
+
+        const schemaGroup =
+            document.getElementById(
+                "schema-group"
+            );
+
+        const hasSchema =
+            fileStore.sql.length > 0 ||
+            fileStore.apex.length > 0;
+
+        if (dialogAuthor) {
+            dialogAuthor.value =
+                author && author.value
+                    ? author.value
+                    : "";
+        }
+
+        if (dialogDevelopment) {
+            dialogDevelopment.value =
+                development && development.value
+                    ? development.value
+                    : "";
+        }
+
+        if (schemaGroup) {
+            schemaGroup.style.display =
+                hasSchema
+                    ? "block"
+                    : "none";
+        }
+
+        if (dialog) {
+            dialog.style.display = "flex";
+        }
+    }
+
+    function closeRegisterDialog() {
+
+        const dialog =
+            document.getElementById(
+                "register-dialog"
+            );
+
+        if (dialog) {
+            dialog.style.display = "none";
+        }
+    }
+
     // =====================================================
     // PUBLIC FUNCTIONS
     // =====================================================
@@ -1602,6 +1677,13 @@
 
     window.downloadMatrix =
         downloadMatrix;
+
+
+    window.openRegisterDialog =
+        openRegisterDialog;
+
+    window.closeRegisterDialog =
+        closeRegisterDialog;
 
     // =====================================================
     // INITIALIZACIÓN DE DROPZONES
