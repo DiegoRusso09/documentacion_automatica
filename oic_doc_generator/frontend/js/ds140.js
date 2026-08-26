@@ -1238,43 +1238,58 @@
     function getRegisterFormData() {
 
         const requiresSchema =
-            fileStore.sql.length > 0 ||
-            fileStore.apex.length > 0;
+            fileStore.sql.length > 0;
 
-
-        const data = {
+        return {
 
             autor:
                 document
-                    .getElementById("register_author")
-                    ?.value.trim() || "",
+                    .getElementById(
+                        "dialog_author"
+                    )
+                    ?.value
+                    .trim()
+                || "",
 
             nombre_desarrollo:
                 document
-                    .getElementById("register_development_name")
-                    ?.value.trim() || "",
+                    .getElementById(
+                        "dialog_development_name"
+                    )
+                    ?.value
+                    .trim()
+                || "",
 
             empresa:
                 document
-                    .getElementById("register_company")
-                    ?.value.trim() || "",
+                    .getElementById(
+                        "dialog_company"
+                    )
+                    ?.value
+                    .trim()
+                || "",
 
             esquema:
                 document
-                    .getElementById("register_schema")
-                    ?.value.trim() || "",
+                    .getElementById(
+                        "dialog_schema"
+                    )
+                    ?.value
+                    .trim()
+                || "",
 
             numero_ticket:
                 document
-                    .getElementById("register_ticket")
-                    ?.value.trim() || "",
+                    .getElementById(
+                        "dialog_ticket"
+                    )
+                    ?.value
+                    .trim()
+                || "",
 
             requiresSchema:
                 requiresSchema
         };
-
-
-        return data;
     }
 
     // =====================================================
@@ -1286,6 +1301,10 @@
         const data =
             getRegisterFormData();
 
+
+        // =====================================================
+        // VALIDATIONS
+        // =====================================================
 
         if (!data.autor) {
 
@@ -1340,11 +1359,28 @@
         }
 
 
-        console.log(
-            "[MATRIZ] Datos válidos:",
-            data
-        );
+        const totalFiles =
 
+            fileStore.vb.length +
+            fileStore.apex.length +
+            fileStore.oic.length +
+            fileStore.bip.length +
+            fileStore.sql.length;
+
+
+        if (totalFiles === 0) {
+
+            alert(
+                "Debe seleccionar al menos un archivo."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // RESPONSE CONTAINER
+        // =====================================================
 
         const responseContainer =
             document.getElementById(
@@ -1359,13 +1395,237 @@
 
             responseContainer.innerHTML = `
             <strong>
-                Validación correcta
+                Procesando objetos...
             </strong>
 
             <br><br>
 
-            Los datos están listos para registrar los objetos.
+            Analizando ${totalFiles}
+            archivo(s) y registrando
+            objetos en la matriz.
         `;
+        }
+
+
+        // =====================================================
+        // BUTTON
+        // =====================================================
+
+        const button =
+            document.querySelector(
+                ".dialog-primary-btn"
+            );
+
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.innerText =
+                "Registrando...";
+        }
+
+
+        try {
+
+            // =================================================
+            // FORMDATA
+            // =================================================
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "empresa",
+                data.empresa
+            );
+
+
+            formData.append(
+                "numero_ticket",
+                data.numero_ticket
+            );
+
+
+            formData.append(
+                "objeto_pase",
+                data.nombre_desarrollo
+            );
+
+
+            formData.append(
+                "autor",
+                data.autor
+            );
+
+
+            formData.append(
+                "esquema",
+                data.esquema
+            );
+
+
+            // =================================================
+            // FILES
+            // =================================================
+
+            appendStoredFiles(
+                formData,
+                "vb"
+            );
+
+
+            appendStoredFiles(
+                formData,
+                "apex"
+            );
+
+
+            appendStoredFiles(
+                formData,
+                "oic"
+            );
+
+
+            appendStoredFiles(
+                formData,
+                "bip"
+            );
+
+
+            appendStoredFiles(
+                formData,
+                "sql"
+            );
+
+
+            console.log(
+                "[MATRIZ] Enviando registro:",
+                {
+                    empresa:
+                        data.empresa,
+
+                    numero_ticket:
+                        data.numero_ticket,
+
+                    objeto_pase:
+                        data.nombre_desarrollo,
+
+                    esquema:
+                        data.esquema,
+
+                    archivos:
+                        totalFiles
+                }
+            );
+
+
+            // =================================================
+            // FASTAPI
+            // =================================================
+
+            const response =
+                await fetch(
+
+                    "/api/matriz/register",
+
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            formData
+                    }
+                );
+
+
+            // =================================================
+            // RESPONSE JSON
+            // =================================================
+
+            const responseText =
+                await response.text();
+
+
+            let result;
+
+
+            try {
+
+                result =
+                    JSON.parse(
+                        responseText
+                    );
+
+            }
+            catch {
+
+                result = {
+
+                    status:
+                        "ERROR",
+
+                    mensaje:
+                        responseText
+                        ||
+                        "El servidor no devolvió una respuesta válida."
+                };
+            }
+
+
+            console.log(
+                "[MATRIZ] Response:",
+                result
+            );
+
+
+            // =================================================
+            // RENDER RESULT
+            // =================================================
+
+            renderMatrixResponse(
+                result,
+                response.ok
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "[MATRIZ]",
+                error
+            );
+
+
+            if (responseContainer) {
+
+                responseContainer.innerHTML = `
+
+                <div class="matrix-error-title">
+                    Error registrando objetos
+                </div>
+
+                <div>
+                    ${escapeHtml(
+                    error.message
+                )}
+                </div>
+            `;
+            }
+
+        }
+        finally {
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.innerText =
+                    "Registrar Objetos";
+            }
         }
     }
 
@@ -1487,6 +1747,255 @@
         if (dialog) {
             dialog.style.display = "none";
         }
+    }
+
+
+    function renderMatrixResponse(
+        result,
+        httpOk
+    ) {
+
+        const container =
+            document.getElementById(
+                "register-response"
+            );
+
+
+        if (!container) {
+
+            return;
+        }
+
+
+        container.style.display =
+            "block";
+
+
+        // =====================================================
+        // ERROR GENERAL
+        // =====================================================
+
+        if (
+            !httpOk ||
+            result.status === "ERROR"
+        ) {
+
+            container.innerHTML = `
+
+            <div class="matrix-error-title">
+                Error procesando la matriz
+            </div>
+
+            <div>
+                ${escapeHtml(
+                result.mensaje
+                ||
+                result.detail
+                ||
+                "Se produjo un error."
+            )}
+            </div>
+        `;
+
+            return;
+        }
+
+
+        // =====================================================
+        // SUMMARY
+        // =====================================================
+
+        const resumen =
+            result.resumen
+            ||
+            {};
+
+
+        const objetos =
+            Array.isArray(
+                result.objetos
+            )
+                ? result.objetos
+                : [];
+
+
+        const rows =
+            objetos
+                .map(
+                    object => {
+
+                        return `
+
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(
+                            object.nombre_objeto
+                            ||
+                            object.id
+                            ||
+                            ""
+                        )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                            object.herramienta
+                            ||
+                            ""
+                        )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                            object.tipo
+                            ||
+                            "No Aplica"
+                        )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                            object.accion
+                            ||
+                            ""
+                        )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                            object.mensaje
+                            ||
+                            ""
+                        )}
+                            </td>
+
+                        </tr>
+                    `;
+                    }
+                )
+                .join(
+                    ""
+                );
+
+
+        container.innerHTML = `
+
+        <div class="matrix-success-title">
+            Registro procesado
+        </div>
+
+        <div class="matrix-owner">
+            Owner:
+            <strong>
+                ${escapeHtml(
+            result.owner
+            ||
+            ""
+        )}
+            </strong>
+        </div>
+
+
+        <div class="matrix-summary">
+
+            <div>
+                <strong>
+                    ${resumen.recibidos || 0}
+                </strong>
+                <span>
+                    Recibidos
+                </span>
+            </div>
+
+            <div>
+                <strong>
+                    ${resumen.insertados || 0}
+                </strong>
+                <span>
+                    Insertados
+                </span>
+            </div>
+
+            <div>
+                <strong>
+                    ${resumen.actualizados || 0}
+                </strong>
+                <span>
+                    Actualizados
+                </span>
+            </div>
+
+            <div>
+                <strong>
+                    ${resumen.sin_cambios || 0}
+                </strong>
+                <span>
+                    Sin cambios
+                </span>
+            </div>
+
+            <div>
+                <strong>
+                    ${resumen.omitidos || 0}
+                </strong>
+                <span>
+                    Omitidos
+                </span>
+            </div>
+
+            <div>
+                <strong>
+                    ${resumen.errores || 0}
+                </strong>
+                <span>
+                    Errores
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="matrix-result-table-wrapper">
+
+            <table class="matrix-result-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Objeto
+                        </th>
+
+                        <th>
+                            Herramienta
+                        </th>
+
+                        <th>
+                            Tipo
+                        </th>
+
+                        <th>
+                            Acción
+                        </th>
+
+                        <th>
+                            Mensaje
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+                    ${rows}
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
     }
 
     // =====================================================

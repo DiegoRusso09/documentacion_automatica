@@ -12,6 +12,10 @@ from fastapi.responses import (
     FileResponse
 )
 
+from oic_doc_generator.api.routes.matriz import (
+    router as matriz_router
+)
+
 from pathlib import Path
 
 from oic_doc_generator.api.routes.tools import (
@@ -75,6 +79,11 @@ app.include_router(
 
     tools_router,
 
+    prefix="/api"
+)
+
+app.include_router(
+    matriz_router,
     prefix="/api"
 )
 
