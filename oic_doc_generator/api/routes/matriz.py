@@ -22,6 +22,30 @@ from fastapi import (
     UploadFile
 )
 
+from fastapi import Query
+
+from fastapi.responses import (
+    JSONResponse,
+    Response
+)
+
+ORDS_MATRIZ_PDF_URL = (
+    "https://sea27ktcsvagrmb-neodbaprod.adb.sa-saopaulo-1.oraclecloudapps.com"
+    "/ords/neora/documentation-automation/matriz/pdf/"
+)
+
+from fastapi import Query
+
+from fastapi.responses import (
+    JSONResponse,
+    Response
+)
+
+ORDS_MATRIZ_PDF_URL = (
+    "https://sea27ktcsvagrmb-neodbaprod.adb.sa-saopaulo-1.oraclecloudapps.com"
+    "/ords/neora/documentation-automation/matriz/pdf/"
+)
+
 from fastapi.responses import JSONResponse
 
 
@@ -1386,5 +1410,358 @@ async def register_matriz(
                     str(
                         error
                     )
+            }
+        )
+    
+# =========================================================
+# DOWNLOAD MATRIZ PDF
+# =========================================================
+
+@router.get(
+    "/matriz/download"
+)
+async def download_matriz(
+    ticket: str = Query(...)
+):
+
+    ticket = (
+        ticket
+        .strip()
+    )
+
+
+    if not ticket:
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status":
+                    "ERROR",
+
+                "mensaje":
+                    "Debe indicar el número de ticket."
+            }
+        )
+
+
+    try:
+
+        print(
+            "[MATRIZ PDF] Solicitando ticket:",
+            ticket
+        )
+
+
+        async with httpx.AsyncClient(
+            timeout=120.0
+        ) as client:
+
+            response = await client.get(
+
+                ORDS_MATRIZ_PDF_URL,
+
+                params={
+                    "ticket":
+                        ticket
+                },
+
+                headers={
+                    "Accept":
+                        "application/pdf"
+                }
+            )
+
+
+        print(
+            "[MATRIZ PDF] ORDS STATUS:",
+            response.status_code
+        )
+
+
+        # =================================================
+        # ERROR ORDS
+        # =================================================
+
+        if response.status_code >= 400:
+
+            content_type = (
+                response.headers.get(
+                    "content-type",
+                    "application/json"
+                )
+            )
+
+
+            return Response(
+
+                content=
+                    response.content,
+
+                status_code=
+                    response.status_code,
+
+                media_type=
+                    content_type
+            )
+
+
+        # =================================================
+        # PDF
+        # =================================================
+
+        content_disposition = (
+            response.headers.get(
+                "content-disposition"
+            )
+            or
+            (
+                'attachment; filename="'
+                'NEO-GD-RG-03 Inventario de Objetos de Desarrollo.pdf'
+                '"'
+            )
+        )
+
+
+        return Response(
+
+            content=
+                response.content,
+
+            status_code=
+                200,
+
+            media_type=
+                "application/pdf",
+
+            headers={
+                "Content-Disposition":
+                    content_disposition,
+
+                "Cache-Control":
+                    "no-store"
+            }
+        )
+
+
+    except httpx.TimeoutException:
+
+        return JSONResponse(
+            status_code=504,
+            content={
+                "status":
+                    "ERROR",
+
+                "mensaje":
+                    "AOP excedió el tiempo de espera generando el PDF."
+            }
+        )
+
+
+    except httpx.RequestError as error:
+
+        print(
+            "[MATRIZ PDF] Error HTTP:",
+            str(error)
+        )
+
+
+        return JSONResponse(
+            status_code=502,
+            content={
+                "status":
+                    "ERROR",
+
+                "mensaje":
+                    "No fue posible comunicarse con el servicio de descarga."
+            }
+        )
+
+
+    except Exception as error:
+
+        print(
+            "[MATRIZ PDF] ERROR:",
+            repr(error)
+        )
+
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status":
+                    "ERROR",
+
+                "mensaje":
+                    str(error)
+            }
+        )
+    
+# =========================================================
+# DOWNLOAD MATRIZ PDF
+# =========================================================
+
+@router.get(
+    "/matriz/download"
+)
+async def download_matriz(
+    ticket: str = Query(...)
+):
+
+    ticket = ticket.strip()
+
+
+    if not ticket:
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "ERROR",
+                "mensaje":
+                    "Debe indicar el número de ticket."
+            }
+        )
+
+
+    try:
+
+        print(
+            "[MATRIZ PDF] Ticket:",
+            ticket
+        )
+
+
+        async with httpx.AsyncClient(
+            timeout=120.0
+        ) as client:
+
+            response = await client.get(
+
+                ORDS_MATRIZ_PDF_URL,
+
+                params={
+                    "ticket":
+                        ticket
+                },
+
+                headers={
+                    "Accept":
+                        "application/pdf"
+                }
+            )
+
+
+        print(
+            "[MATRIZ PDF] ORDS STATUS:",
+            response.status_code
+        )
+
+
+        # =================================================
+        # ERROR ORDS
+        # =================================================
+
+        if response.status_code >= 400:
+
+            content_type = (
+                response.headers.get(
+                    "content-type",
+                    "application/json"
+                )
+            )
+
+            return Response(
+
+                content=
+                    response.content,
+
+                status_code=
+                    response.status_code,
+
+                media_type=
+                    content_type
+            )
+
+
+        # =================================================
+        # PDF
+        # =================================================
+
+        content_disposition = (
+            response.headers.get(
+                "content-disposition"
+            )
+            or
+            (
+                'attachment; filename="'
+                'NEO-GD-RG-03 Inventario de Objetos de Desarrollo.pdf'
+                '"'
+            )
+        )
+
+
+        return Response(
+
+            content=
+                response.content,
+
+            status_code=
+                200,
+
+            media_type=
+                "application/pdf",
+
+            headers={
+
+                "Content-Disposition":
+                    content_disposition,
+
+                "Cache-Control":
+                    "no-store"
+            }
+        )
+
+
+    except httpx.TimeoutException:
+
+        return JSONResponse(
+            status_code=504,
+            content={
+                "status": "ERROR",
+                "mensaje":
+                    "AOP excedió el tiempo de espera generando el PDF."
+            }
+        )
+
+
+    except httpx.RequestError as error:
+
+        print(
+            "[MATRIZ PDF] HTTP ERROR:",
+            str(error)
+        )
+
+        return JSONResponse(
+            status_code=502,
+            content={
+                "status": "ERROR",
+                "mensaje":
+                    "No fue posible comunicarse con ORDS."
+            }
+        )
+
+
+    except Exception as error:
+
+        print(
+            "[MATRIZ PDF] ERROR:",
+            repr(error)
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "ERROR",
+                "mensaje":
+                    str(error)
             }
         )

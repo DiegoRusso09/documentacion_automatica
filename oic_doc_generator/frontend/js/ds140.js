@@ -1633,14 +1633,15 @@
     // DESCARGAR MATRIZ
     // =====================================================
 
-    function downloadMatrix() {
+    async function downloadMatrix() {
 
         const ticket =
             document
                 .getElementById(
-                    "register_ticket"
+                    "dialog_ticket"
                 )
-                ?.value.trim();
+                ?.value
+                .trim();
 
 
         if (!ticket) {
@@ -1653,15 +1654,154 @@
         }
 
 
-        console.log(
-            "[MATRIZ] Ticket para futura descarga:",
-            ticket
-        );
+        const button =
+            document.querySelector(
+                ".dialog-secondary-btn"
+            );
 
 
-        alert(
-            "La descarga de matriz se implementará posteriormente."
-        );
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.innerText =
+                "Generando PDF...";
+        }
+
+
+        try {
+
+            console.log(
+                "[MATRIZ PDF] Descargando ticket:",
+                ticket
+            );
+
+
+            const response =
+                await fetch(
+
+                    `/api/matriz/download?ticket=${encodeURIComponent(
+                        ticket
+                    )
+                    }`,
+
+                    {
+                        method:
+                            "GET",
+
+                        cache:
+                            "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                let message =
+                    text;
+
+
+                try {
+
+                    const json =
+                        JSON.parse(
+                            text
+                        );
+
+                    message =
+                        json.mensaje
+                        ||
+                        json.detail
+                        ||
+                        text;
+
+                }
+                catch {
+
+                    // respuesta no JSON
+                }
+
+
+                throw new Error(
+                    message
+                );
+            }
+
+
+            // =================================================
+            // PDF
+            // =================================================
+
+            const blob =
+                await response.blob();
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+
+            link.download =
+                "NEO-GD-RG-03 Inventario de Objetos de Desarrollo.pdf";
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "[MATRIZ PDF]",
+                error
+            );
+
+
+            alert(
+                error.message
+                ||
+                "No fue posible descargar la matriz."
+            );
+
+        }
+        finally {
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.innerText =
+                    "Descargar Matriz";
+            }
+        }
     }
 
 
