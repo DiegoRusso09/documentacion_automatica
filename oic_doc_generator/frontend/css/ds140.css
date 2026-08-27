@@ -1156,3 +1156,35 @@
     overflow-y: auto;
     overflow-x: auto;
 }
+
+/* =========================================================
+   GUÍA DE USO
+   ========================================================= */
+
+.usage-guide {
+    margin-top: 30px;
+}
+
+.usage-guide h2 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    text-align: center;
+    font-size: 20px;
+}
+
+.usage-guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.usage-guide-content p {
+    margin: 0;
+    padding: 14px 16px;
+    border-left: 4px solid #C74634;
+    background: #fafafa;
+    border-radius: 8px;
+    color: #444;
+    line-height: 1.6;
+    font-size: 15px;
+}
