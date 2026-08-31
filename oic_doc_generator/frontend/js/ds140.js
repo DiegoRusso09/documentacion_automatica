@@ -848,6 +848,12 @@
                 );
 
 
+            const company =
+                document.getElementById(
+                    "company_name"
+                );
+
+
             formData.append(
                 "author_name",
                 author
@@ -860,6 +866,13 @@
                 "development_name",
                 development
                     ? development.value
+                    : ""
+            );
+
+            formData.append(
+                "company_name",
+                company
+                    ? company.value.trim()
                     : ""
             );
 
@@ -1831,9 +1844,19 @@
                 "development_name"
             );
 
+        const company =
+            document.getElementById(
+                "company_name"
+            );
+
         const dialogAuthor =
             document.getElementById(
                 "dialog_author"
+            );
+
+        const dialogCompany =
+            document.getElementById(
+                "dialog_company"
             );
 
         const dialogDevelopment =
@@ -1861,6 +1884,14 @@
             dialogDevelopment.value =
                 development && development.value
                     ? development.value
+                    : "";
+        }
+
+        if (dialogCompany) {
+
+            dialogCompany.value =
+                company && company.value
+                    ? company.value
                     : "";
         }
 

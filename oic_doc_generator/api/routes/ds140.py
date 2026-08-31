@@ -70,6 +70,8 @@ def run_ds140_job(
 
     development_name,
 
+    company_name,
+
     vb_files,
 
     apex_files,
@@ -94,6 +96,8 @@ def run_ds140_job(
             author_name,
 
             development_name,
+
+            company_name,
 
             vb_files,
 
@@ -146,6 +150,8 @@ async def start_ds140(
     author_name: str = Form(...),
 
     development_name: str = Form(...),
+
+    company_name: str = Form(...),
 
     vb_files: list[UploadFile] = File(
         default=[]
@@ -246,6 +252,8 @@ async def start_ds140(
             author_name,
 
             development_name,
+
+            company_name,
 
             vb_memory_files,
 

@@ -51,6 +51,8 @@ def generate_ds140_service(
 
     development_name,
 
+    company_name,
+
     vb_files,
 
     apex_files,
@@ -424,6 +426,9 @@ def generate_ds140_service(
 
         development_name=
             development_name,
+
+        company_name=
+            company_name,
 
         selected_components=
             selected_components,

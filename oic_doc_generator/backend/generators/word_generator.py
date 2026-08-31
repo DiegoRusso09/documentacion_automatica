@@ -364,7 +364,8 @@ def create_custom_styles(
 def add_cover_page(
     document,
     development_name,
-    author_name
+    author_name,
+    company_name
 ):
 
     current_dir = os.path.dirname(
@@ -446,7 +447,7 @@ def add_cover_page(
 
         run.add_picture(
             logo_path,
-            width=Cm(4)
+            width=Cm(3)
         )
 
     # =====================================================
@@ -486,7 +487,7 @@ def add_cover_page(
 
         "00",
 
-        "15/06/2023",
+        "19/08/2026",
 
         "1 de 1"
     ]
@@ -586,7 +587,7 @@ def add_cover_page(
     )
 
     add_line(
-        "NEORA",
+        company_name,
         24,
         color=RGBColor(0,0,255)
     )
@@ -863,6 +864,7 @@ def generate_word_document(
     package_path,
     author_name,
     development_name,
+    company_name,
     selected_components,
     visual_builder_apps,
     apex_apps,
@@ -916,7 +918,8 @@ def generate_word_document(
     add_cover_page(
         document,
         development_name,
-        author_name
+        author_name,
+        company_name
     )
 
     style = document.styles['Normal']
