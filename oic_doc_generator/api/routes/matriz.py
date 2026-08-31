@@ -29,6 +29,11 @@ from fastapi.responses import (
     Response
 )
 
+from oic_doc_generator.backend.parsers.integration_parser import (
+    get_integration_metadata as get_oic_integration_metadata,
+    integration_is_scheduled
+)
+
 from oic_doc_generator.backend.parsers.bip_archive_parser import (
     build_bip_artifact_tree,
     get_report_artifacts,
@@ -161,111 +166,6 @@ async def to_memory_files(
 
 
 # =========================================================
-# NORMALIZE OIC EXPORT NAME
-# =========================================================
-
-def normalize_oic_export_name(
-    file_name: str
-) -> str:
-
-    if not file_name:
-        return ""
-
-    stem = Path(
-        os.path.basename(
-            file_name
-        )
-    ).stem
-
-
-    # =====================================================
-    # REMOVE ORACLE EXPORT PREFIXES
-    # =====================================================
-
-    stem = re.sub(
-        r"^(icspackage_|IC_|IAR_)",
-        "",
-        stem,
-        flags=re.IGNORECASE
-    )
-
-
-    # =====================================================
-    # REMOVE UUID
-    #
-    # Example:
-    # _5ce773ac-02ce-4803-b52b-f64687f36de1
-    # =====================================================
-
-    stem = re.sub(
-        (
-            r"_[0-9a-fA-F]{8}"
-            r"-[0-9a-fA-F]{4}"
-            r"-[0-9a-fA-F]{4}"
-            r"-[0-9a-fA-F]{4}"
-            r"-[0-9a-fA-F]{12}$"
-        ),
-        "",
-        stem
-    )
-
-
-    # =====================================================
-    # REMOVE VERSION
-    #
-    # _01.00.0000
-    # _1.0.2
-    # =====================================================
-
-    stem = re.sub(
-        r"[_-]\d+(?:\.\d+){1,3}$",
-        "",
-        stem
-    )
-
-
-    return stem.strip(
-        "_- "
-    )
-
-
-# =========================================================
-# OIC ID
-# =========================================================
-
-def infer_oic_id(
-    iar_path: str,
-    integration_name: str = ""
-):
-
-    integration_id = (
-        normalize_oic_export_name(
-            iar_path
-        )
-    )
-
-
-    if integration_id:
-        return integration_id
-
-
-    if integration_name:
-
-        integration_id = (
-            integration_name
-            .strip()
-            .replace(
-                " ",
-                "_"
-            )
-        )
-
-        return integration_id
-
-
-    return ""
-
-# =========================================================
 # OIC PACKAGE
 # =========================================================
 
@@ -368,11 +268,16 @@ def build_oic_objects(
 
     objetos = []
 
+    if not oic_files:
+        return objetos
+
+
     temp_root = tempfile.mkdtemp(
         prefix="matriz_oic_"
     )
 
     cleanup_dirs = []
+
 
     try:
 
@@ -386,7 +291,9 @@ def build_oic_objects(
                 .lower()
             )
 
+
             iar_files = []
+
 
             # =================================================
             # PAR
@@ -414,8 +321,9 @@ def build_oic_objects(
                     )
                 )
 
+
             # =================================================
-            # IAR
+            # IAR DIRECTO
             # =================================================
 
             elif extension == ".iar":
@@ -424,12 +332,16 @@ def build_oic_objects(
                     0
                 )
 
+
                 local_iar = os.path.join(
+
                     temp_root,
+
                     os.path.basename(
                         oic_file.name
                     )
                 )
+
 
                 with open(
                     local_iar,
@@ -440,12 +352,19 @@ def build_oic_objects(
                         oic_file.read()
                     )
 
+
                 iar_files = [
                     local_iar
                 ]
 
+
+            else:
+
+                continue
+
+
             # =================================================
-            # PROCESS IAR
+            # PROCESS EVERY IAR
             # =================================================
 
             for iar_path in iar_files:
@@ -456,120 +375,119 @@ def build_oic_objects(
                     )
                 )
 
+
                 cleanup_dirs.append(
                     extracted_iar
                 )
 
-            try:
 
-                integration_name = (
-                    get_project_name(
+                # =============================================
+                # ORACLE METADATA
+                # =============================================
+
+                metadata = (
+                    get_oic_integration_metadata(
                         extracted_iar
                     )
                 )
 
-            except Exception:
 
-                integration_name = None
+                integration_id = (
+                    metadata.get(
+                        "project_code",
+                        ""
+                    )
+                    or
+                    ""
+                ).strip()
 
-
-            # =========================================================
-            # NORMALIZED OIC ID
-            # =========================================================
-
-            integration_id = (
-                infer_oic_id(
-                    iar_path,
-                    integration_name
-                )
-            )
-
-
-            # =========================================================
-            # DETECT INVALID / TECHNICAL PROJECT NAME
-            # =========================================================
-
-            technical_name = False
-
-
-            if integration_name:
-
-                lower_name = (
-                    integration_name
-                    .lower()
-                )
-
-
-                if lower_name.startswith(
-                    "icspackage_"
-                ):
-
-                    technical_name = True
-
-
-                if re.search(
-                    (
-                        r"[0-9a-fA-F]{8}"
-                        r"-[0-9a-fA-F]{4}"
-                        r"-[0-9a-fA-F]{4}"
-                        r"-[0-9a-fA-F]{4}"
-                        r"-[0-9a-fA-F]{12}"
-                    ),
-                    integration_name
-                ):
-
-                    technical_name = True
-
-
-            # =========================================================
-            # FALLBACK HUMAN-READABLE NAME
-            # =========================================================
-
-            if (
-                not integration_name
-                or
-                technical_name
-            ):
 
                 integration_name = (
-                    integration_id
-                    .replace(
-                        "_",
-                        " "
+                    metadata.get(
+                        "project_name",
+                        ""
                     )
-                    .strip()
-                )
+                    or
+                    ""
+                ).strip()
 
-                try:
 
-                    version = (
-                        get_project_version(
-                            extracted_iar
+                version = (
+                    metadata.get(
+                        "project_version",
+                        ""
+                    )
+                    or
+                    ""
+                ).strip()
+
+
+                # =============================================
+                # ID ES OBLIGATORIO
+                # =============================================
+
+                if not integration_id:
+
+                    print(
+                        "[MATRIZ OIC] WARNING: "
+                        "No se encontró project_code en:",
+                        os.path.basename(
+                            iar_path
                         )
                     )
 
-                except Exception:
+                    continue
+
+
+                # =============================================
+                # NAME FALLBACK
+                #
+                # Sigue viniendo del metadata.
+                # NO del filename.
+                # =============================================
+
+                if not integration_name:
+
+                    integration_name = (
+                        integration_id
+                    )
+
+
+                # =============================================
+                # VERSION
+                # =============================================
+
+                if not version:
 
                     version = None
 
-                try:
 
-                    scheduled = (
-                        is_scheduled_integration(
-                            extracted_iar
-                        )
-                    )
+                # =============================================
+                # TYPE
+                # =============================================
 
-                except Exception:
-
-                    scheduled = False
-
-                integration_id = (
-                    infer_oic_id(
-                        iar_path,
-                        integration_name
+                scheduled = (
+                    integration_is_scheduled(
+                        metadata
                     )
                 )
+
+
+                integration_type = (
+
+                    "Integración Programada"
+
+                    if scheduled
+
+                    else
+
+                    "Integración REST"
+                )
+
+
+                # =============================================
+                # PACKAGE
+                # =============================================
 
                 package_name = (
                     extract_oic_package_name(
@@ -577,14 +495,12 @@ def build_oic_objects(
                     )
                 )
 
-                integration_type = (
-                    "Integración Programada"
-                    if scheduled
-                    else
-                    "Integración REST"
-                )
 
-                objetos.append({
+                # =============================================
+                # MATRIX OBJECT
+                # =============================================
+
+                objeto = {
 
                     "id":
                         integration_id,
@@ -609,7 +525,19 @@ def build_oic_objects(
 
                     "ruta":
                         None
-                })
+                }
+
+
+                objetos.append(
+                    objeto
+                )
+
+
+                print(
+                    "[MATRIZ OIC] Encontrado:",
+                    objeto
+                )
+
 
     finally:
 
@@ -634,13 +562,22 @@ def build_oic_objects(
 
                 pass
 
+
         shutil.rmtree(
             temp_root,
             ignore_errors=True
         )
 
-    return objetos
 
+    print(
+        "[MATRIZ OIC] Total:",
+        len(
+            objetos
+        )
+    )
+
+
+    return objetos
 
 # =========================================================
 # BUILD VISUAL BUILDER OBJECTS
@@ -690,6 +627,149 @@ def build_vb_objects(
 
     return objetos
 
+# =========================================================
+# RESOLVE BI PUBLISHER DATA MODEL PATH
+# =========================================================
+
+def resolve_bip_dm_path(
+    dm_name,
+    reports_metadata
+):
+
+    if not dm_name:
+        return None
+
+
+    normalized_dm_name = (
+        dm_name
+        .strip()
+        .lower()
+    )
+
+
+    for report in reports_metadata:
+
+        data_model = (
+            report.get(
+                "data_model",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        if not data_model:
+            continue
+
+
+        # =================================================
+        # NORMALIZE ORACLE PATH
+        # =================================================
+
+        normalized_reference = (
+            data_model
+            .replace(
+                "\\",
+                "/"
+            )
+            .strip()
+        )
+
+
+        reference_name = (
+            Path(
+                normalized_reference
+            )
+            .stem
+            .strip()
+            .lower()
+        )
+
+
+        # =================================================
+        # SAME DATA MODEL
+        # =================================================
+
+        if (
+            reference_name
+            !=
+            normalized_dm_name
+        ):
+
+            continue
+
+
+        # =================================================
+        # DATA MODEL REFERENCE CONTAINS PATH
+        #
+        # /Custom/Financials/.../Data Models/MODELO.xdm
+        # =================================================
+
+        if "/" in normalized_reference:
+
+            dm_path = (
+                normalized_reference
+                .rsplit(
+                    "/",
+                    1
+                )[0]
+                .strip()
+            )
+
+
+            if dm_path:
+
+                if not dm_path.startswith(
+                    "/"
+                ):
+
+                    dm_path = (
+                        "/"
+                        +
+                        dm_path
+                    )
+
+
+                return dm_path
+
+
+        # =================================================
+        # FALLBACK USING REPORT PATH
+        # =================================================
+
+        report_path = (
+            report.get(
+                "report_path",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        if report_path:
+
+            report_path = (
+                report_path
+                .replace(
+                    "\\",
+                    "/"
+                )
+                .rstrip(
+                    "/"
+                )
+            )
+
+
+            return (
+                report_path
+                +
+                "/Data Models"
+            )
+
+
+    return None
 
 # =========================================================
 # BUILD BI PUBLISHER OBJECTS
@@ -848,6 +928,10 @@ def build_bip_objects(
 
         for dm_artifact in dm_artifacts:
 
+            # =============================================
+            # ORIGINAL FILE
+            # =============================================
+
             original_file = (
                 dm_artifact.get(
                     "original_file",
@@ -857,6 +941,10 @@ def build_bip_objects(
                 ""
             )
 
+
+            # =============================================
+            # DATA MODEL NAME
+            # =============================================
 
             dm_name = safe_stem(
                 os.path.basename(
@@ -868,6 +956,22 @@ def build_bip_objects(
             if not dm_name:
                 continue
 
+
+            # =============================================
+            # RESOLVE DATA MODEL PATH
+            # =============================================
+
+            dm_path = (
+                resolve_bip_dm_path(
+                    dm_name,
+                    reports_metadata
+                )
+            )
+
+
+            # =============================================
+            # DUPLICATE CONTROL
+            # =============================================
 
             dm_key = (
                 dm_name.upper()
@@ -883,7 +987,11 @@ def build_bip_objects(
             )
 
 
-            objetos.append({
+            # =============================================
+            # MATRIX OBJECT
+            # =============================================
+
+            objeto = {
 
                 "id":
                     dm_name,
@@ -907,8 +1015,25 @@ def build_bip_objects(
                     "BI Publisher",
 
                 "ruta":
-                    None
-            })
+                    dm_path
+            }
+
+
+            objetos.append(
+                objeto
+            )
+
+
+            # =============================================
+            # LOG
+            # =============================================
+
+            print(
+                "[MATRIZ BIP] Data Model:",
+                dm_name,
+                "| Ruta:",
+                dm_path
+            )
 
 
         # =================================================
