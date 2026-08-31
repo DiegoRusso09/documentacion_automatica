@@ -306,6 +306,218 @@
     font-family: Consolas, monospace;
 }
 
+/* =========================================================
+   ARCHIVE EXPLORER
+   ========================================================= */
+
+.result-container {
+    white-space: normal;
+    font-family: Arial, sans-serif;
+    padding: 0;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   HEADER RESULT
+   ========================================================= */
+
+.archive-result-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fafafa;
+}
+
+.archive-result-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #222;
+}
+
+.archive-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: #e8eef8;
+    color: #315b8a;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.archive-result-summary {
+    margin-top: 7px;
+    color: #777;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TREE
+   ========================================================= */
+
+.archive-tree {
+    max-height: 650px;
+    overflow: auto;
+    padding: 12px 14px 20px;
+}
+
+.archive-folder {
+    margin: 2px 0;
+}
+
+.archive-folder-summary {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    padding: 7px 8px;
+    border-radius: 6px;
+    user-select: none;
+    font-size: 14px;
+}
+
+.archive-folder-summary:hover {
+    background: #f3f3f3;
+}
+
+.archive-folder-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.archive-folder-count {
+    font-size: 12px;
+    color: #999;
+}
+
+.archive-folder-children {
+    margin-left: 22px;
+    padding-left: 10px;
+    border-left: 1px solid #e3e3e3;
+}
+
+
+/* =========================================================
+   FILE
+   ========================================================= */
+
+.archive-file-row {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+.archive-file-row:hover {
+    background: #f7f7f7;
+}
+
+.archive-file-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.archive-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.archive-file-name {
+    overflow-wrap: anywhere;
+    color: #333;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+}
+
+.archive-file-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.archive-file-size {
+    min-width: 65px;
+    text-align: right;
+    color: #999;
+    font-size: 12px;
+}
+
+.archive-download {
+    color: #1976d2;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.archive-download:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   STATES
+   ========================================================= */
+
+.tools-loading {
+    padding: 24px;
+    color: #555;
+    font-family: Arial, sans-serif;
+}
+
+.tools-error {
+    margin: 20px;
+    padding: 14px 16px;
+    border-radius: 7px;
+    background: #fff3f2;
+    color: #b3261e;
+    font-family: Arial, sans-serif;
+}
+
+.archive-empty {
+    padding: 30px;
+    text-align: center;
+    color: #777;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (
+    max-width: 700px
+) {
+
+    .tool-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .archive-file-row {
+        align-items: flex-start;
+    }
+
+    .archive-file-actions {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
+    }
+
+    .archive-tree {
+        max-height: 500px;
+    }
+}
+
 </style>
 
 <script src="/static/js/tools.js"></script>
