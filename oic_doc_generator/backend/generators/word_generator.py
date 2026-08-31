@@ -57,6 +57,10 @@ from oic_doc_generator.backend.parsers.orchestration_parser import (
     generate_description
 )
 
+from oic_doc_generator.api.services.ai_text_service import (
+    naturalize_technical_text
+)
+
 from oic_doc_generator.backend.parsers.connections_parser import (
     analyze_dbaas_jca,
     find_application_folder,
@@ -1509,7 +1513,11 @@ def generate_word_document(
                 endpoint_flows.items()
             ):
 
-                description = (
+                # =============================================
+                # DETERMINISTIC DESCRIPTION
+                # =============================================
+
+                original_description = (
                     generate_description(
 
                         endpoint,
@@ -1523,6 +1531,71 @@ def generate_word_document(
                         root
                     )
                 )
+
+
+                # =============================================
+                # AI TECHNICAL-NATURAL DESCRIPTION
+                # =============================================
+
+                description = (
+                    original_description
+                )
+
+
+                try:
+
+                    print(
+                        "[AI TEXT] Naturalizando endpoint:",
+                        endpoint
+                    )
+
+
+                    description = (
+                        naturalize_technical_text(
+                            original_description
+                        )
+                    )
+
+
+                    print(
+                        "[AI TEXT] ORIGINAL:",
+                        original_description
+                    )
+
+
+                    print(
+                        "[AI TEXT] RESULTADO:",
+                        description
+                    )
+
+
+                except Exception as ai_error:
+
+                    # =========================================
+                    # FALLBACK
+                    # =========================================
+                    # La generación del DS140 NO debe fallar
+                    # si OpenAI no está disponible.
+                    # =========================================
+
+                    print(
+                        "[AI TEXT] FALLBACK:",
+                        endpoint,
+                        "|",
+                        repr(
+                            ai_error
+                        )
+                    )
+
+
+                    description = (
+                        original_description
+                    )
+
+
+                # =============================================
+                # WORD
+                # =============================================
 
                 document.add_paragraph(
                     description

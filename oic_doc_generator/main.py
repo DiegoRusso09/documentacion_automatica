@@ -26,6 +26,10 @@ from oic_doc_generator.api.routes.ds140 import (
     router as ds140_router
 )
 
+from oic_doc_generator.api.routes.ai import (
+    router as ai_router
+)
+
 app = FastAPI()
 
 app.add_middleware(
@@ -84,6 +88,11 @@ app.include_router(
 
 app.include_router(
     matriz_router,
+    prefix="/api"
+)
+
+app.include_router(
+    ai_router,
     prefix="/api"
 )
 
