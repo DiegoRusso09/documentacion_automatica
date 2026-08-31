@@ -36,8 +36,6 @@ from oic_doc_generator.backend.parsers.integration_parser import (
 
 from oic_doc_generator.backend.parsers.bip_archive_parser import (
     build_bip_artifact_tree,
-    get_report_artifacts,
-    get_datamodel_artifacts,
     clean_bip_workspace
 )
 
@@ -627,149 +625,6 @@ def build_vb_objects(
 
     return objetos
 
-# =========================================================
-# RESOLVE BI PUBLISHER DATA MODEL PATH
-# =========================================================
-
-def resolve_bip_dm_path(
-    dm_name,
-    reports_metadata
-):
-
-    if not dm_name:
-        return None
-
-
-    normalized_dm_name = (
-        dm_name
-        .strip()
-        .lower()
-    )
-
-
-    for report in reports_metadata:
-
-        data_model = (
-            report.get(
-                "data_model",
-                ""
-            )
-            or
-            ""
-        ).strip()
-
-
-        if not data_model:
-            continue
-
-
-        # =================================================
-        # NORMALIZE ORACLE PATH
-        # =================================================
-
-        normalized_reference = (
-            data_model
-            .replace(
-                "\\",
-                "/"
-            )
-            .strip()
-        )
-
-
-        reference_name = (
-            Path(
-                normalized_reference
-            )
-            .stem
-            .strip()
-            .lower()
-        )
-
-
-        # =================================================
-        # SAME DATA MODEL
-        # =================================================
-
-        if (
-            reference_name
-            !=
-            normalized_dm_name
-        ):
-
-            continue
-
-
-        # =================================================
-        # DATA MODEL REFERENCE CONTAINS PATH
-        #
-        # /Custom/Financials/.../Data Models/MODELO.xdm
-        # =================================================
-
-        if "/" in normalized_reference:
-
-            dm_path = (
-                normalized_reference
-                .rsplit(
-                    "/",
-                    1
-                )[0]
-                .strip()
-            )
-
-
-            if dm_path:
-
-                if not dm_path.startswith(
-                    "/"
-                ):
-
-                    dm_path = (
-                        "/"
-                        +
-                        dm_path
-                    )
-
-
-                return dm_path
-
-
-        # =================================================
-        # FALLBACK USING REPORT PATH
-        # =================================================
-
-        report_path = (
-            report.get(
-                "report_path",
-                ""
-            )
-            or
-            ""
-        ).strip()
-
-
-        if report_path:
-
-            report_path = (
-                report_path
-                .replace(
-                    "\\",
-                    "/"
-                )
-                .rstrip(
-                    "/"
-                )
-            )
-
-
-            return (
-                report_path
-                +
-                "/Data Models"
-            )
-
-
-    return None
 
 # =========================================================
 # BUILD BI PUBLISHER OBJECTS
@@ -827,6 +682,13 @@ def build_bip_objects(
         reports_metadata = (
             bip_metadata.get(
                 "reports",
+                []
+            )
+        )
+
+        data_models_metadata = (
+            bip_metadata.get(
+                "data_models",
                 []
             )
         )
@@ -911,46 +773,27 @@ def build_bip_objects(
                     report_path
             })
 
-
         # =================================================
         # DATA MODELS
         # =================================================
 
-        dm_artifacts = (
-            get_datamodel_artifacts(
-                artifact_tree
-            )
-        )
-
-
         dm_names = set()
 
 
-        for dm_artifact in dm_artifacts:
+        for dm in data_models_metadata:
 
             # =============================================
-            # ORIGINAL FILE
+            # NAME
             # =============================================
 
-            original_file = (
-                dm_artifact.get(
-                    "original_file",
+            dm_name = (
+                dm.get(
+                    "dm_name",
                     ""
                 )
                 or
                 ""
-            )
-
-
-            # =============================================
-            # DATA MODEL NAME
-            # =============================================
-
-            dm_name = safe_stem(
-                os.path.basename(
-                    original_file
-                )
-            )
+            ).strip()
 
 
             if not dm_name:
@@ -958,15 +801,17 @@ def build_bip_objects(
 
 
             # =============================================
-            # RESOLVE DATA MODEL PATH
+            # REAL BI PUBLISHER PATH
             # =============================================
 
             dm_path = (
-                resolve_bip_dm_path(
-                    dm_name,
-                    reports_metadata
+                dm.get(
+                    "dm_path",
+                    ""
                 )
-            )
+                or
+                ""
+            ).strip()
 
 
             # =============================================
@@ -974,7 +819,8 @@ def build_bip_objects(
             # =============================================
 
             dm_key = (
-                dm_name.upper()
+                dm_name.upper(),
+                dm_path.upper()
             )
 
 
@@ -1031,7 +877,7 @@ def build_bip_objects(
             print(
                 "[MATRIZ BIP] Data Model:",
                 dm_name,
-                "| Ruta:",
+                "| Ruta real:",
                 dm_path
             )
 

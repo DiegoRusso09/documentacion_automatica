@@ -12,6 +12,9 @@ from oic_doc_generator.backend.parsers.bip_relationship_parser import (
     match_reports_with_dms
 )
 
+from oic_doc_generator.backend.parsers.bip_dm_parser import (
+    parse_bip_datamodel
+)
 
 # =========================================================
 # BUILD BIP REPORT CATALOG
@@ -88,6 +91,112 @@ def build_bip_metadata(
         "reports",
         []
     )
+
+    # =====================================================
+    # DATA MODELS
+    # =====================================================
+
+    dm_artifacts = get_datamodel_artifacts(
+        artifact_tree
+    )
+
+
+    data_models = []
+
+    data_model_keys = set()
+
+
+    for dm_artifact in dm_artifacts:
+
+        workspace = dm_artifact.get(
+            "workspace",
+            ""
+        )
+
+
+        if not workspace:
+            continue
+
+
+        dm_metadata = parse_bip_datamodel(
+            workspace
+        )
+
+
+        dm_name = (
+            dm_metadata.get(
+                "dm_name",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        dm_path = (
+            dm_metadata.get(
+                "dm_path",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        if not dm_name:
+            continue
+
+        # =====================================================
+        # DUPLICATE CONTROL
+        # =====================================================
+
+        dm_key = (
+            dm_name.upper(),
+            dm_path.upper()
+        )
+
+
+        if dm_key in data_model_keys:
+            continue
+
+
+        data_model_keys.add(
+            dm_key
+        )
+
+
+        data_models.append({
+
+            "dm_name":
+                dm_name,
+
+            "dm_path":
+                dm_path,
+
+            "datasource":
+                dm_metadata.get(
+                    "datasource",
+                    ""
+                ),
+
+            "parameters":
+                dm_metadata.get(
+                    "parameters",
+                    []
+                ),
+
+            "dataset_sqls":
+                dm_metadata.get(
+                    "dataset_sqls",
+                    []
+                ),
+
+            "xsd_structure":
+                dm_metadata.get(
+                    "xsd_structure",
+                    {}
+                )
+        })
 
     result = []
 
@@ -227,6 +336,9 @@ def build_bip_metadata(
 
         "reports":
             result,
+
+        "data_models":
+            data_models,
 
         "warnings":
             catalog.get(

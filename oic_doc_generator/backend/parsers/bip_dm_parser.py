@@ -5,6 +5,7 @@
 
 import os
 import xml.etree.ElementTree as ET
+from urllib.parse import unquote
 
 from oic_doc_generator.backend.utils.xml_utils import (
     clean_tag
@@ -66,6 +67,96 @@ def safe_xml_parse(
 
         return None
 
+
+# =========================================================
+# DECODE BIP PATH
+# =========================================================
+
+def decode_bip_path(
+    encoded_path
+):
+
+    if not encoded_path:
+        return ""
+
+    decoded = unquote(
+        encoded_path
+    )
+
+    decoded = decoded.replace(
+        "+",
+        " "
+    )
+
+    return decoded.strip()
+
+
+# =========================================================
+# EXTRACT DATA MODEL PATH
+# =========================================================
+
+def extract_dm_path(
+    metadata_root
+):
+
+    if metadata_root is None:
+        return ""
+
+
+    for elem in metadata_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                elem.tag
+            )
+
+        except Exception:
+
+            continue
+
+
+        if tag.lower() != "entry":
+            continue
+
+
+        key = ""
+        value = ""
+
+
+        for child in elem:
+
+            try:
+
+                child_tag = clean_tag(
+                    child.tag
+                )
+
+            except Exception:
+
+                continue
+
+
+            if child_tag.lower() == "key":
+
+                if child.text:
+                    key = child.text.strip()
+
+
+            elif child_tag.lower() == "value":
+
+                if child.text:
+                    value = child.text.strip()
+
+
+        if key == "path":
+
+            return decode_bip_path(
+                value
+            )
+
+
+    return ""
 
 # =========================================================
 # EXTRACT DATASOURCE
@@ -617,6 +708,8 @@ def parse_bip_datamodel(
 
         "dm_name": "",
 
+        "dm_path": "",
+
         "datasource": "",
 
         "sql_queries": [],
@@ -652,6 +745,31 @@ def parse_bip_datamodel(
     if not dm_xml:
 
         return result
+
+    # =====================================================
+    # FIND METADATA
+    # =====================================================
+
+    metadata_xml = find_file_recursive(
+
+        dm_workspace,
+
+        "~metadata.meta"
+    )
+
+
+    metadata_root = safe_xml_parse(
+        metadata_xml
+    )
+
+
+    # =====================================================
+    # REAL BI PUBLISHER PATH
+    # =====================================================
+
+    result["dm_path"] = extract_dm_path(
+        metadata_root
+    )
 
     # =====================================================
     # PARSE XML
