@@ -29,6 +29,17 @@ from fastapi.responses import (
     Response
 )
 
+from oic_doc_generator.backend.parsers.bip_archive_parser import (
+    build_bip_artifact_tree,
+    get_report_artifacts,
+    get_datamodel_artifacts,
+    clean_bip_workspace
+)
+
+from oic_doc_generator.backend.parsers.bip_metadata_builder import (
+    build_bip_metadata
+)
+
 ORDS_MATRIZ_PDF_URL = (
     "https://sea27ktcsvagrmb-neodbaprod.adb.sa-saopaulo-1.oraclecloudapps.com"
     "/ords/neora/documentation-automation/matriz/pdf/"
@@ -571,72 +582,281 @@ def build_bip_objects(
 
     objetos = []
 
-    for bip_file in bip_files:
+    if not bip_files:
+        return objetos
 
-        extension = (
-            Path(
-                bip_file.name
+
+    artifact_tree = None
+
+
+    try:
+
+        # =================================================
+        # REINICIAR STREAMS
+        # =================================================
+
+        for bip_file in bip_files:
+
+            try:
+                bip_file.seek(0)
+            except Exception:
+                pass
+
+
+        # =================================================
+        # ANALIZAR ARCHIVOS / CARPETAS XDRZ
+        # =================================================
+
+        artifact_tree = (
+            build_bip_artifact_tree(
+                bip_files
             )
-            .suffix
-            .lower()
         )
 
-        name = safe_stem(
-            bip_file.name
+
+        # =================================================
+        # METADATA DE REPORTES
+        # =================================================
+
+        bip_metadata = (
+            build_bip_metadata(
+                artifact_tree
+            )
         )
 
-        if not name:
-            continue
 
-        if extension == ".xdmz":
-
-            object_type = (
-                "Data Model"
+        reports_metadata = (
+            bip_metadata.get(
+                "reports",
+                []
             )
+        )
 
-        elif extension in [
-            ".xdoz",
-            ".xdrz"
-        ]:
 
-            object_type = (
-                "Report"
-            )
+        # =================================================
+        # REPORTS
+        # =================================================
 
-        else:
+        report_names = set()
 
-            continue
 
-        objetos.append({
+        for report in reports_metadata:
 
-            "id":
-                name,
+            report_name = (
+                report.get(
+                    "report_name",
+                    ""
+                )
+                or
+                ""
+            ).strip()
 
-            "nombre_objeto":
-                name,
 
-            "tipo":
-                object_type,
+            if not report_name:
+                continue
 
-            "version":
-                None,
 
-            "paquete":
-                None,
-
-            "creacion_modificacion":
-                "Creacion",
-
-            "herramienta":
-                "BI Publisher",
-
-            "ruta":
+            report_path = (
+                report.get(
+                    "report_path"
+                )
+                or
                 None
-        })
-
-    return objetos
+            )
 
 
+            # Evitar duplicados
+            report_key = (
+                report_name.upper(),
+                str(
+                    report_path
+                    or
+                    ""
+                ).upper()
+            )
+
+
+            if report_key in report_names:
+                continue
+
+
+            report_names.add(
+                report_key
+            )
+
+
+            objetos.append({
+
+                "id":
+                    report_name,
+
+                "nombre_objeto":
+                    report_name,
+
+                "tipo":
+                    "Report",
+
+                "version":
+                    None,
+
+                "paquete":
+                    None,
+
+                "creacion_modificacion":
+                    "Creacion",
+
+                "herramienta":
+                    "BI Publisher",
+
+                "ruta":
+                    report_path
+            })
+
+
+        # =================================================
+        # DATA MODELS
+        # =================================================
+
+        dm_artifacts = (
+            get_datamodel_artifacts(
+                artifact_tree
+            )
+        )
+
+
+        dm_names = set()
+
+
+        for dm_artifact in dm_artifacts:
+
+            original_file = (
+                dm_artifact.get(
+                    "original_file",
+                    ""
+                )
+                or
+                ""
+            )
+
+
+            dm_name = safe_stem(
+                os.path.basename(
+                    original_file
+                )
+            )
+
+
+            if not dm_name:
+                continue
+
+
+            dm_key = (
+                dm_name.upper()
+            )
+
+
+            if dm_key in dm_names:
+                continue
+
+
+            dm_names.add(
+                dm_key
+            )
+
+
+            objetos.append({
+
+                "id":
+                    dm_name,
+
+                "nombre_objeto":
+                    dm_name,
+
+                "tipo":
+                    "Data Model",
+
+                "version":
+                    None,
+
+                "paquete":
+                    None,
+
+                "creacion_modificacion":
+                    "Creacion",
+
+                "herramienta":
+                    "BI Publisher",
+
+                "ruta":
+                    None
+            })
+
+
+        # =================================================
+        # LOG
+        # =================================================
+
+        print(
+            "[MATRIZ BIP] Reports encontrados:",
+            len(
+                report_names
+            )
+        )
+
+        print(
+            "[MATRIZ BIP] Data Models encontrados:",
+            len(
+                dm_names
+            )
+        )
+
+        print(
+            "[MATRIZ BIP] Total objetos:",
+            len(
+                objetos
+            )
+        )
+
+
+        warnings = (
+            artifact_tree.get(
+                "warnings",
+                []
+            )
+        )
+
+
+        for warning in warnings:
+
+            print(
+                "[MATRIZ BIP] WARNING:",
+                warning
+            )
+
+
+        return objetos
+
+
+    finally:
+
+        # =================================================
+        # LIMPIAR WORKSPACE TEMPORAL
+        # =================================================
+
+        if artifact_tree:
+
+            workspace = (
+                artifact_tree.get(
+                    "workspace"
+                )
+            )
+
+            if workspace:
+
+                clean_bip_workspace(
+                    workspace
+                )
+                
 # =========================================================
 # BUILD DATABASE OBJECTS
 # =========================================================
