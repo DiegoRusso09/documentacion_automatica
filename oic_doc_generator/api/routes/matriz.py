@@ -161,48 +161,109 @@ async def to_memory_files(
 
 
 # =========================================================
-# OIC ID
+# NORMALIZE OIC EXPORT NAME
 # =========================================================
 
-def infer_oic_id(
-    iar_path: str,
-    integration_name: str
-):
+def normalize_oic_export_name(
+    file_name: str
+) -> str:
 
-    file_name = os.path.basename(
-        iar_path
-    )
+    if not file_name:
+        return ""
 
     stem = Path(
-        file_name
+        os.path.basename(
+            file_name
+        )
     ).stem
 
-    # Oracle puede exportar IAR con prefijos como IC_
+
+    # =====================================================
+    # REMOVE ORACLE EXPORT PREFIXES
+    # =====================================================
+
     stem = re.sub(
-        r"^(IC_|IAR_)",
+        r"^(icspackage_|IC_|IAR_)",
         "",
         stem,
         flags=re.IGNORECASE
     )
 
-    # Remueve versiones al final:
+
+    # =====================================================
+    # REMOVE UUID
+    #
+    # Example:
+    # _5ce773ac-02ce-4803-b52b-f64687f36de1
+    # =====================================================
+
+    stem = re.sub(
+        (
+            r"_[0-9a-fA-F]{8}"
+            r"-[0-9a-fA-F]{4}"
+            r"-[0-9a-fA-F]{4}"
+            r"-[0-9a-fA-F]{4}"
+            r"-[0-9a-fA-F]{12}$"
+        ),
+        "",
+        stem
+    )
+
+
+    # =====================================================
+    # REMOVE VERSION
+    #
     # _01.00.0000
     # _1.0.2
+    # =====================================================
+
     stem = re.sub(
         r"[_-]\d+(?:\.\d+){1,3}$",
         "",
         stem
     )
 
-    stem = stem.strip(
+
+    return stem.strip(
         "_- "
     )
 
-    if stem:
-        return stem
 
-    return integration_name
+# =========================================================
+# OIC ID
+# =========================================================
 
+def infer_oic_id(
+    iar_path: str,
+    integration_name: str = ""
+):
+
+    integration_id = (
+        normalize_oic_export_name(
+            iar_path
+        )
+    )
+
+
+    if integration_id:
+        return integration_id
+
+
+    if integration_name:
+
+        integration_id = (
+            integration_name
+            .strip()
+            .replace(
+                " ",
+                "_"
+            )
+        )
+
+        return integration_id
+
+
+    return ""
 
 # =========================================================
 # OIC PACKAGE
@@ -399,27 +460,85 @@ def build_oic_objects(
                     extracted_iar
                 )
 
-                try:
+            try:
 
-                    integration_name = (
-                        get_project_name(
-                            extracted_iar
-                        )
+                integration_name = (
+                    get_project_name(
+                        extracted_iar
                     )
+                )
 
-                except Exception:
+            except Exception:
 
-                    integration_name = None
+                integration_name = None
 
-                if not integration_name:
 
-                    integration_name = (
-                        safe_stem(
-                            os.path.basename(
-                                iar_path
-                            )
-                        )
+            # =========================================================
+            # NORMALIZED OIC ID
+            # =========================================================
+
+            integration_id = (
+                infer_oic_id(
+                    iar_path,
+                    integration_name
+                )
+            )
+
+
+            # =========================================================
+            # DETECT INVALID / TECHNICAL PROJECT NAME
+            # =========================================================
+
+            technical_name = False
+
+
+            if integration_name:
+
+                lower_name = (
+                    integration_name
+                    .lower()
+                )
+
+
+                if lower_name.startswith(
+                    "icspackage_"
+                ):
+
+                    technical_name = True
+
+
+                if re.search(
+                    (
+                        r"[0-9a-fA-F]{8}"
+                        r"-[0-9a-fA-F]{4}"
+                        r"-[0-9a-fA-F]{4}"
+                        r"-[0-9a-fA-F]{4}"
+                        r"-[0-9a-fA-F]{12}"
+                    ),
+                    integration_name
+                ):
+
+                    technical_name = True
+
+
+            # =========================================================
+            # FALLBACK HUMAN-READABLE NAME
+            # =========================================================
+
+            if (
+                not integration_name
+                or
+                technical_name
+            ):
+
+                integration_name = (
+                    integration_id
+                    .replace(
+                        "_",
+                        " "
                     )
+                    .strip()
+                )
 
                 try:
 
