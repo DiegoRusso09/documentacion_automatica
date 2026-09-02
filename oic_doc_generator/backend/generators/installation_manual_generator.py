@@ -347,7 +347,6 @@ def add_bip_installation_section(
         Cm(12.5)
     )
 
-
     # =====================================================
     # 3.2.2 CONSIDERATIONS
     # =====================================================
@@ -359,6 +358,52 @@ def add_bip_installation_section(
     )
 
 
+    # =====================================================
+    # INSTALLATION ORDER
+    # =====================================================
+
+    p = document.add_paragraph()
+
+    p.paragraph_format.space_before = Pt(
+        3
+    )
+
+    p.paragraph_format.space_after = Pt(
+        3
+    )
+
+
+    run = p.add_run(
+        "Orden de instalación"
+    )
+
+    run.bold = True
+
+
+    p = document.add_paragraph(
+        (
+            "Los artefactos incluidos en la carpeta OTBI "
+            "deberán instalarse respetando el siguiente orden:"
+        )
+    )
+
+    p.paragraph_format.line_spacing = 1.0
+    p.paragraph_format.space_after = Pt(4)
+
+
+    add_bip_installation_plan_table(
+        document,
+        items
+    )
+
+
+    document.add_paragraph("")
+
+
+    # =====================================================
+    # CONSIDERATIONS
+    # =====================================================
+
     considerations = [
 
         (
@@ -367,69 +412,44 @@ def add_bip_installation_section(
         ),
 
         (
-            "Las carpetas se instalarán antes que los "
-            "Data Models y los Reportes."
+            "Las carpetas deberán instalarse antes que "
+            "los Data Models y los Reportes."
         ),
 
         (
-            "La ruta indicada para cada artefacto "
-            "corresponde al Catálogo de BI Publisher "
-            "del ambiente destino."
+            "La ruta indicada para cada artefacto corresponde "
+            "al Catálogo de BI Publisher del ambiente destino."
         ),
 
         (
-            "No modifique el nombre ni el contenido de "
-            "los archivos incluidos en la carpeta OTBI "
+            "No se deberá modificar el nombre ni el contenido "
+            "de los archivos incluidos en la carpeta OTBI "
             "del paquete de instalación."
         ),
 
         (
-            "Si una ruta requerida no existe, deberá "
-            "crearse antes de continuar, excepto cuando "
-            "dicha carpeta sea provista mediante un "
-            "artefacto XDRZ incluido en el mismo pase."
+            "Si una ruta requerida no existe, deberá crearse "
+            "antes de continuar, excepto cuando dicha carpeta "
+            "sea proporcionada mediante un archivo XDRZ "
+            "incluido en el mismo pase."
         )
     ]
 
 
     for consideration in considerations:
 
-        document.add_paragraph(
-            consideration,
-            style="List Bullet"
-        )
-
-
-        document.add_paragraph("")
-
-
-        p = document.add_paragraph()
-
-        run = p.add_run(
-            "Orden de instalación"
-        )
-
-        run.bold = True
-
-
-        document.add_paragraph(
-            (
-                "Los artefactos incluidos en la carpeta OTBI "
-                "deberán instalarse respetando el siguiente orden:"
-            )
-        )
-
-
-        add_bip_installation_plan_table(
+        add_im090_bullet(
             document,
-            items
+            consideration,
+            left_indent=0.75
         )
 
 
-        document.add_paragraph("")
+    document.add_paragraph("")
+
 
     # =====================================================
-    # ARTIFACTS
+    # INDIVIDUAL ARTIFACT SECTIONS
     # =====================================================
 
     subsection = 3
@@ -882,6 +902,57 @@ def add_bottom_border(
 
 
 # =========================================================
+# IM090 BULLET
+# =========================================================
+
+def add_im090_bullet(
+    document,
+    text,
+    left_indent=0.75
+):
+
+    p = document.add_paragraph()
+
+    p.paragraph_format.left_indent = Cm(
+        left_indent
+    )
+
+    p.paragraph_format.first_line_indent = Cm(
+        -0.35
+    )
+
+    p.paragraph_format.space_before = Pt(
+        0
+    )
+
+    p.paragraph_format.space_after = Pt(
+        0
+    )
+
+    p.paragraph_format.line_spacing = 1.0
+
+
+    run = p.add_run(
+        "• "
+    )
+
+    run.font.name = "Arial"
+    run.font.size = Pt(10)
+
+
+    run = p.add_run(
+        text
+    )
+
+    run.font.name = "Arial"
+    run.font.size = Pt(10)
+
+
+    return p
+
+
+
+# =========================================================
 # COVER PAGE
 # =========================================================
 
@@ -892,13 +963,11 @@ def add_im090_cover_page(
     approvers=None
 ):
 
-    if approvers is None:
-
-        approvers = [
-            "<Aprobador 1>",
-            "<Aprobador 2>",
-            "<Aprobador 3>"
-        ]
+    approvers = [
+        "<Aprobador 1>",
+        "<Aprobador 2>",
+        "<Aprobador 3>"
+    ]
 
 
     current_dir = os.path.dirname(
@@ -964,18 +1033,42 @@ def add_im090_cover_page(
 
 
     # =====================================================
-    # ORACLE TEXT
+    # COMPANY / ORACLE
     # =====================================================
 
-    p = document.add_paragraph()
+    company_table = document.add_table(
+        rows=1,
+        cols=1
+    )
 
-    p.paragraph_format.space_before = Pt(
+    company_table.style = None
+
+    cell = company_table.cell(
+        0,
         0
     )
 
-    p.paragraph_format.space_after = Pt(
-        8
+
+    shading = parse_xml(
+        r'<w:shd {} w:fill="F2F2F2"/>'.format(
+            nsdecls("w")
+        )
     )
+
+    cell._tc.get_or_add_tcPr().append(
+        shading
+    )
+
+
+    p = cell.paragraphs[0]
+
+    p.alignment = (
+        WD_PARAGRAPH_ALIGNMENT.LEFT
+    )
+
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(0)
+
 
     run = p.add_run(
         "ORACLE"
@@ -995,33 +1088,15 @@ def add_im090_cover_page(
     # DEVELOPMENT NAME
     # =====================================================
 
-    title_table = document.add_table(
-        rows=1,
-        cols=1
-    )
-
-    title_table.style = None
-
-    cell = title_table.cell(
-        0,
-        0
-    )
-
-    shading = parse_xml(
-        r'<w:shd {} w:fill="F2F2F2"/>'.format(
-            nsdecls("w")
-        )
-    )
-
-    cell._tc.get_or_add_tcPr().append(
-        shading
-    )
-
-    p = cell.paragraphs[0]
+    p = document.add_paragraph()
 
     p.alignment = (
-        WD_PARAGRAPH_ALIGNMENT.CENTER
+        WD_PARAGRAPH_ALIGNMENT.LEFT
     )
+
+    p.paragraph_format.space_before = Pt(4)
+    p.paragraph_format.space_after = Pt(8)
+
 
     run = p.add_run(
         development_name
@@ -1029,11 +1104,6 @@ def add_im090_cover_page(
 
     run.font.name = "Arial"
     run.font.size = Pt(15)
-
-
-    document.add_paragraph("")
-    document.add_paragraph("")
-
 
     # =====================================================
     # INFORMATION
@@ -1443,13 +1513,12 @@ def add_installation_requirements(
 
     if "BI Publisher" in selected_components:
 
-        p = document.add_paragraph(
-            style="List Bullet"
-        )
-
-        run = p.add_run(
+        p = add_im090_bullet(
+            document,
             "Oracle ERP Cloud"
         )
+
+        p.runs[-1].bold = True
 
         run.bold = True
 
@@ -1916,39 +1985,93 @@ def add_database_installation_section(
 
     preparation_steps = [
 
-        (
-            "Abrir Oracle SQL Developer o la herramienta "
-            "autorizada para la administración de la "
-            "Base de Datos Oracle."
-        ),
+        {
+            "text":
+                (
+                    "Abrir Oracle SQL Developer o la herramienta "
+                    "autorizada para la administración de la "
+                    "Base de Datos Oracle."
+                ),
 
-        (
-            "Ubicar la conexión correspondiente al "
-            "ambiente destino donde se realizará la "
-            "instalación."
-        ),
+            "image":
+                "open-sqldeveloper.png",
 
-        (
-            "Hacer clic derecho sobre la conexión y "
-            "seleccionar la opción Conectar."
-        ),
+            "width":
+                11.5
+        },
 
-        (
-            "Ingresar la contraseña correspondiente "
-            "al usuario configurado."
-        ),
+        {
+            "text":
+                (
+                    "Ubicar la conexión correspondiente al "
+                    "ambiente destino donde se realizará la "
+                    "instalación."
+                ),
 
-        (
-            "No modificar el usuario definido en la "
-            "conexión, salvo que exista una instrucción "
-            "expresa dentro del procedimiento de pase."
-        ),
+            "image":
+                "buscar_schema.png",
 
-        (
-            "Confirmar que la conexión se encuentre "
-            "activa antes de continuar con la ejecución "
-            "de los scripts."
-        )
+            "width":
+                12.5
+        },
+
+        {
+            "text":
+                (
+                    "Hacer clic derecho sobre la conexión y "
+                    "seleccionar la opción Conectar."
+                ),
+
+            "image":
+                "connect_to_schema.png",
+
+            "width":
+                10.5
+        },
+
+        {
+            "text":
+                (
+                    "Ingresar la contraseña correspondiente "
+                    "al usuario configurado."
+                ),
+
+            "image":
+                "credentials_sqldeveloper.png",
+
+            "width":
+                12.5
+        },
+
+        {
+            "text":
+                (
+                    "No modificar el usuario definido en la "
+                    "conexión, salvo que exista una instrucción "
+                    "expresa dentro del procedimiento de pase."
+                ),
+
+            "image":
+                None,
+
+            "width":
+                None
+        },
+
+        {
+            "text":
+                (
+                    "Confirmar que la conexión se encuentre "
+                    "activa antes de continuar con la ejecución "
+                    "de los scripts."
+                ),
+
+            "image":
+                None,
+
+            "width":
+                None
+        }
     ]
 
 
@@ -1963,16 +2086,62 @@ def add_database_installation_section(
             0.5
         )
 
+        paragraph.paragraph_format.space_before = Pt(
+            0
+        )
+
+        paragraph.paragraph_format.space_after = Pt(
+            4
+        )
+
+        paragraph.paragraph_format.line_spacing = 1.0
+
+
         run = paragraph.add_run(
             f"{index}. "
         )
 
         run.bold = True
 
+
         paragraph.add_run(
-            step
+            step[
+                "text"
+            ]
         )
 
+
+        # =================================================
+        # SCREENSHOT
+        # =================================================
+
+        image_name = step.get(
+            "image"
+        )
+
+
+        if image_name:
+
+            image_path = (
+                get_im090_template_path(
+                    image_name
+                )
+            )
+
+
+            add_centered_image(
+
+                document,
+
+                image_path,
+
+                Cm(
+                    step.get(
+                        "width",
+                        12
+                    )
+                )
+            )
 
     add_information_box(
 
@@ -2196,74 +2365,7 @@ def add_database_installation_section(
 
 
     # =====================================================
-    # GENERAL EXECUTION INSTRUCTIONS
-    # =====================================================
-
-    execution_steps = [
-
-        (
-            "Ubicar la carpeta scripts incluida en "
-            "el paquete de instalación."
-        ),
-
-        (
-            "Abrir el primer archivo indicado en la "
-            "tabla de orden de ejecución."
-        ),
-
-        (
-            "Cargar el contenido del archivo en una "
-            "hoja de trabajo de Oracle SQL Developer."
-        ),
-
-        (
-            "Ejecutar el archivo utilizando la opción "
-            "Run Script o la tecla F5."
-        ),
-
-        (
-            "Revisar la salida de ejecución y confirmar "
-            "que el script haya finalizado sin errores."
-        ),
-
-        (
-            "Continuar con el siguiente archivo únicamente "
-            "cuando el script anterior haya finalizado "
-            "correctamente."
-        ),
-
-        (
-            "Repetir el procedimiento hasta completar "
-            "todos los archivos definidos en el plan de "
-            "instalación."
-        )
-    ]
-
-
-    for index, step in enumerate(
-        execution_steps,
-        start=1
-    ):
-
-        paragraph = document.add_paragraph()
-
-        paragraph.paragraph_format.left_indent = Cm(
-            0.5
-        )
-
-        run = paragraph.add_run(
-            f"{index}. "
-        )
-
-        run.bold = True
-
-        paragraph.add_run(
-            step
-        )
-
-
-    # =====================================================
-    # INDIVIDUAL SCRIPT ORDER
+    # EXECUTE EACH INSTALLATION SCRIPT
     # =====================================================
 
     if installation_scripts:
@@ -2271,23 +2373,14 @@ def add_database_installation_section(
         document.add_paragraph("")
 
 
-        paragraph = document.add_paragraph()
-
-        run = paragraph.add_run(
-            "Orden de ejecución:"
+        execute_script_image = (
+            get_im090_template_path(
+                "ejecutar_script.png"
+            )
         )
-
-        run.bold = True
 
 
         for script in installation_scripts:
-
-            paragraph = document.add_paragraph()
-
-            paragraph.paragraph_format.left_indent = Cm(
-                0.75
-            )
-
 
             order = script.get(
                 "order",
@@ -2301,30 +2394,129 @@ def add_database_installation_section(
             )
 
 
-            script_type = script.get(
-                "type",
-                ""
+            # =================================================
+            # SCRIPT STEP
+            # =================================================
+
+            p = document.add_paragraph()
+
+            p.paragraph_format.space_before = Pt(
+                6
             )
 
+            p.paragraph_format.space_after = Pt(
+                3
+            )
 
-            run = paragraph.add_run(
-                f"{order}. "
+            p.paragraph_format.line_spacing = 1.0
+
+
+            run = p.add_run(
+                f"Paso {order}. Ejecutar {file_name}"
             )
 
             run.bold = True
 
 
-            run = paragraph.add_run(
-                file_name
+            # =================================================
+            # OPEN SCRIPT
+            # =================================================
+
+            p = document.add_paragraph()
+
+            p.paragraph_format.left_indent = Cm(
+                0.5
             )
 
-            run.bold = True
-
-
-            paragraph.add_run(
-                f" — {script_type}"
+            p.paragraph_format.space_before = Pt(
+                0
             )
 
+            p.paragraph_format.space_after = Pt(
+                2
+            )
+
+            p.paragraph_format.line_spacing = 1.0
+
+
+            p.add_run(
+                (
+                    "Abra el archivo "
+                    f"../scripts/{file_name} "
+                    "en una hoja de trabajo de "
+                    "Oracle SQL Developer."
+                )
+            )
+
+
+            # =================================================
+            # RUN SCRIPT
+            # =================================================
+
+            p = document.add_paragraph()
+
+            p.paragraph_format.left_indent = Cm(
+                0.5
+            )
+
+            p.paragraph_format.space_before = Pt(
+                0
+            )
+
+            p.paragraph_format.space_after = Pt(
+                3
+            )
+
+            p.paragraph_format.line_spacing = 1.0
+
+
+            p.add_run(
+                (
+                    "Ejecute el script utilizando la opción "
+                    "Run Script o presionando la tecla F5."
+                )
+            )
+
+
+            # =================================================
+            # IMAGE
+            # =================================================
+
+            add_centered_image(
+                document,
+                execute_script_image,
+                Cm(13)
+            )
+
+
+            # =================================================
+            # VALIDATION
+            # =================================================
+
+            p = document.add_paragraph()
+
+            p.paragraph_format.left_indent = Cm(
+                0.5
+            )
+
+            p.paragraph_format.space_before = Pt(
+                0
+            )
+
+            p.paragraph_format.space_after = Pt(
+                6
+            )
+
+            p.paragraph_format.line_spacing = 1.0
+
+
+            p.add_run(
+                (
+                    "Verifique que la ejecución finalice "
+                    "sin errores antes de continuar con "
+                    "el siguiente script."
+                )
+            )
 
     add_information_box(
 

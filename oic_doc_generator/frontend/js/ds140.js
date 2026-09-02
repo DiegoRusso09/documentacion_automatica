@@ -2576,37 +2576,6 @@
             );
 
 
-            // =================================================
-            // APPROVERS
-            // =================================================
-
-            [
-                "im090_approver_1",
-                "im090_approver_2",
-                "im090_approver_3"
-
-            ].forEach(
-                id => {
-
-                    const value =
-                        document
-                            .getElementById(
-                                id
-                            )
-                            ?.value
-                            .trim();
-
-
-                    if (value) {
-
-                        formData.append(
-                            "approvers",
-                            value
-                        );
-                    }
-                }
-            );
-
 
             // =================================================
             // EXISTING FILE STORE

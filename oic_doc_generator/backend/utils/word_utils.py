@@ -1346,14 +1346,12 @@ def create_toc_table(
     # CONTENT LABEL
     # =====================================================
 
-    content_title = document.add_paragraph()
-
-    content_title.paragraph_format.space_before = Pt(
-        18
+    content_title = document.add_paragraph(
+        style="HD1"
     )
 
-    content_title.paragraph_format.space_after = Pt(
-        4
+    content_title.alignment = (
+        WD_PARAGRAPH_ALIGNMENT.LEFT
     )
 
 
@@ -1362,19 +1360,13 @@ def create_toc_table(
     )
 
     run.bold = True
-
-    run.font.name = (
-        "Arial"
-    )
-
-    run.font.size = Pt(
-        11
-    )
+    run.font.name = "Arial"
+    run.font.size = Pt(16)
 
     run.font.color.rgb = RGBColor(
-        47,
-        85,
-        151
+        0,
+        0,
+        0
     )
 
 
