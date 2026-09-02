@@ -2037,7 +2037,7 @@ def add_database_installation_section(
                 "buscar_schema.png",
 
             "width":
-                12.5
+                6
         },
 
         {
@@ -2510,7 +2510,7 @@ def add_database_installation_section(
             add_centered_image(
                 document,
                 execute_script_image,
-                Cm(13)
+                Cm(5)
             )
 
 
