@@ -1507,10 +1507,6 @@ def add_installation_requirements(
     )
 
 
-    # =====================================================
-    # ERP CLOUD
-    # =====================================================
-
     if "BI Publisher" in selected_components:
 
         p = add_im090_bullet(
@@ -1518,9 +1514,9 @@ def add_installation_requirements(
             "Oracle ERP Cloud"
         )
 
-        p.runs[-1].bold = True
+        if p.runs:
 
-        run.bold = True
+            p.runs[-1].bold = True
 
 
         p = document.add_paragraph()
@@ -1528,6 +1524,17 @@ def add_installation_requirements(
         p.paragraph_format.left_indent = Cm(
             0.75
         )
+
+        p.paragraph_format.space_before = Pt(
+            0
+        )
+
+        p.paragraph_format.space_after = Pt(
+            0
+        )
+
+        p.paragraph_format.line_spacing = 1.0
+
 
         p.add_run(
             "Editor de BI de aplicaciones en la nube: "
@@ -1543,6 +1550,17 @@ def add_installation_requirements(
                 0.75
             )
 
+            p.paragraph_format.space_before = Pt(
+                0
+            )
+
+            p.paragraph_format.space_after = Pt(
+                0
+            )
+
+            p.paragraph_format.line_spacing = 1.0
+
+
             p.add_run(
                 "El usuario de ERP debe tener asignados "
                 "los siguientes roles:"
@@ -1551,16 +1569,11 @@ def add_installation_requirements(
 
             for role in erp_roles:
 
-                p = document.add_paragraph()
-
-                p.paragraph_format.left_indent = Cm(
-                    1
+                add_im090_bullet(
+                    document,
+                    role,
+                    left_indent=1.0
                 )
-
-                p.add_run(
-                    role
-                )
-
 
     # =====================================================
     # PAAS
@@ -1603,16 +1616,19 @@ def add_installation_requirements(
 
         document.add_paragraph("")
 
-        p = document.add_paragraph(
-            style="List Bullet"
+
+        p = add_im090_bullet(
+            document,
+            (
+                "Platform as a Service - PaaS "
+                "(Plataforma como Servicio)"
+            )
         )
 
-        run = p.add_run(
-            "Platform as a Service - PaaS "
-            "(Plataforma como Servicio)"
-        )
 
-        run.bold = True
+        if p.runs:
+
+            p.runs[-1].bold = True
 
 
         for component_name, description in (
@@ -1625,16 +1641,25 @@ def add_installation_requirements(
                 0.75
             )
 
-            run = p.add_run(
+            p.paragraph_format.space_before = Pt(
+                0
+            )
+
+            p.paragraph_format.space_after = Pt(
+                0
+            )
+
+            p.paragraph_format.line_spacing = 1.0
+
+
+            p.add_run(
                 f"{component_name}: "
             )
 
-            run.bold = False
 
             p.add_run(
                 description
             )
-
 
 # =========================================================
 # ADD INFORMATION BOX
