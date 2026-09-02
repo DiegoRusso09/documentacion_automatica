@@ -28,6 +28,10 @@ from docx.oxml.ns import (
     qn
 )
 
+from docx.enum.style import (
+    WD_STYLE_TYPE
+)
+
 
 # =========================================================
 # HEADER NUMBER REGEX
@@ -2037,3 +2041,164 @@ def add_description_box(
     p.alignment = (
         WD_PARAGRAPH_ALIGNMENT.LEFT
     )
+
+# =========================================================
+# CREATE DOCUMENT STYLES
+# =========================================================
+
+def create_document_styles(
+    document
+):
+
+    styles = document.styles
+
+
+    # =====================================================
+    # HD1
+    # =====================================================
+
+    if "HD1" not in styles:
+
+        style = styles.add_style(
+            "HD1",
+            WD_STYLE_TYPE.PARAGRAPH
+        )
+
+        font = style.font
+
+        font.name = "Arial"
+        font.size = Pt(16)
+        font.bold = True
+
+        paragraph_format = (
+            style.paragraph_format
+        )
+
+        paragraph_format.left_indent = Cm(0)
+        paragraph_format.first_line_indent = Cm(0)
+        paragraph_format.space_before = Pt(6)
+        paragraph_format.space_after = Pt(12)
+        paragraph_format.keep_with_next = True
+        paragraph_format.keep_together = True
+
+        p_pr = (
+            style.element
+            .get_or_add_pPr()
+        )
+
+        outline_level = OxmlElement(
+            "w:outlineLvl"
+        )
+
+        outline_level.set(
+            qn("w:val"),
+            "0"
+        )
+
+        p_pr.append(
+            outline_level
+        )
+
+        border_xml = parse_xml(r'''
+            <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:top
+                    w:val="single"
+                    w:sz="45"
+                    w:space="1"
+                    w:color="000000"/>
+            </w:pBdr>
+        ''')
+
+        p_pr.append(
+            border_xml
+        )
+
+
+    # =====================================================
+    # HD2
+    # =====================================================
+
+    if "HD2" not in styles:
+
+        style = styles.add_style(
+            "HD2",
+            WD_STYLE_TYPE.PARAGRAPH
+        )
+
+        font = style.font
+
+        font.name = "Arial"
+        font.size = Pt(13)
+        font.bold = True
+
+        paragraph_format = (
+            style.paragraph_format
+        )
+
+        paragraph_format.left_indent = Cm(0)
+        paragraph_format.first_line_indent = Cm(0)
+        paragraph_format.space_before = Pt(6)
+        paragraph_format.space_after = Pt(6)
+        paragraph_format.keep_with_next = True
+        paragraph_format.keep_together = True
+
+        p_pr = (
+            style.element
+            .get_or_add_pPr()
+        )
+
+        outline_level = OxmlElement(
+            "w:outlineLvl"
+        )
+
+        outline_level.set(
+            qn("w:val"),
+            "1"
+        )
+
+        p_pr.append(
+            outline_level
+        )
+
+        border_xml = parse_xml(r'''
+            <w:pBdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:top
+                    w:val="single"
+                    w:sz="24"
+                    w:space="1"
+                    w:color="000000"/>
+            </w:pBdr>
+        ''')
+
+        p_pr.append(
+            border_xml
+        )
+
+
+# =========================================================
+# APPLY TABLE HEADER STYLE
+# =========================================================
+
+def apply_table_header_style(
+    cell,
+    fill="D9D9D9"
+):
+
+    shading = parse_xml(
+        r'<w:shd {} w:fill="{}"/>'.format(
+            nsdecls("w"),
+            fill
+        )
+    )
+
+    cell._tc.get_or_add_tcPr().append(
+        shading
+    )
+
+    for paragraph in cell.paragraphs:
+
+        for run in paragraph.runs:
+
+            run.bold = True
+            run.font.name = "Arial"
+            run.font.size = Pt(9)

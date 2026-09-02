@@ -2169,6 +2169,812 @@
     `;
     }
 
+
+    // =====================================================
+    // OPEN IM090 DIALOG
+    // =====================================================
+
+    function openIM090Dialog() {
+
+        const dialog =
+            document.getElementById(
+                "im090-dialog"
+            );
+
+
+        if (!dialog) {
+
+            console.error(
+                "[IM090] No existe el diálogo"
+            );
+
+            return;
+        }
+
+
+        // =================================================
+        // PREFILL AUTHOR
+        // =================================================
+
+        const sourceAuthor =
+            document.getElementById(
+                "author_name"
+            );
+
+
+        const targetAuthor =
+            document.getElementById(
+                "im090_author"
+            );
+
+
+        if (targetAuthor) {
+
+            targetAuthor.value =
+                sourceAuthor
+                    ? sourceAuthor.value
+                    : "";
+        }
+
+
+        // =================================================
+        // PREFILL DEVELOPMENT
+        // =================================================
+
+        const sourceDevelopment =
+            document.getElementById(
+                "development_name"
+            );
+
+
+        const targetDevelopment =
+            document.getElementById(
+                "im090_development_name"
+            );
+
+
+        if (targetDevelopment) {
+
+            targetDevelopment.value =
+                sourceDevelopment
+                    ? sourceDevelopment.value
+                    : "";
+        }
+
+
+        // =================================================
+        // SQL -> SHOW SCHEMA
+        // =================================================
+
+        const schemaGroup =
+            document.getElementById(
+                "im090_schema_group"
+            );
+
+
+        if (schemaGroup) {
+
+            schemaGroup.style.display =
+                fileStore.sql.length > 0
+                    ? "block"
+                    : "none";
+        }
+
+
+        // =================================================
+        // BIP -> SHOW ERP ROLES
+        // =================================================
+
+        const erpRolesGroup =
+            document.getElementById(
+                "im090_erp_roles_group"
+            );
+
+
+        if (erpRolesGroup) {
+
+            erpRolesGroup.style.display =
+                fileStore.bip.length > 0
+                    ? "block"
+                    : "none";
+        }
+
+
+        // =================================================
+        // COMPONENT SUMMARY
+        // =================================================
+
+        const summary =
+            document.getElementById(
+                "im090_components_summary"
+            );
+
+
+        if (summary) {
+
+            const components = [];
+
+
+            if (fileStore.vb.length > 0) {
+
+                components.push(
+                    `Visual Builder (${fileStore.vb.length})`
+                );
+            }
+
+
+            if (fileStore.apex.length > 0) {
+
+                components.push(
+                    `APEX (${fileStore.apex.length})`
+                );
+            }
+
+
+            if (fileStore.oic.length > 0) {
+
+                components.push(
+                    `OIC (${fileStore.oic.length})`
+                );
+            }
+
+
+            if (fileStore.bip.length > 0) {
+
+                components.push(
+                    `BI Publisher (${fileStore.bip.length})`
+                );
+            }
+
+
+            if (fileStore.sql.length > 0) {
+
+                components.push(
+                    `Base de Datos (${fileStore.sql.length})`
+                );
+            }
+
+
+            if (components.length > 0) {
+
+                summary.innerHTML =
+                    `
+                    <strong>
+                        Componentes detectados:
+                    </strong>
+                    <br>
+                    ${components.join("<br>")}
+                `;
+            }
+            else {
+
+                summary.innerHTML =
+                    `
+                    <strong>
+                        No hay componentes cargados.
+                    </strong>
+                `;
+            }
+        }
+
+
+        dialog.style.display =
+            "flex";
+    }
+
+
+    // =====================================================
+    // CLOSE IM090 DIALOG
+    // =====================================================
+
+    function closeIM090Dialog() {
+
+        const dialog =
+            document.getElementById(
+                "im090-dialog"
+            );
+
+
+        if (dialog) {
+
+            dialog.style.display =
+                "none";
+        }
+    }
+
+    // =====================================================
+    // IM090 JOB
+    // =====================================================
+
+    let currentIM090JobId =
+        null;
+
+    let im090StatusInterval =
+        null;
+
+
+    // =====================================================
+    // GENERATE IM090
+    // =====================================================
+
+    async function generateIM090() {
+
+        try {
+
+            // =================================================
+            // BASIC COMPONENT VALIDATION
+            // =================================================
+
+            const hasComponents = (
+
+                fileStore.vb.length > 0
+                ||
+                fileStore.apex.length > 0
+                ||
+                fileStore.oic.length > 0
+                ||
+                fileStore.bip.length > 0
+                ||
+                fileStore.sql.length > 0
+
+            );
+
+
+            if (!hasComponents) {
+
+                alert(
+                    "Debe cargar al menos un componente."
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // VALUES
+            // =================================================
+
+            const author =
+                document
+                    .getElementById(
+                        "im090_author"
+                    )
+                    ?.value
+                    .trim()
+                || "";
+
+
+            const developmentName =
+                document
+                    .getElementById(
+                        "im090_development_name"
+                    )
+                    ?.value
+                    .trim()
+                || "";
+
+
+            const schemaName =
+                document
+                    .getElementById(
+                        "im090_schema"
+                    )
+                    ?.value
+                    .trim()
+                || "";
+
+
+            if (!author) {
+
+                alert(
+                    "Debe indicar el autor."
+                );
+
+                return;
+            }
+
+
+            if (!developmentName) {
+
+                alert(
+                    "Debe indicar el nombre del desarrollo."
+                );
+
+                return;
+            }
+
+
+            if (
+                fileStore.sql.length > 0
+                &&
+                !schemaName
+            ) {
+
+                alert(
+                    "Debe indicar el esquema de Base de Datos."
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // BUTTON
+            // =================================================
+
+            const button =
+                document.getElementById(
+                    "im090_generate_btn"
+                );
+
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+                button.innerText =
+                    "Generando...";
+            }
+
+
+            // =================================================
+            // FORMDATA
+            // =================================================
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "author_name",
+                author
+            );
+
+
+            formData.append(
+                "development_name",
+                developmentName
+            );
+
+
+            formData.append(
+                "schema_name",
+                schemaName
+            );
+
+
+            // =================================================
+            // ERP ROLES
+            // =================================================
+
+            [
+                "im090_erp_role_1",
+                "im090_erp_role_2",
+                "im090_erp_role_3"
+
+            ].forEach(
+                id => {
+
+                    const value =
+                        document
+                            .getElementById(
+                                id
+                            )
+                            ?.value
+                            .trim();
+
+
+                    if (value) {
+
+                        formData.append(
+                            "erp_roles",
+                            value
+                        );
+                    }
+                }
+            );
+
+
+            // =================================================
+            // APPROVERS
+            // =================================================
+
+            [
+                "im090_approver_1",
+                "im090_approver_2",
+                "im090_approver_3"
+
+            ].forEach(
+                id => {
+
+                    const value =
+                        document
+                            .getElementById(
+                                id
+                            )
+                            ?.value
+                            .trim();
+
+
+                    if (value) {
+
+                        formData.append(
+                            "approvers",
+                            value
+                        );
+                    }
+                }
+            );
+
+
+            // =================================================
+            // EXISTING FILE STORE
+            // =================================================
+
+            appendStoredFiles(
+                formData,
+                "vb"
+            );
+
+            appendStoredFiles(
+                formData,
+                "apex"
+            );
+
+            appendStoredFiles(
+                formData,
+                "oic"
+            );
+
+            appendStoredFiles(
+                formData,
+                "bip"
+            );
+
+            appendStoredFiles(
+                formData,
+                "sql"
+            );
+
+
+            // =================================================
+            // START
+            // =================================================
+
+            const response =
+                await fetch(
+
+                    "/api/im090/start",
+
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            formData
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+
+                throw new Error(
+                    `Error generando IM090 (${response.status}): ${errorText}`
+                );
+            }
+
+
+            const result =
+                await response.json();
+
+
+            currentIM090JobId =
+                result.job_id;
+
+
+            // =================================================
+            // CLOSE DIALOG
+            // =================================================
+
+            closeIM090Dialog();
+
+
+            // =================================================
+            // SHOW EXISTING PROGRESS BAR
+            // =================================================
+
+            const progressContainer =
+                document.getElementById(
+                    "progress-container"
+                );
+
+
+            const progressBar =
+                document.getElementById(
+                    "progress-bar"
+                );
+
+
+            const progressText =
+                document.getElementById(
+                    "progress-text"
+                );
+
+
+            if (progressContainer) {
+
+                progressContainer.style.display =
+                    "block";
+            }
+
+
+            if (progressBar) {
+
+                progressBar.style.width =
+                    "0%";
+            }
+
+
+            if (progressText) {
+
+                progressText.innerText =
+                    "Generando IM090...";
+            }
+
+
+            // =================================================
+            // POLLING
+            // =================================================
+
+            if (im090StatusInterval) {
+
+                clearInterval(
+                    im090StatusInterval
+                );
+            }
+
+
+            im090StatusInterval =
+                setInterval(
+
+                    checkIM090Status,
+
+                    1000
+                );
+
+        }
+        catch (error) {
+
+            console.error(
+                "[IM090]",
+                error
+            );
+
+
+            alert(
+                error.message
+            );
+
+
+            resetIM090Button();
+        }
+    }
+
+
+    // =====================================================
+    // CHECK IM090 STATUS
+    // =====================================================
+
+    async function checkIM090Status() {
+
+        if (!currentIM090JobId) {
+
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+
+                    `/api/im090/status/${currentIM090JobId}`,
+
+                    {
+                        cache:
+                            "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+
+                throw new Error(
+                    `Error consultando IM090 (${response.status}): ${errorText}`
+                );
+            }
+
+
+            const job =
+                await response.json();
+
+
+            const progress =
+                job.progress || 0;
+
+
+            const progressBar =
+                document.getElementById(
+                    "progress-bar"
+                );
+
+
+            const progressText =
+                document.getElementById(
+                    "progress-text"
+                );
+
+
+            const activityText =
+                document.getElementById(
+                    "activity-text"
+                );
+
+
+            const detailText =
+                document.getElementById(
+                    "detail-text"
+                );
+
+
+            if (progressBar) {
+
+                progressBar.style.width =
+                    `${progress}%`;
+            }
+
+
+            if (progressText) {
+
+                progressText.innerText =
+                    `${progress}% - ${job.step || "IM090"}`;
+            }
+
+
+            if (activityText) {
+
+                activityText.innerText =
+                    job.activity || "";
+            }
+
+
+            if (detailText) {
+
+                detailText.innerText =
+                    job.object || "";
+            }
+
+
+            // =================================================
+            // COMPLETED
+            // =================================================
+
+            if (
+                job.status ===
+                "completed"
+            ) {
+
+                clearInterval(
+                    im090StatusInterval
+                );
+
+
+                im090StatusInterval =
+                    null;
+
+
+                window.location.href =
+
+                    `/api/im090/download/${currentIM090JobId}`;
+
+
+                resetIM090Button();
+
+                return;
+            }
+
+
+            // =================================================
+            // ERROR
+            // =================================================
+
+            if (
+                job.status === "error"
+                ||
+                job.status === "failed"
+            ) {
+
+                clearInterval(
+                    im090StatusInterval
+                );
+
+
+                im090StatusInterval =
+                    null;
+
+
+                alert(
+                    job.error
+                    ||
+                    "Error generando IM090."
+                );
+
+
+                resetIM090Button();
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "[IM090 STATUS]",
+                error
+            );
+
+
+            if (im090StatusInterval) {
+
+                clearInterval(
+                    im090StatusInterval
+                );
+
+
+                im090StatusInterval =
+                    null;
+            }
+
+
+            alert(
+                error.message
+            );
+
+
+            resetIM090Button();
+        }
+    }
+
+
+    // =====================================================
+    // RESET IM090 BUTTON
+    // =====================================================
+
+    function resetIM090Button() {
+
+        const button =
+            document.getElementById(
+                "im090_generate_btn"
+            );
+
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.innerText =
+                "Generar IM090";
+        }
+    }
+
     // =====================================================
     // PUBLIC FUNCTIONS
     // =====================================================
@@ -2193,6 +2999,15 @@
 
     window.closeRegisterDialog =
         closeRegisterDialog;
+
+    window.openIM090Dialog =
+        openIM090Dialog;
+
+    window.closeIM090Dialog =
+        closeIM090Dialog;
+
+    window.generateIM090 =
+        generateIM090;
 
     // =====================================================
     // INITIALIZACIÓN DE DROPZONES

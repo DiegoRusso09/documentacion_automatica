@@ -27,6 +27,10 @@ from oic_doc_generator.backend.parsers.sql_trigger_parser import (
     extract_triggers
 )
 
+from oic_doc_generator.backend.parsers.sql_insert_parser import (
+    extract_inserts
+)
+
 # =========================================================
 # READ SQL FILE
 # =========================================================
@@ -77,6 +81,8 @@ def parse_single_sql_file(
 
         "sequences": [],
 
+        "inserts": [],
+
         "packages": [],
 
         "views": [],
@@ -107,6 +113,14 @@ def parse_single_sql_file(
     # =====================================================
 
     result["sequences"] = extract_sequences(
+        sql_text
+    )
+
+    # =====================================================
+    # INSERTS
+    # =====================================================
+
+    result["inserts"] = extract_inserts(
         sql_text
     )
 
@@ -478,6 +492,8 @@ def parse_sql_files(
 
     all_sequences = []
 
+    all_inserts = []
+
     all_packages = []
 
     all_views = []
@@ -659,6 +675,18 @@ def build_database_metadata(
         "all_sequences":
             sql_metadata.get(
                 "sequences",
+                []
+            ),
+
+        "inserts":
+            sql_metadata.get(
+                "inserts",
+                []
+            ),
+
+        "all_inserts":
+            sql_metadata.get(
+                "inserts",
                 []
             ),
 
