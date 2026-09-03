@@ -2661,6 +2661,800 @@ def add_database_installation_section(
 
 
 # =========================================================
+# OIC SIMPLE METADATA TABLE
+# =========================================================
+
+def add_oic_metadata_table(
+    document,
+    rows
+):
+
+    if not rows:
+
+        return
+
+
+    table = document.add_table(
+        rows=1,
+        cols=2
+    )
+
+    table.style = "Table Grid"
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.CENTER
+    )
+
+
+    table.cell(
+        0,
+        0
+    ).text = "Propiedad"
+
+
+    table.cell(
+        0,
+        1
+    ).text = "Valor"
+
+
+    apply_table_header_style(
+        table.cell(
+            0,
+            0
+        )
+    )
+
+
+    apply_table_header_style(
+        table.cell(
+            0,
+            1
+        )
+    )
+
+
+    for property_name, value in rows:
+
+        cells = (
+            table.add_row().cells
+        )
+
+
+        cells[0].text = str(
+            property_name
+        )
+
+
+        cells[1].text = str(
+            value
+            or
+            "-"
+        )
+
+
+        for cell in cells:
+
+            for paragraph in (
+                cell.paragraphs
+            ):
+
+                for run in (
+                    paragraph.runs
+                ):
+
+                    run.font.name = "Arial"
+                    run.font.size = Pt(8)
+
+
+    return table
+
+
+# =========================================================
+# OIC CONNECTION TABLE
+# =========================================================
+
+def add_oic_connection_table(
+    document,
+    connection
+):
+
+    connection_name = (
+        connection.get(
+            "name",
+            ""
+        )
+    )
+
+
+    connection_type = (
+        connection.get(
+            "type",
+            ""
+        )
+    )
+
+
+    p = document.add_paragraph()
+
+    p.paragraph_format.space_before = Pt(
+        6
+    )
+
+    p.paragraph_format.space_after = Pt(
+        3
+    )
+
+
+    run = p.add_run(
+        f"Conexión: {connection_name}"
+    )
+
+    run.bold = True
+
+
+    if connection_type:
+
+        p.add_run(
+            f" ({connection_type})"
+        )
+
+
+    rows = (
+        connection.get(
+            "installation_rows",
+            []
+        )
+    )
+
+
+    if not rows:
+
+        add_im090_bullet(
+            document,
+            (
+                "No se detectaron parámetros "
+                "adicionales de configuración."
+            )
+        )
+
+        return
+
+
+    table = document.add_table(
+        rows=1,
+        cols=3
+    )
+
+
+    table.style = "Table Grid"
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.CENTER
+    )
+
+
+    headers = [
+        "Grupo",
+        "Propiedad",
+        "Configuración"
+    ]
+
+
+    for index, header in enumerate(
+        headers
+    ):
+
+        cell = table.cell(
+            0,
+            index
+        )
+
+        cell.text = header
+
+        apply_table_header_style(
+            cell
+        )
+
+
+    for row in rows:
+
+        cells = (
+            table.add_row().cells
+        )
+
+
+        cells[0].text = (
+            row.get(
+                "group",
+                ""
+            )
+        )
+
+
+        cells[1].text = (
+            row.get(
+                "property",
+                ""
+            )
+        )
+
+
+        cells[2].text = (
+            row.get(
+                "value",
+                ""
+            )
+        )
+
+
+        for cell in cells:
+
+            for paragraph in (
+                cell.paragraphs
+            ):
+
+                paragraph.paragraph_format.line_spacing = (
+                    1.0
+                )
+
+
+                for run in (
+                    paragraph.runs
+                ):
+
+                    run.font.name = "Arial"
+                    run.font.size = Pt(8)
+
+
+    for table_row in table.rows:
+
+        table_row.cells[0].width = Cm(
+            2.7
+        )
+
+        table_row.cells[1].width = Cm(
+            5.0
+        )
+
+        table_row.cells[2].width = Cm(
+            8.0
+        )
+
+
+# =========================================================
+# OIC NAME LIST
+# =========================================================
+
+def add_oic_name_list(
+    document,
+    title,
+    names
+):
+
+    names = (
+        names
+        or
+        []
+    )
+
+
+    p = document.add_paragraph()
+
+    p.paragraph_format.space_before = Pt(
+        4
+    )
+
+    p.paragraph_format.space_after = Pt(
+        2
+    )
+
+
+    run = p.add_run(
+        f"{title}: {len(names)}"
+    )
+
+    run.bold = True
+
+
+    if not names:
+
+        add_im090_bullet(
+            document,
+            "No aplica.",
+            left_indent=1.0
+        )
+
+        return
+
+
+    for name in names:
+
+        add_im090_bullet(
+            document,
+            str(name),
+            left_indent=1.0
+        )
+
+
+# =========================================================
+# OIC INSTALLATION SECTION
+# =========================================================
+
+def add_oic_installation_section(
+    document,
+    oic_installation_plan
+):
+
+    if not oic_installation_plan:
+
+        return
+
+
+    items = (
+        oic_installation_plan.get(
+            "items",
+            []
+        )
+    )
+
+
+    if not items:
+
+        return
+
+
+    # =====================================================
+    # 3.3
+    # =====================================================
+
+    create_header(
+        document,
+        (
+            "3.3\tInstalación paso a paso "
+            "de los objetos de OIC"
+        ),
+        size=13
+    )
+
+
+    document.add_paragraph(
+        (
+            "En esta sección se detallan las actividades "
+            "necesarias para importar los artefactos de "
+            "Oracle Integration Cloud incluidos en el "
+            "paquete de instalación."
+        )
+    )
+
+
+    # =====================================================
+    # 3.3.1 STATIC ACCESS
+    # =====================================================
+
+    create_header(
+        document,
+        "3.3.1\tAcceso al módulo de diseño",
+        size=11
+    )
+
+
+    add_im090_bullet(
+        document,
+        (
+            "Acceda a Oracle Integration Cloud con "
+            "las credenciales correspondientes al "
+            "ambiente destino."
+        )
+    )
+
+
+    add_im090_bullet(
+        document,
+        (
+            "Abra el menú de opciones ubicado en la "
+            "parte superior izquierda."
+        )
+    )
+
+
+    add_im090_bullet(
+        document,
+        (
+            "Seleccione la opción Design para acceder "
+            "a los componentes de diseño de OIC."
+        )
+    )
+
+
+    design_image = (
+        get_im090_template_path(
+            "get_to_design_oic.png"
+        )
+    )
+
+
+    add_centered_image(
+        document,
+        design_image,
+        Cm(15)
+    )
+
+
+    # =====================================================
+    # ARTIFACTS
+    # =====================================================
+
+    subsection = 2
+
+
+    for item in items:
+
+        artifact_type = (
+            item.get(
+                "artifact_type",
+                ""
+            )
+        )
+
+
+        file_name = (
+            item.get(
+                "file_name",
+                ""
+            )
+        )
+
+
+        package_path = (
+            item.get(
+                "package_path",
+                ""
+            )
+        )
+
+
+        type_label = (
+            item.get(
+                "type_label",
+                ""
+            )
+        )
+
+
+        create_header(
+
+            document,
+
+            (
+                f"3.3.{subsection}\t"
+                f"Instalación de {type_label}: "
+                f"{file_name}"
+            ),
+
+            size=11
+        )
+
+
+        subsection += 1
+
+
+        # =================================================
+        # IMPORT INSTRUCTIONS
+        # =================================================
+
+        if artifact_type == "iar":
+
+            add_im090_bullet(
+                document,
+                (
+                    "Ingrese a Design > Integrations "
+                    "y seleccione la opción Import."
+                )
+            )
+
+
+            add_im090_bullet(
+                document,
+                (
+                    "Seleccione el siguiente archivo "
+                    "incluido en el paquete de instalación: "
+                    f"{package_path}"
+                )
+            )
+
+
+            import_image_name = (
+                "import_iar_oic.png"
+            )
+
+
+        else:
+
+            add_im090_bullet(
+                document,
+                (
+                    "Ingrese a Design > Packages "
+                    "y seleccione la opción Import."
+                )
+            )
+
+
+            add_im090_bullet(
+                document,
+                (
+                    "Seleccione el siguiente archivo "
+                    "incluido en el paquete de instalación: "
+                    f"{package_path}"
+                )
+            )
+
+
+            add_im090_bullet(
+                document,
+                (
+                    'Seleccione la opción '
+                    '"Import and Configure".'
+                )
+            )
+
+
+            import_image_name = (
+                "import_par_oic.png"
+            )
+
+
+        import_image = (
+            get_im090_template_path(
+                import_image_name
+            )
+        )
+
+
+        add_centered_image(
+            document,
+            import_image,
+            Cm(15)
+        )
+
+
+        # =================================================
+        # IAR METADATA
+        # =================================================
+
+        if artifact_type == "iar":
+
+            integration = (
+                item.get(
+                    "integration",
+                    {}
+                )
+            )
+
+
+            p = document.add_paragraph()
+
+            run = p.add_run(
+                "Metadata de la integración"
+            )
+
+            run.bold = True
+
+
+            add_oic_metadata_table(
+                document,
+                [
+                    (
+                        "Nombre",
+                        integration.get(
+                            "name",
+                            ""
+                        )
+                    ),
+                    (
+                        "Código",
+                        integration.get(
+                            "code",
+                            ""
+                        )
+                    ),
+                    (
+                        "Versión",
+                        integration.get(
+                            "version",
+                            ""
+                        )
+                    ),
+                    (
+                        "Estado",
+                        integration.get(
+                            "state",
+                            ""
+                        )
+                    ),
+                    (
+                        "Tipo",
+                        integration.get(
+                            "type",
+                            ""
+                        )
+                    )
+                ]
+            )
+
+
+            connections = (
+                item.get(
+                    "connections",
+                    []
+                )
+            )
+
+
+            add_oic_name_list(
+
+                document,
+
+                "Conexiones incluidas",
+
+                [
+                    connection.get(
+                        "name",
+                        ""
+                    )
+
+                    for connection in connections
+                ]
+            )
+
+
+        # =================================================
+        # PAR METADATA
+        # =================================================
+
+        else:
+
+            integrations = (
+                item.get(
+                    "integrations",
+                    []
+                )
+            )
+
+
+            connections = (
+                item.get(
+                    "connections",
+                    []
+                )
+            )
+
+
+            lookups = (
+                item.get(
+                    "lookups",
+                    []
+                )
+            )
+
+
+            javascript_libraries = (
+                item.get(
+                    "javascript_libraries",
+                    []
+                )
+            )
+
+
+            p = document.add_paragraph()
+
+            run = p.add_run(
+                "Metadata del paquete"
+            )
+
+            run.bold = True
+
+
+            add_oic_name_list(
+
+                document,
+
+                "Integraciones",
+
+                [
+                    integration.get(
+                        "name",
+                        ""
+                    )
+
+                    for integration in integrations
+                ]
+            )
+
+
+            add_oic_name_list(
+
+                document,
+
+                "Conexiones",
+
+                [
+                    connection.get(
+                        "name",
+                        ""
+                    )
+
+                    for connection in connections
+                ]
+            )
+
+
+            add_oic_name_list(
+                document,
+                "Lookups",
+                lookups
+            )
+
+
+            add_oic_name_list(
+                document,
+                "Librerías JavaScript",
+                javascript_libraries
+            )
+
+
+        # =================================================
+        # CONNECTION CONFIGURATION
+        # =================================================
+
+        p = document.add_paragraph()
+
+        p.paragraph_format.space_before = Pt(
+            8
+        )
+
+
+        run = p.add_run(
+            "Configuración de conexiones"
+        )
+
+        run.bold = True
+
+
+        if connections:
+
+            document.add_paragraph(
+                (
+                    "Configure las siguientes conexiones "
+                    "de acuerdo con los valores requeridos "
+                    "para el ambiente destino."
+                )
+            )
+
+
+            for connection in connections:
+
+                add_oic_connection_table(
+                    document,
+                    connection
+                )
+
+
+        else:
+
+            add_im090_bullet(
+                document,
+                (
+                    "El artefacto no contiene conexiones "
+                    "que requieran configuración."
+                )
+            )
+
+
+        document.add_paragraph("")
+
+
+# =========================================================
 # GENERATE INSTALLATION MANUAL
 # =========================================================
 
@@ -2673,7 +3467,8 @@ def generate_installation_manual(
     approvers=None,
     schema_name="",
     database_export_info=None,
-    bip_installation_plan=None
+    bip_installation_plan=None,
+    oic_installation_plan=None
 ):
 
     document = Document()
@@ -2819,6 +3614,20 @@ def generate_installation_manual(
         add_bip_installation_section(
             document,
             bip_installation_plan
+        )
+
+
+    # =====================================================
+    # OIC INSTALLATION
+    # =====================================================
+
+    if oic_installation_plan:
+
+        document.add_page_break()
+
+        add_oic_installation_section(
+            document,
+            oic_installation_plan
         )
 
 

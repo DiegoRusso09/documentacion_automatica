@@ -43,6 +43,10 @@ from oic_doc_generator.backend.utils.bip_installation_plan import (
     build_bip_installation_plan
 )
 
+from oic_doc_generator.backend.utils.oic_installation_plan import (
+    build_oic_installation_plan
+)
+
 # =========================================================
 # EXPORT BIP DELIVERY FILES
 # =========================================================
@@ -403,6 +407,161 @@ def validate_im090_zip(
 
 
 # =========================================================
+# EXPORT OIC DELIVERY FILES
+# =========================================================
+
+def export_oic_delivery_files(
+    oic_files,
+    delivery_folder
+):
+
+    if not oic_files:
+
+        return None
+
+
+    oic_folder = os.path.join(
+        delivery_folder,
+        "OIC"
+    )
+
+
+    os.makedirs(
+        oic_folder,
+        exist_ok=True
+    )
+
+
+    used_names = set()
+
+
+    for oic_file in oic_files:
+
+        file_name = (
+            os.path.basename(
+                getattr(
+                    oic_file,
+                    "name",
+                    ""
+                )
+            )
+        )
+
+
+        if not file_name:
+
+            continue
+
+
+        # =================================================
+        # VALIDATE EXTENSION
+        # =================================================
+
+        lower_name = (
+            file_name.lower()
+        )
+
+
+        if not (
+            lower_name.endswith(
+                ".iar"
+            )
+            or
+            lower_name.endswith(
+                ".par"
+            )
+        ):
+
+            continue
+
+
+        # =================================================
+        # DUPLICATE NAME
+        # =================================================
+
+        file_key = (
+            file_name.lower()
+        )
+
+
+        if file_key in used_names:
+
+            raise Exception(
+                (
+                    "Existen dos artefactos OIC "
+                    "con el mismo nombre de archivo: "
+                    f"{file_name}"
+                )
+            )
+
+
+        used_names.add(
+            file_key
+        )
+
+
+        # =================================================
+        # RESET
+        # =================================================
+
+        try:
+
+            oic_file.seek(
+                0
+            )
+
+        except Exception:
+
+            pass
+
+
+        # =================================================
+        # READ
+        # =================================================
+
+        content = (
+            oic_file.read()
+        )
+
+
+        # =================================================
+        # WRITE
+        # =================================================
+
+        file_path = os.path.join(
+            oic_folder,
+            file_name
+        )
+
+
+        with open(
+            file_path,
+            "wb"
+        ) as target:
+
+            target.write(
+                content
+            )
+
+
+        # =================================================
+        # RESET AGAIN
+        # =================================================
+
+        try:
+
+            oic_file.seek(
+                0
+            )
+
+        except Exception:
+
+            pass
+
+
+    return oic_folder
+
+# =========================================================
 # GENERATE IM090
 # =========================================================
 
@@ -535,6 +694,8 @@ def generate_im090_service(
     database_metadata = None
 
     database_export_info = None
+
+    oic_installation_plan = None
 
 
     if sql_files:
@@ -738,6 +899,125 @@ def generate_im090_service(
                     )
                 )
 
+
+    # =========================================================
+    # OIC
+    # =========================================================
+
+    if oic_files:
+
+        # =====================================================
+        # RESET FILE STREAMS
+        # =====================================================
+
+        for oic_file in oic_files:
+
+            try:
+
+                oic_file.seek(
+                    0
+                )
+
+            except Exception:
+
+                pass
+
+
+        # =====================================================
+        # BUILD INSTALLATION PLAN
+        # =====================================================
+
+        oic_installation_plan = (
+            build_oic_installation_plan(
+                oic_files
+            )
+        )
+
+
+        installation_items = (
+            oic_installation_plan.get(
+                "items",
+                []
+            )
+        )
+
+
+        warnings = (
+            oic_installation_plan.get(
+                "warnings",
+                []
+            )
+        )
+
+
+        # =====================================================
+        # VALIDATE
+        # =====================================================
+
+        if not installation_items:
+
+            warning_text = (
+                "\n".join(
+                    warnings
+                )
+                if warnings
+                else
+                "No se detectaron artefactos IAR o PAR."
+            )
+
+
+            raise Exception(
+                (
+                    "No fue posible generar el plan "
+                    "de instalación de OIC.\n"
+                    f"{warning_text}"
+                )
+            )
+
+
+        # =====================================================
+        # LOG WARNINGS
+        # =====================================================
+
+        for warning in warnings:
+
+            print(
+                "[IM090][OIC][WARNING]",
+                warning
+            )
+
+
+        # =====================================================
+        # RESET AGAIN
+        # =====================================================
+
+        for oic_file in oic_files:
+
+            try:
+
+                oic_file.seek(
+                    0
+                )
+
+            except Exception:
+
+                pass
+
+
+        advance_progress(
+
+            job_id,
+
+            component=
+                "IM090 - OIC",
+
+            detail=
+                "Plan de instalación generado",
+
+            object_name=
+                f"{len(installation_items)} artefacto(s)"
+        )
+
     # =====================================================
     # GENERATE WORD
     # =====================================================
@@ -747,6 +1027,9 @@ def generate_im090_service(
 
             author_name=
                 author_name,
+
+            oic_installation_plan=
+                oic_installation_plan,
 
             development_name=
                 development_name,
@@ -808,6 +1091,17 @@ def generate_im090_service(
     export_bip_delivery_files(
 
         bip_files,
+
+        delivery_folder
+    )
+
+    # =====================================================
+    # COPY OIC ARTIFACTS
+    # =====================================================
+
+    export_oic_delivery_files(
+
+        oic_files,
 
         delivery_folder
     )

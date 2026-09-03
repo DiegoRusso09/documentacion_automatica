@@ -586,6 +586,843 @@ def get_connection_xmls(
         extracted_iar
     )
 
+
+# =========================================================
+# IM090 - CONNECTION INSTALLATION METADATA
+# =========================================================
+
+IM090_INTERNAL_PROPERTIES = {
+    "csfkey",
+    "csfmap",
+    "integration_role"
+}
+
+
+IM090_PROPERTY_LABELS = {
+
+    "Host":
+        "Host",
+
+    "Port":
+        "Puerto",
+
+    "SID":
+        "SID",
+
+    "ServiceName":
+        "Service Name",
+
+    "connectionUrl":
+        "Connection URL",
+
+    "connectionType":
+        "Connection Type",
+
+    "UseSftp":
+        "SFTP Connection",
+
+    "ServerTimeZone":
+        "Server Time Zone",
+
+    "UsePassiveIpAsHostIp":
+        "Usar IP pasiva como Host",
+
+    "UseImplicitSSL":
+        "SSL Implícito",
+
+    "enableTwoWaySSL":
+        "Two-Way SSL",
+
+    "sslCertificateAlias":
+        "SSL Certificate Alias",
+
+    "HostKeyCertificate":
+        "Host Key Certificate",
+
+    "WALLET":
+        "Wallet",
+
+    "WALLETPASSWORD":
+        "Wallet Password",
+
+    "WalletPassword":
+        "Wallet Password",
+
+    "PGPPUBLICKEY":
+        "PGP Public Key",
+
+    "PGPPRIVATEKEY":
+        "PGP Private Key",
+
+    "PGPPRIVATEKEYPASSWORD":
+        "PGP Private Key Password",
+
+    "PGPCIPHER":
+        "PGP Cipher",
+
+    "PGPHASHINGALGO":
+        "PGP Hashing Algorithm"
+}
+
+
+# =========================================================
+# XML TEXT
+# =========================================================
+
+def get_xml_tag_value(
+    xml_root,
+    tag_name
+):
+
+    for elem in xml_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                elem.tag
+            )
+
+        except:
+
+            continue
+
+
+        if tag != tag_name:
+
+            continue
+
+
+        value = (
+            elem.text.strip()
+            if elem.text
+            else ""
+        )
+
+
+        if value:
+
+            return value
+
+
+    return ""
+
+
+# =========================================================
+# CONNECTION PROPERTIES
+# =========================================================
+
+def extract_connection_properties(
+    xml_root
+):
+
+    result = {}
+
+
+    for elem in xml_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                elem.tag
+            )
+
+        except:
+
+            continue
+
+
+        if tag != "connectionProperty":
+
+            continue
+
+
+        property_name = ""
+        property_value = ""
+
+
+        for child in list(
+            elem
+        ):
+
+            try:
+
+                child_tag = clean_tag(
+                    child.tag
+                )
+
+            except:
+
+                continue
+
+
+            child_text = (
+                child.text.strip()
+                if child.text
+                else ""
+            )
+
+
+            if child_tag == "name":
+
+                property_name = (
+                    child_text
+                )
+
+
+            elif child_tag == "value":
+
+                property_value = (
+                    child_text
+                )
+
+
+        if property_name:
+
+            result[
+                property_name
+            ] = property_value
+
+
+    return result
+
+
+# =========================================================
+# CONNECTION TYPE FOR INSTALLATION
+# =========================================================
+
+def map_installation_connection_type(
+    raw_type,
+    properties
+):
+
+    raw_type = (
+        raw_type
+        or
+        ""
+    )
+
+
+    lower = raw_type.lower()
+
+
+    if (
+        "dbaas" in lower
+        or
+        "database" in lower
+    ):
+
+        return "Database"
+
+
+    if "collocatedics" in lower:
+
+        return "Local Integration"
+
+
+    if "rest" in lower:
+
+        return "REST"
+
+
+    if "soap" in lower:
+
+        return "SOAP"
+
+
+    if "ftp" in lower:
+
+        use_sftp = (
+            properties.get(
+                "UseSftp",
+                ""
+            )
+        )
+
+
+        if use_sftp:
+
+            return "FTP/SFTP"
+
+
+        return "FTP"
+
+
+    if "sftp" in lower:
+
+        return "FTP/SFTP"
+
+
+    if "erp" in lower:
+
+        return "Oracle ERP Cloud"
+
+
+    if "hcm" in lower:
+
+        return "Oracle HCM Cloud"
+
+
+    if (
+        "ociobjectstorage" in lower
+        or
+        "objectstorage" in lower
+    ):
+
+        return "OCI Object Storage"
+
+
+    if "salesforce" in lower:
+
+        return "Salesforce"
+
+
+    if "stage" in lower:
+
+        return "Stage File"
+
+
+    if "file" in lower:
+
+        return "File"
+
+
+    if raw_type:
+
+        return raw_type
+
+
+    return "Desconocido"
+
+
+# =========================================================
+# PROPERTY GROUP
+# =========================================================
+
+def get_installation_property_group(
+    property_name
+):
+
+    endpoint_properties = {
+
+        "Host",
+        "Port",
+        "SID",
+        "ServiceName",
+        "connectionUrl",
+        "connectionType"
+    }
+
+
+    security_properties = {
+
+        "WALLET",
+        "WALLETPASSWORD",
+        "WalletPassword",
+        "PGPPUBLICKEY",
+        "PGPPRIVATEKEY",
+        "PGPPRIVATEKEYPASSWORD",
+        "PGPCIPHER",
+        "PGPHASHINGALGO",
+        "sslCertificateAlias",
+        "HostKeyCertificate"
+    }
+
+
+    if property_name in endpoint_properties:
+
+        return "Conexión"
+
+
+    if property_name in security_properties:
+
+        return "Seguridad"
+
+
+    return "Propiedades"
+
+
+# =========================================================
+# PROPERTY LABEL
+# =========================================================
+
+def get_installation_property_label(
+    property_name
+):
+
+    return (
+        IM090_PROPERTY_LABELS.get(
+            property_name,
+            property_name
+        )
+    )
+
+
+# =========================================================
+# SENSITIVE PROPERTY
+# =========================================================
+
+def is_sensitive_connection_property(
+    property_name
+):
+
+    lower = (
+        property_name
+        or
+        ""
+    ).lower()
+
+
+    sensitive_names = [
+
+        "password",
+        "privatekey",
+        "secret"
+    ]
+
+
+    for value in sensitive_names:
+
+        if value in lower:
+
+            return True
+
+
+    return False
+
+
+# =========================================================
+# DISPLAY PROPERTY VALUE
+# =========================================================
+
+def get_installation_property_value(
+    property_name,
+    property_value
+):
+
+    property_value = (
+        property_value
+        or
+        ""
+    ).strip()
+
+
+    if not property_value:
+
+        return ""
+
+
+    if is_sensitive_connection_property(
+        property_name
+    ):
+
+        return (
+            "<Configurar en ambiente destino>"
+        )
+
+
+    if (
+        property_value.startswith(
+            "%%"
+        )
+        and
+        property_value.endswith(
+            "%%"
+        )
+    ):
+
+        return (
+            "<Configurar en ambiente destino>"
+        )
+
+
+    return property_value
+
+
+# =========================================================
+# BUILD INSTALLATION ROWS
+# =========================================================
+
+def build_connection_installation_rows(
+    connection
+):
+
+    rows = []
+
+
+    # =====================================================
+    # GENERAL
+    # =====================================================
+
+    rows.append({
+
+        "group":
+            "General",
+
+        "property":
+            "Tipo de conexión",
+
+        "value":
+            connection.get(
+                "type",
+                ""
+            )
+    })
+
+
+    integration_role = (
+        connection.get(
+            "integration_role",
+            ""
+        )
+    )
+
+
+    if integration_role:
+
+        rows.append({
+
+            "group":
+                "General",
+
+            "property":
+                "Rol de integración",
+
+            "value":
+                integration_role
+        })
+
+
+    agent_group = (
+        connection.get(
+            "agent_group",
+            ""
+        )
+    )
+
+
+    if agent_group:
+
+        rows.append({
+
+            "group":
+                "General",
+
+            "property":
+                "Agent Group",
+
+            "value":
+                agent_group
+        })
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    for property_name, raw_value in (
+        connection.get(
+            "properties",
+            {}
+        ).items()
+    ):
+
+        if (
+            property_name.lower()
+            in
+            IM090_INTERNAL_PROPERTIES
+        ):
+
+            continue
+
+
+        display_value = (
+            get_installation_property_value(
+
+                property_name,
+
+                raw_value
+            )
+        )
+
+
+        # No mostramos propiedades vacías.
+        if not display_value:
+
+            continue
+
+
+        rows.append({
+
+            "group":
+                get_installation_property_group(
+                    property_name
+                ),
+
+            "property":
+                get_installation_property_label(
+                    property_name
+                ),
+
+            "value":
+                display_value
+        })
+
+
+    # =====================================================
+    # SECURITY POLICY
+    # =====================================================
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+    )
+
+
+    if security_policy:
+
+        rows.append({
+
+            "group":
+                "Seguridad",
+
+            "property":
+                "Security Policy",
+
+            "value":
+                security_policy
+        })
+
+
+    # =====================================================
+    # REQUIRED CREDENTIALS
+    # =====================================================
+
+    connection_type = (
+        connection.get(
+            "type",
+            ""
+        )
+    )
+
+
+    requires_user_password = (
+
+        security_policy
+        in {
+            "BASIC_AUTH",
+            "USERNAME_PASSWORD_TOKEN"
+        }
+
+        or
+
+        (
+            connection_type
+            ==
+            "FTP/SFTP"
+
+            and
+
+            security_policy
+            ==
+            "CUSTOM"
+        )
+    )
+
+
+    if requires_user_password:
+
+        rows.append({
+
+            "group":
+                "Seguridad",
+
+            "property":
+                "Usuario",
+
+            "value":
+                "<Configurar en ambiente destino>"
+        })
+
+
+        rows.append({
+
+            "group":
+                "Seguridad",
+
+            "property":
+                "Contraseña",
+
+            "value":
+                "<Configurar en ambiente destino>"
+        })
+
+
+    return rows
+
+
+# =========================================================
+# PARSE CONNECTION XML FOR INSTALLATION
+# =========================================================
+
+def parse_connection_for_installation(
+    xml_path
+):
+
+    try:
+
+        tree = ET.parse(
+            xml_path
+        )
+
+        xml_root = (
+            tree.getroot()
+        )
+
+    except:
+
+        return None
+
+
+    properties = (
+        extract_connection_properties(
+            xml_root
+        )
+    )
+
+
+    raw_type = (
+        get_xml_tag_value(
+            xml_root,
+            "applicationTypeRef"
+        )
+    )
+
+
+    integration_role = (
+        get_xml_tag_value(
+            xml_root,
+            "integrationRole"
+        )
+        or
+        properties.get(
+            "integration_role",
+            ""
+        )
+    )
+
+
+    connection = {
+
+        "name":
+            get_xml_tag_value(
+                xml_root,
+                "displayName"
+            )
+            or
+            os.path.splitext(
+                os.path.basename(
+                    xml_path
+                )
+            )[0],
+
+        "instance_code":
+            get_xml_tag_value(
+                xml_root,
+                "instanceCode"
+            ),
+
+        "raw_type":
+            raw_type,
+
+        "type":
+            map_installation_connection_type(
+                raw_type,
+                properties
+            ),
+
+        "integration_role":
+            integration_role,
+
+        "security_policy":
+            get_xml_tag_value(
+                xml_root,
+                "securityPolicy"
+            ),
+
+        "agent_group":
+            get_xml_tag_value(
+                xml_root,
+                "agentDefinition"
+            ),
+
+        "properties":
+            properties
+    }
+
+
+    connection[
+        "installation_rows"
+    ] = (
+        build_connection_installation_rows(
+            connection
+        )
+    )
+
+
+    return connection
+
+
+# =========================================================
+# GET CONNECTIONS FOR IM090
+# =========================================================
+
+def get_installation_connections(
+    extracted_iar
+):
+
+    result = []
+
+
+    for root, dirs, files in os.walk(
+        extracted_iar
+    ):
+
+        if "appinstances" not in root.lower():
+
+            continue
+
+
+        for file_name in files:
+
+            if not file_name.lower().endswith(
+                ".xml"
+            ):
+
+                continue
+
+
+            connection = (
+                parse_connection_for_installation(
+                    os.path.join(
+                        root,
+                        file_name
+                    )
+                )
+            )
+
+
+            if connection:
+
+                result.append(
+                    connection
+                )
+
+
+    return result
+
+
 # =========================================================
 # BUILD ACTION DESCRIPTION
 # =========================================================

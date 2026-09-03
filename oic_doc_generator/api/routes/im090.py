@@ -135,24 +135,35 @@ def run_im090_job(
         # PROGRESS
         # =================================================
         #
-        # Con BD:
+        # ETAPAS FIJAS:
         #
-        # 1. Procesamiento BD
-        # 2. Generación Word
-        # 3. ZIP
+        # +1 Generación del Word
+        # +1 Generación del ZIP
         #
-        # Sin BD:
+        # ETAPAS DINÁMICAS:
         #
-        # 1. Generación Word
-        # 2. ZIP
+        # +1 si existen objetos de Base de Datos
+        # +1 si existen artefactos BI Publisher
+        # +1 si existen artefactos OIC
         #
         # =================================================
 
-        total_points = (
-            3
-            if sql_files
-            else 2
-        )
+        total_points = 2
+
+
+        if sql_files:
+
+            total_points += 1
+
+
+        if bip_files:
+
+            total_points += 1
+
+
+        if oic_files:
+
+            total_points += 1
 
 
         initialize_progress(
