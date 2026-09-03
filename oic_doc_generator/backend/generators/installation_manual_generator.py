@@ -2749,6 +2749,263 @@ def add_oic_metadata_table(
 
     return table
 
+# =========================================================
+# OIC RED TABLE CELL
+# =========================================================
+
+def apply_oic_red_cell_style(
+    cell,
+    font_size=8
+):
+
+    shading = parse_xml(
+        r'<w:shd {} w:fill="C00000"/>'.format(
+            nsdecls("w")
+        )
+    )
+
+    cell._tc.get_or_add_tcPr().append(
+        shading
+    )
+
+
+    for paragraph in cell.paragraphs:
+
+        paragraph.paragraph_format.space_before = Pt(
+            0
+        )
+
+        paragraph.paragraph_format.space_after = Pt(
+            0
+        )
+
+        paragraph.paragraph_format.line_spacing = 1.0
+
+
+        for run in paragraph.runs:
+
+            run.font.name = "Arial"
+
+            run.font.size = Pt(
+                font_size
+            )
+
+            run.font.bold = True
+
+            run.font.color.rgb = RGBColor(
+                255,
+                255,
+                255
+            )
+
+
+# =========================================================
+# OIC STRUCTURED CONNECTION TABLE
+# =========================================================
+
+def add_oic_structured_table(
+    document,
+    table_info
+):
+
+    title = (
+        table_info.get(
+            "title",
+            ""
+        )
+        or
+        ""
+    )
+
+
+    headers = (
+        table_info.get(
+            "headers",
+            []
+        )
+        or
+        []
+    )
+
+
+    rows = (
+        table_info.get(
+            "rows",
+            []
+        )
+        or
+        []
+    )
+
+
+    if not headers:
+
+        return
+
+
+    column_count = len(
+        headers
+    )
+
+
+    # =====================================================
+    # TABLE
+    # =====================================================
+
+    table = document.add_table(
+        rows=2,
+        cols=column_count
+    )
+
+
+    table.style = "Table Grid"
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.CENTER
+    )
+
+
+    table.autofit = True
+
+
+    # =====================================================
+    # TABLE TITLE
+    # =====================================================
+
+    title_cell = table.cell(
+        0,
+        0
+    )
+
+
+    if column_count > 1:
+
+        title_cell = title_cell.merge(
+            table.cell(
+                0,
+                column_count - 1
+            )
+        )
+
+
+    title_cell.text = title
+
+
+    apply_oic_red_cell_style(
+        title_cell,
+        font_size=9
+    )
+
+
+    # =====================================================
+    # COLUMN HEADERS
+    # =====================================================
+
+    for index, header in enumerate(
+        headers
+    ):
+
+        cell = table.cell(
+            1,
+            index
+        )
+
+
+        cell.text = str(
+            header
+            or
+            ""
+        )
+
+
+        apply_oic_red_cell_style(
+            cell,
+            font_size=8
+        )
+
+
+    # =====================================================
+    # DATA
+    # =====================================================
+
+    for values in rows:
+
+        values = (
+            values
+            or
+            []
+        )
+
+
+        cells = (
+            table.add_row().cells
+        )
+
+
+        for index in range(
+            column_count
+        ):
+
+            value = (
+                values[index]
+                if index < len(values)
+                else ""
+            )
+
+
+            cell = cells[index]
+
+
+            cell.text = str(
+                value
+                if value is not None
+                else ""
+            )
+
+
+            for paragraph in (
+                cell.paragraphs
+            ):
+
+                paragraph.paragraph_format.space_before = Pt(
+                    1
+                )
+
+                paragraph.paragraph_format.space_after = Pt(
+                    1
+                )
+
+                paragraph.paragraph_format.line_spacing = (
+                    1.0
+                )
+
+
+                for run in paragraph.runs:
+
+                    run.font.name = "Arial"
+
+                    run.font.size = Pt(
+                        8
+                    )
+
+
+    # =====================================================
+    # SPACE AFTER TABLE
+    # =====================================================
+
+    spacer = document.add_paragraph()
+
+    spacer.paragraph_format.space_before = Pt(
+        0
+    )
+
+    spacer.paragraph_format.space_after = Pt(
+        3
+    )
+
+
+    return table
+
 
 # =========================================================
 # OIC CONNECTION TABLE
@@ -2764,6 +3021,8 @@ def add_oic_connection_table(
             "name",
             ""
         )
+        or
+        ""
     )
 
 
@@ -2772,22 +3031,36 @@ def add_oic_connection_table(
             "type",
             ""
         )
+        or
+        ""
     )
 
+
+    # =====================================================
+    # CONNECTION TITLE
+    # =====================================================
 
     p = document.add_paragraph()
 
     p.paragraph_format.space_before = Pt(
-        6
+        8
     )
 
     p.paragraph_format.space_after = Pt(
-        3
+        4
     )
+
+    p.paragraph_format.line_spacing = 1.0
 
 
     run = p.add_run(
         f"Conexión: {connection_name}"
+    )
+
+    run.font.name = "Arial"
+
+    run.font.size = Pt(
+        10
     )
 
     run.bold = True
@@ -2795,16 +3068,64 @@ def add_oic_connection_table(
 
     if connection_type:
 
-        p.add_run(
+        run = p.add_run(
             f" ({connection_type})"
         )
 
+        run.font.name = "Arial"
+
+        run.font.size = Pt(
+            10
+        )
+
+        run.italic = True
+
+
+    # =====================================================
+    # NEW STRUCTURED TABLES
+    # =====================================================
+
+    installation_tables = (
+        connection.get(
+            "installation_tables",
+            []
+        )
+        or
+        []
+    )
+
+
+    if installation_tables:
+
+        for table_info in (
+            installation_tables
+        ):
+
+            add_oic_structured_table(
+                document,
+                table_info
+            )
+
+
+        return
+
+
+    # =====================================================
+    # FALLBACK
+    # =====================================================
+    #
+    # Para adaptadores todavía no mapeados:
+    # HCM, Object Storage, Salesforce, etc.
+    #
+    # =====================================================
 
     rows = (
         connection.get(
             "installation_rows",
             []
         )
+        or
+        []
     )
 
 
@@ -2841,6 +3162,10 @@ def add_oic_connection_table(
     ]
 
 
+    # =====================================================
+    # FALLBACK HEADER
+    # =====================================================
+
     for index, header in enumerate(
         headers
     ):
@@ -2850,12 +3175,19 @@ def add_oic_connection_table(
             index
         )
 
+
         cell.text = header
 
-        apply_table_header_style(
-            cell
+
+        apply_oic_red_cell_style(
+            cell,
+            font_size=8
         )
 
+
+    # =====================================================
+    # FALLBACK VALUES
+    # =====================================================
 
     for row in rows:
 
@@ -2864,7 +3196,7 @@ def add_oic_connection_table(
         )
 
 
-        cells[0].text = (
+        cells[0].text = str(
             row.get(
                 "group",
                 ""
@@ -2872,7 +3204,7 @@ def add_oic_connection_table(
         )
 
 
-        cells[1].text = (
+        cells[1].text = str(
             row.get(
                 "property",
                 ""
@@ -2880,7 +3212,7 @@ def add_oic_connection_table(
         )
 
 
-        cells[2].text = (
+        cells[2].text = str(
             row.get(
                 "value",
                 ""
@@ -2894,34 +3226,31 @@ def add_oic_connection_table(
                 cell.paragraphs
             ):
 
+                paragraph.paragraph_format.space_before = Pt(
+                    1
+                )
+
+                paragraph.paragraph_format.space_after = Pt(
+                    1
+                )
+
                 paragraph.paragraph_format.line_spacing = (
                     1.0
                 )
 
 
-                for run in (
-                    paragraph.runs
-                ):
+                for run in paragraph.runs:
 
                     run.font.name = "Arial"
-                    run.font.size = Pt(8)
+
+                    run.font.size = Pt(
+                        8
+                    )
 
 
-    for table_row in table.rows:
+    document.add_paragraph("")
 
-        table_row.cells[0].width = Cm(
-            2.7
-        )
-
-        table_row.cells[1].width = Cm(
-            5.0
-        )
-
-        table_row.cells[2].width = Cm(
-            8.0
-        )
-
-
+    
 # =========================================================
 # OIC NAME LIST
 # =========================================================
@@ -3285,8 +3614,11 @@ def add_oic_installation_section(
 
             connections = (
                 item.get(
-                    "connections",
-                    []
+                    "configurable_connections",
+                    item.get(
+                        "connections",
+                        []
+                    )
                 )
             )
 
@@ -3324,8 +3656,11 @@ def add_oic_installation_section(
 
             connections = (
                 item.get(
-                    "connections",
-                    []
+                    "configurable_connections",
+                    item.get(
+                        "connections",
+                        []
+                    )
                 )
             )
 

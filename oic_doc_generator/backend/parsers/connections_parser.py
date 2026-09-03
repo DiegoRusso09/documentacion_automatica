@@ -4,6 +4,8 @@
 
 import os
 import re
+import base64
+import json
 
 import xml.etree.ElementTree as ET
 
@@ -574,6 +576,9 @@ def get_connections_information(
     return result
 
 
+
+
+
 # =========================================================
 # GET CONNECTION XMLS
 # =========================================================
@@ -831,19 +836,6 @@ def map_installation_connection_type(
 
     if "ftp" in lower:
 
-        use_sftp = (
-            properties.get(
-                "UseSftp",
-                ""
-            )
-        )
-
-
-        if use_sftp:
-
-            return "FTP/SFTP"
-
-
         return "FTP"
 
 
@@ -1037,6 +1029,1492 @@ def get_installation_property_value(
 
     return property_value
 
+
+# =========================================================
+# IM090 - CONNECTION HELPERS
+# =========================================================
+
+def get_connection_property(
+    properties,
+    *names
+):
+
+    properties = properties or {}
+
+    normalized = {
+        str(key).lower():
+            value
+        for key, value in properties.items()
+    }
+
+
+    for name in names:
+
+        value = normalized.get(
+            str(name).lower()
+        )
+
+        if value is not None:
+
+            return str(value).strip()
+
+
+    return ""
+
+
+def has_connection_property(
+    properties,
+    property_name
+):
+
+    property_name = (
+        property_name
+        or
+        ""
+    ).lower()
+
+
+    return any(
+        str(key).lower() == property_name
+        for key in (properties or {})
+    )
+
+
+def format_connection_placeholder(
+    value,
+    placeholder
+):
+
+    value = (
+        value
+        or
+        ""
+    ).strip()
+
+
+    if not value:
+
+        return placeholder
+
+
+    # Valores parametrizados de OIC:
+    # %%CONNECTION_PROPERTY
+    if value.startswith("%%"):
+
+        return placeholder
+
+
+    return value
+
+
+def get_access_type(
+    private_endpoint
+):
+
+    if (
+        str(
+            private_endpoint
+            or
+            ""
+        )
+        .strip()
+        .lower()
+        ==
+        "true"
+    ):
+
+        return "Private Endpoint"
+
+
+    return "Public Gateway"
+
+
+def format_optional_boolean(
+    value
+):
+
+    value = (
+        value
+        or
+        ""
+    ).strip().lower()
+
+
+    if not value:
+
+        return "No aplica"
+
+
+    if value == "true":
+
+        return "Sí"
+
+
+    if value == "false":
+
+        return "No"
+
+
+    return value
+
+
+# =========================================================
+# BASE64 ATTACHMENT
+# =========================================================
+
+def decode_connection_attachment(
+    content
+):
+
+    content = (
+        content
+        or
+        ""
+    ).strip()
+
+
+    if not content:
+
+        return ""
+
+
+    try:
+
+        padding = (
+            "="
+            *
+            (-len(content) % 4)
+        )
+
+
+        decoded = base64.b64decode(
+            content + padding
+        )
+
+
+        text = decoded.decode(
+            "utf-8",
+            errors="replace"
+        ).strip()
+
+
+        # Si es JSON, lo dejamos bonito.
+        try:
+
+            json_content = json.loads(
+                text
+            )
+
+
+            return json.dumps(
+                json_content,
+                ensure_ascii=False,
+                indent=2
+            )
+
+
+        except Exception:
+
+            return text
+
+
+    except Exception:
+
+        return ""
+
+
+# =========================================================
+# EXTRACT ATTACHMENTS
+# =========================================================
+
+def extract_connection_attachments(
+    xml_root
+):
+
+    result = {}
+
+
+    for element in xml_root.iter():
+
+        try:
+
+            tag = clean_tag(
+                element.tag
+            )
+
+        except Exception:
+
+            continue
+
+
+        if tag != "attachment":
+
+            continue
+
+
+        attachment = {}
+
+
+        for child in list(
+            element
+        ):
+
+            try:
+
+                child_tag = clean_tag(
+                    child.tag
+                )
+
+            except Exception:
+
+                continue
+
+
+            value = (
+                child.text.strip()
+                if child.text
+                else ""
+            )
+
+
+            attachment[
+                child_tag
+            ] = value
+
+
+        property_name = (
+            attachment.get(
+                "propertyName",
+                ""
+            )
+        )
+
+
+        content = (
+            attachment.get(
+                "content",
+                ""
+            )
+        )
+
+
+        if property_name:
+
+            result[
+                property_name
+            ] = (
+                decode_connection_attachment(
+                    content
+                )
+            )
+
+
+    return result
+
+
+# =========================================================
+# SECURITY POLICY LABEL
+# =========================================================
+
+def get_security_policy_label(
+    security_policy,
+    raw_type=""
+):
+
+    security_policy = (
+        security_policy
+        or
+        ""
+    ).strip().upper()
+
+
+    raw_type = (
+        raw_type
+        or
+        ""
+    ).strip().lower()
+
+
+    if security_policy == "NONE":
+
+        return "No Security Policy"
+
+
+    if security_policy == "BASIC_AUTH":
+
+        return "Basic Authentication"
+
+
+    if security_policy == "USERNAME_PASSWORD_TOKEN":
+
+        return "Username Password Token"
+
+
+    if (
+        security_policy
+        ==
+        "JWT_USER_ASSERTION_FOR_OAUTH"
+    ):
+
+        return "JWT User Assertion for OAuth"
+
+
+    if security_policy == "MULTI_TOKEN_INBOUND":
+
+        return (
+            "OAuth 2.0 Or Basic Authentication"
+        )
+
+
+    if (
+        security_policy == "CUSTOM"
+        and
+        raw_type == "ftp"
+    ):
+
+        return "FTP Server Access Policy"
+
+
+    return (
+        security_policy
+        if security_policy
+        else
+        "No Security Policy"
+    )
+
+# =========================================================
+# ERP CLOUD INSTALLATION TABLES
+# =========================================================
+
+def build_erp_installation_tables(
+    connection
+):
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+        or
+        ""
+    ).strip().upper()
+
+
+    private_endpoint = (
+        connection.get(
+            "private_endpoint",
+            ""
+        )
+    )
+
+
+    tables = []
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Properties",
+
+        "headers": [
+            "ERP Cloud Host"
+        ],
+
+        "rows": [[
+            "<ERP Cloud Host>"
+        ]]
+    })
+
+
+    # =====================================================
+    # SECURITY
+    # =====================================================
+
+    if security_policy == "NONE":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                "No Security Policy"
+            ]]
+        })
+
+
+    else:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+
+                get_security_policy_label(
+                    security_policy,
+                    "erp"
+                ),
+
+                "<username>",
+
+                "<password>"
+            ]]
+        })
+
+
+    # =====================================================
+    # ACCESS TYPE
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Access Type",
+
+        "headers": [
+            "Access Type"
+        ],
+
+        "rows": [[
+
+            get_access_type(
+                private_endpoint
+            )
+
+        ]]
+    })
+
+
+    return tables
+
+# =========================================================
+# FTP INSTALLATION TABLES
+# =========================================================
+
+def build_ftp_installation_tables(
+    connection
+):
+
+    properties = (
+        connection.get(
+            "properties",
+            {}
+        )
+    )
+
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+        or
+        ""
+    ).strip().upper()
+
+
+    private_endpoint = (
+        connection.get(
+            "private_endpoint",
+            ""
+        )
+    )
+
+
+    tables = []
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Properties",
+
+        "headers": [
+            "FTP Server Host Address",
+            "FTP Server Port"
+        ],
+
+        "rows": [[
+            "<FTP Server Host Address>",
+            "<FTP Server Port>"
+        ]]
+    })
+
+
+    # =====================================================
+    # OPTIONAL PROPERTIES
+    # =====================================================
+
+    use_sftp = (
+        get_connection_property(
+            properties,
+            "UseSftp"
+        )
+    )
+
+
+    if not use_sftp:
+
+        use_sftp_display = (
+            "No aplica"
+        )
+
+
+    elif use_sftp.startswith(
+        "%%"
+    ):
+
+        use_sftp_display = (
+            "<Sí/No>"
+        )
+
+
+    elif use_sftp.lower() == "true":
+
+        use_sftp_display = "Yes"
+
+
+    elif use_sftp.lower() == "false":
+
+        use_sftp_display = "No"
+
+
+    else:
+
+        use_sftp_display = (
+            use_sftp
+        )
+
+
+    tables.append({
+
+        "title":
+            "Optional Properties",
+
+        "headers": [
+            "SFTP Connection"
+        ],
+
+        "rows": [[
+            use_sftp_display
+        ]]
+    })
+
+
+    # =====================================================
+    # SECURITY
+    # =====================================================
+
+    if security_policy == "NONE":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                "No Security Policy"
+            ]]
+        })
+
+
+    else:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+
+                get_security_policy_label(
+                    security_policy,
+                    "ftp"
+                ),
+
+                "<username>",
+
+                "<password>"
+            ]]
+        })
+
+
+    # =====================================================
+    # ACCESS TYPE
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Access Type",
+
+        "headers": [
+            "Access Type"
+        ],
+
+        "rows": [[
+
+            get_access_type(
+                private_endpoint
+            )
+
+        ]]
+    })
+
+
+    return tables
+
+
+# =========================================================
+# REST INSTALLATION TABLES
+# =========================================================
+
+def build_rest_installation_tables(
+    connection
+):
+
+    properties = (
+        connection.get(
+            "properties",
+            {}
+        )
+    )
+
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+        or
+        ""
+    ).strip().upper()
+
+
+    private_endpoint = (
+        connection.get(
+            "private_endpoint",
+            ""
+        )
+    )
+
+
+    attachments = (
+        connection.get(
+            "attachments",
+            {}
+        )
+    )
+
+
+    tables = []
+
+
+    # =====================================================
+    # SPECIAL CASE: INBOUND REST
+    # =====================================================
+
+    if security_policy == "MULTI_TOKEN_INBOUND":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+                "OAuth 2.0 Or Basic Authentication",
+                "No aplica",
+                "No aplica"
+            ]]
+        })
+
+
+        tables.append({
+
+            "title":
+                "Access Type",
+
+            "headers": [
+                "Access Type"
+            ],
+
+            "rows": [[
+                get_access_type(
+                    private_endpoint
+                )
+            ]]
+        })
+
+
+        return tables
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    connection_type = (
+        get_connection_property(
+            properties,
+            "connectionType"
+        )
+        or
+        "restUrl"
+    )
+
+
+    tables.append({
+
+        "title":
+            "Properties",
+
+        "headers": [
+            "Connection Type",
+            "Connection URL"
+        ],
+
+        "rows": [[
+            connection_type,
+            "<URL base>"
+        ]]
+    })
+
+
+    # =====================================================
+    # OPTIONAL PROPERTIES
+    # =====================================================
+
+    tls_version = (
+        get_connection_property(
+            properties,
+            "tlsVersion"
+        )
+        or
+        "No aplica"
+    )
+
+
+    two_way_ssl = (
+        format_optional_boolean(
+            get_connection_property(
+                properties,
+                "enableTwoWaySSL"
+            )
+        )
+    )
+
+
+    identity_alias = (
+        get_connection_property(
+            properties,
+            "sslCertificateAlias"
+        )
+        or
+        "No aplica"
+    )
+
+
+    tables.append({
+
+        "title":
+            "Optional Properties",
+
+        "headers": [
+            "TLS Versión",
+            "Enable Two way SSL",
+            "Identity keystore alias name"
+        ],
+
+        "rows": [[
+            tls_version,
+            two_way_ssl,
+            identity_alias
+        ]]
+    })
+
+
+    # =====================================================
+    # SECURITY
+    # =====================================================
+
+    if security_policy == "NONE":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                "No Security Policy"
+            ]]
+        })
+
+
+    elif security_policy == "BASIC_AUTH":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+                "Basic Authentication",
+                "<username>",
+                "<password>"
+            ]]
+        })
+
+
+    elif (
+        security_policy
+        ==
+        "JWT_USER_ASSERTION_FOR_OAUTH"
+    ):
+
+        access_token_uri = (
+            get_connection_property(
+                properties,
+                "accessTokenURI",
+                "accessTokenUri",
+                "tokenUrl",
+                "oauthTokenEndpoint"
+            )
+            or
+            "<Token>"
+        )
+
+
+        jwt_header = (
+            attachments.get(
+                "jwt_header",
+                ""
+            )
+            or
+            "No disponible"
+        )
+
+
+        jwt_payload = (
+            attachments.get(
+                "jwt_payload",
+                ""
+            )
+            or
+            "No disponible"
+        )
+
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Access Token URI",
+                "JWT headers in json format",
+                "JWT payload in json format"
+            ],
+
+            "rows": [[
+                "JWT User Assertion for OAuth",
+                access_token_uri,
+                jwt_header,
+                jwt_payload
+            ]]
+        })
+
+
+    elif security_policy:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                get_security_policy_label(
+                    security_policy,
+                    "rest"
+                )
+            ]]
+        })
+
+
+    # =====================================================
+    # ACCESS TYPE
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Access Type",
+
+        "headers": [
+            "Access Type"
+        ],
+
+        "rows": [[
+            get_access_type(
+                private_endpoint
+            )
+        ]]
+    })
+
+
+    return tables
+
+# =========================================================
+# SOAP INSTALLATION TABLES
+# =========================================================
+
+def build_soap_installation_tables(
+    connection
+):
+
+    properties = (
+        connection.get(
+            "properties",
+            {}
+        )
+    )
+
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+        or
+        ""
+    ).strip().upper()
+
+
+    private_endpoint = (
+        connection.get(
+            "private_endpoint",
+            ""
+        )
+    )
+
+
+    tables = []
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    wsdl_url = (
+        format_connection_placeholder(
+
+            get_connection_property(
+                properties,
+                "targetWSDLURL",
+                "WSDLURL",
+                "wsdlUrl"
+            ),
+
+            "<WSDL URL>"
+        )
+    )
+
+
+    tables.append({
+
+        "title":
+            "Properties",
+
+        "headers": [
+            "WSDL URL"
+        ],
+
+        "rows": [[
+            wsdl_url
+        ]]
+    })
+
+
+    # =====================================================
+    # OPTIONAL PROPERTIES
+    # =====================================================
+
+    tls_version = (
+        get_connection_property(
+            properties,
+            "tlsVersion"
+        )
+        or
+        "No aplica"
+    )
+
+
+    two_way_ssl = (
+        format_optional_boolean(
+            get_connection_property(
+                properties,
+                "enableTwoWaySSL"
+            )
+        )
+    )
+
+
+    identity_alias = (
+        get_connection_property(
+            properties,
+            "sslCertificateAlias"
+        )
+        or
+        "No aplica"
+    )
+
+
+    tables.append({
+
+        "title":
+            "Optional Properties",
+
+        "headers": [
+            "TLS Versión",
+            "Enable Two way SSL",
+            "Identity keystore alias name"
+        ],
+
+        "rows": [[
+            tls_version,
+            two_way_ssl,
+            identity_alias
+        ]]
+    })
+
+
+    # =====================================================
+    # SECURITY
+    # =====================================================
+
+    if security_policy == "NONE":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                "No Security Policy"
+            ]]
+        })
+
+
+    elif security_policy == "BASIC_AUTH":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+                "Basic Authentication",
+                "<username>",
+                "<password>"
+            ]]
+        })
+
+
+    elif security_policy:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                get_security_policy_label(
+                    security_policy,
+                    "soap"
+                )
+            ]]
+        })
+
+
+    # =====================================================
+    # ACCESS TYPE
+    # =====================================================
+
+    tables.append({
+
+        "title":
+            "Access Type",
+
+        "headers": [
+            "Access Type"
+        ],
+
+        "rows": [[
+            get_access_type(
+                private_endpoint
+            )
+        ]]
+    })
+
+
+    return tables
+
+
+# =========================================================
+# DBAAS INSTALLATION TABLES
+# =========================================================
+
+def build_dbaas_installation_tables(
+    connection
+):
+
+    properties = (
+        connection.get(
+            "properties",
+            {}
+        )
+    )
+
+
+    security_policy = (
+        connection.get(
+            "security_policy",
+            ""
+        )
+        or
+        ""
+    ).strip().upper()
+
+
+    tables = []
+
+
+    wallet_enabled = (
+        has_connection_property(
+            properties,
+            "WALLET"
+        )
+    )
+
+
+    service_name = (
+        format_connection_placeholder(
+
+            get_connection_property(
+                properties,
+                "ServiceName"
+            ),
+
+            "<service name>"
+        )
+    )
+
+
+    # =====================================================
+    # PROPERTIES
+    # =====================================================
+
+    if wallet_enabled:
+
+        host = "No aplica"
+        port = "No aplica"
+        sid = "No aplica"
+
+
+    else:
+
+        host = (
+            format_connection_placeholder(
+
+                get_connection_property(
+                    properties,
+                    "Host"
+                ),
+
+                "<host>"
+            )
+        )
+
+
+        port = (
+            format_connection_placeholder(
+
+                get_connection_property(
+                    properties,
+                    "Port"
+                ),
+
+                "<port>"
+            )
+        )
+
+
+        sid = (
+            format_connection_placeholder(
+
+                get_connection_property(
+                    properties,
+                    "SID"
+                ),
+
+                "<sid>"
+            )
+        )
+
+
+    tables.append({
+
+        "title":
+            "Properties",
+
+        "headers": [
+            "Host",
+            "Port",
+            "SID",
+            "Service Name"
+        ],
+
+        "rows": [[
+            host,
+            port,
+            sid,
+            service_name
+        ]]
+    })
+
+
+    # =====================================================
+    # SECURITY NONE
+    # =====================================================
+
+    if security_policy == "NONE":
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy"
+            ],
+
+            "rows": [[
+                "No Security Policy"
+            ]]
+        })
+
+
+    # =====================================================
+    # WALLET
+    # =====================================================
+
+    elif wallet_enabled:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Wallet",
+                "Wallet Password",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+                "Oracle Wallet",
+                "<zip>",
+                "<wallet password>",
+                "<username>",
+                "<password>"
+            ]]
+        })
+
+
+    # =====================================================
+    # NORMAL DATABASE
+    # =====================================================
+
+    else:
+
+        tables.append({
+
+            "title":
+                "Security",
+
+            "headers": [
+                "Security Policy",
+                "Username",
+                "Password"
+            ],
+
+            "rows": [[
+                get_security_policy_label(
+                    security_policy,
+                    "dbaasdatabase"
+                ),
+                "<username>",
+                "<password>"
+            ]]
+        })
+
+
+    return tables
+
+# =========================================================
+# BUILD CONNECTION INSTALLATION TABLES
+# =========================================================
+
+def build_connection_installation_tables(
+    connection
+):
+
+    raw_type = (
+        connection.get(
+            "raw_type",
+            ""
+        )
+        or
+        ""
+    ).strip().lower()
+
+
+    # =====================================================
+    # REST
+    # =====================================================
+
+    if raw_type == "rest":
+
+        return (
+            build_rest_installation_tables(
+                connection
+            )
+        )
+
+
+    # =====================================================
+    # SOAP
+    # =====================================================
+
+    if raw_type == "soap":
+
+        return (
+            build_soap_installation_tables(
+                connection
+            )
+        )
+
+
+    # =====================================================
+    # DATABASE
+    # =====================================================
+
+    if raw_type == "dbaasdatabase":
+
+        return (
+            build_dbaas_installation_tables(
+                connection
+            )
+        )
+
+
+    # =====================================================
+    # ERP CLOUD
+    # =====================================================
+
+    if raw_type == "erp":
+
+        return (
+            build_erp_installation_tables(
+                connection
+            )
+        )
+
+
+    # =====================================================
+    # FTP
+    # =====================================================
+
+    if raw_type == "ftp":
+
+        return (
+            build_ftp_installation_tables(
+                connection
+            )
+        )
+
+
+    # =====================================================
+    # UNKNOWN / NOT MAPPED YET
+    # =====================================================
+
+    return []
 
 # =========================================================
 # BUILD INSTALLATION ROWS
@@ -1358,14 +2836,26 @@ def parse_connection_for_installation(
             ),
 
         "properties":
-            properties
+            properties,
+
+        "private_endpoint":
+            get_xml_tag_value(
+                xml_root,
+                "privateEndpoint"
+            ),
+
+        "attachments":
+            extract_connection_attachments(
+                xml_root
+            )
+        
     }
 
 
     connection[
-        "installation_rows"
+        "installation_tables"
     ] = (
-        build_connection_installation_rows(
+        build_connection_installation_tables(
             connection
         )
     )

@@ -158,6 +158,65 @@ def unique_connections(
 
 
 # =========================================================
+# INTEGRATION CONNECTION
+# =========================================================
+
+def is_integration_connection(
+    connection
+):
+
+    raw_type = (
+        connection.get(
+            "raw_type",
+            ""
+        )
+        or
+        ""
+    ).strip().lower()
+
+
+    connection_type = (
+        connection.get(
+            "type",
+            ""
+        )
+        or
+        ""
+    ).strip().lower()
+
+
+    return (
+        raw_type == "collocatedics"
+        or
+        connection_type == "local integration"
+    )
+
+
+# =========================================================
+# CONFIGURABLE CONNECTIONS
+# =========================================================
+
+def get_configurable_connections(
+    connections
+):
+
+    return [
+
+        connection
+
+        for connection in (
+            connections
+            or
+            []
+        )
+
+        if not is_integration_connection(
+            connection
+        )
+    ]
+
+
+# =========================================================
 # GET API LIBRARY NAMES
 # =========================================================
 #
@@ -483,6 +542,14 @@ def build_iar_installation_item(
                 []
             ),
 
+        "configurable_connections":
+            get_configurable_connections(
+                analysis.get(
+                    "connections",
+                    []
+                )
+            ),
+
         "lookups":
             analysis.get(
                 "lookups",
@@ -672,6 +739,12 @@ def build_par_installation_item(
         )
     )
 
+    configurable_connections = (
+        get_configurable_connections(
+            connections
+        )
+    )
+
 
     lookups = (
         unique_strings(
@@ -718,6 +791,9 @@ def build_par_installation_item(
         "connections":
             connections,
 
+        "configurable_connections":
+            configurable_connections,
+
         "lookups":
             lookups,
 
@@ -733,7 +809,7 @@ def build_par_installation_item(
 
             "connection_count":
                 len(
-                    connections
+                    configurable_connections
                 ),
 
             "lookup_count":
