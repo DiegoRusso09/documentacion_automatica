@@ -1848,3 +1848,12 @@
     }
 
 }
+.logoneora {
+    max-height: 50px;
+    max-width: 100px;
+}
+
+.logooracle {
+    max-height: 100px;
+    max-width: 150px;
+}
