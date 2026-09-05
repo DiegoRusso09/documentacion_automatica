@@ -76,6 +76,14 @@ from oic_doc_generator.backend.parsers.iar_parser import (
     extract_iar
 )
 
+from oic_doc_generator.backend.parsers.lookup_parser import (
+    get_lookup_names
+)
+
+from oic_doc_generator.backend.utils.oic_installation_plan import (
+    get_api_library_names
+)
+
 from oic_doc_generator.backend.parsers.project_parser import (
     get_project_name,
     get_project_version
@@ -265,6 +273,9 @@ def build_oic_objects(
 ):
 
     objetos = []
+
+    lookup_keys = set()
+    library_keys = set()
 
     if not oic_files:
         return objetos
@@ -535,6 +546,197 @@ def build_oic_objects(
                     "[MATRIZ OIC] Encontrado:",
                     objeto
                 )
+
+        # =============================================
+        # LOOKUPS
+        # =============================================
+
+        lookup_names = (
+            get_lookup_names(
+                extracted_iar
+            )
+            or
+            []
+        )
+
+
+        for lookup_name in lookup_names:
+
+            lookup_name = (
+                str(
+                    lookup_name
+                    or
+                    ""
+                ).strip()
+            )
+
+
+            if not lookup_name:
+
+                continue
+
+
+            lookup_key = (
+                lookup_name.upper()
+            )
+
+
+            if lookup_key in lookup_keys:
+
+                continue
+
+
+            lookup_keys.add(
+                lookup_key
+            )
+
+
+            lookup_object = {
+
+                "id":
+                    lookup_name,
+
+                "nombre_objeto":
+                    lookup_name,
+
+                "tipo":
+                    "Lookup",
+
+                "version":
+                    None,
+
+                "paquete":
+                    package_name,
+
+                "creacion_modificacion":
+                    "Creacion",
+
+                "herramienta":
+                    "OIC",
+
+                "ruta":
+                    None
+            }
+
+
+            objetos.append(
+                lookup_object
+            )
+
+
+            print(
+                "[MATRIZ OIC] Lookup encontrado:",
+                lookup_object
+            )
+
+
+        # =============================================
+        # JAVASCRIPT LIBRARIES
+        # =============================================
+
+        library_names = (
+            get_api_library_names(
+                extracted_iar
+            )
+            or
+            []
+        )
+
+
+        for library_name in library_names:
+
+            library_name = (
+                str(
+                    library_name
+                    or
+                    ""
+                ).strip()
+            )
+
+
+            if not library_name:
+
+                continue
+
+
+            # El parser intenta obtener el nombre lógico
+            # del api-library.
+            #
+            # Si tuvo que usar el .js como fallback,
+            # quitamos únicamente la extensión.
+            if library_name.lower().endswith(
+                ".js"
+            ):
+
+                library_name = (
+                    Path(
+                        library_name
+                    ).stem
+                )
+
+
+            library_name = (
+                library_name.strip()
+            )
+
+
+            if not library_name:
+
+                continue
+
+
+            library_key = (
+                library_name.upper()
+            )
+
+
+            if library_key in library_keys:
+
+                continue
+
+
+            library_keys.add(
+                library_key
+            )
+
+
+            library_object = {
+
+                "id":
+                    library_name,
+
+                "nombre_objeto":
+                    library_name,
+
+                "tipo":
+                    "Biblioteca",
+
+                "version":
+                    None,
+
+                "paquete":
+                    package_name,
+
+                "creacion_modificacion":
+                    "Creacion",
+
+                "herramienta":
+                    "OIC",
+
+                "ruta":
+                    None
+            }
+
+
+            objetos.append(
+                library_object
+            )
+
+
+            print(
+                "[MATRIZ OIC] Biblioteca encontrada:",
+                library_object
+            )
 
 
     finally:
