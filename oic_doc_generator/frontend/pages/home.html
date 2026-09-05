@@ -1,189 +1,500 @@
-<!-- HERO -->
+<div class="dac-home">
 
-<section class="hero">
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
 
-    <div class="hero-content">
+    <section class="dac-hero">
 
-        <h1>
+        <div class="dac-hero-copy">
 
-            Automatización de Documentación Técnica
+            <span class="dac-eyebrow">
+                DOCUMENTATION AUTOMATION CENTER
+            </span>
 
-        </h1>
+            <h1>
+                Simplifica procesos manuales
+                <span>en un solo lugar.</span>
+            </h1>
+
+            <p class="dac-hero-description">
+                Convierte artefactos Oracle reales en documentación técnica,
+                manuales de instalación, matrices de objetos y análisis
+                reutilizables desde una sola plataforma.
+            </p>
+
+            <div class="dac-hero-actions">
+
+                <a
+                    class="dac-btn dac-btn-primary"
+                    href="#ds140"
+                >
+                    Comenzar
+                </a>
+
+                <button
+                    type="button"
+                    class="dac-btn dac-btn-secondary"
+                    onclick="
+                        document
+                            .getElementById('dac-capabilities')
+                            .scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                    "
+                >
+                    Conocer capacidades
+                </button>
+
+            </div>
+
+
+            <div class="dac-platforms">
+
+                <span>OIC</span>
+
+                <span>
+                    Visual Builder
+                </span>
+
+                <span>
+                    APEX
+                </span>
+
+                <span>
+                    BI Publisher
+                </span>
+
+                <span>
+                    Base de Datos
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FLOW PANEL
+        ================================================== -->
+
+        <div class="dac-flow-panel">
+
+            <div class="dac-flow-panel-title">
+                UN SOLO FLUJO
+            </div>
+
+
+            <div class="dac-flow-item">
+
+                <span class="dac-flow-number">
+                    01
+                </span>
+
+                <div>
+
+                    <strong>
+                        Carga tus artefactos
+                    </strong>
+
+                    <p>
+                        Incorpora los componentes técnicos
+                        reales de tu desarrollo.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="dac-flow-connector"></div>
+
+
+            <div class="dac-flow-item">
+
+                <span class="dac-flow-number">
+                    02
+                </span>
+
+                <div>
+
+                    <strong>
+                        Analiza y centraliza
+                    </strong>
+
+                    <p>
+                        La plataforma interpreta metadatos,
+                        estructura y componentes.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="dac-flow-connector"></div>
+
+
+            <div class="dac-flow-item">
+
+                <span class="dac-flow-number">
+                    03
+                </span>
+
+                <div>
+
+                    <strong>
+                        Genera entregables
+                    </strong>
+
+                    <p>
+                        Produce documentación, manuales,
+                        matrices y análisis listos para usar.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         CAPACIDADES
+    ====================================================== -->
+
+    <section
+        id="dac-capabilities"
+        class="dac-section"
+    >
+
+        <div class="dac-section-heading">
+
+            <span class="dac-eyebrow dac-eyebrow-red">
+                QUÉ PUEDES HACER
+            </span>
+
+            <h2>
+                Menos tareas repetitivas.
+                <br>
+                Más tiempo para construir.
+            </h2>
+
+            <p>
+                Centraliza actividades técnicas que normalmente
+                requieren revisar archivos, recopilar información
+                y preparar entregables de forma manual.
+            </p>
+
+        </div>
+
+
+        <div class="dac-capability-grid">
+
+
+            <!-- DOCUMENTOS -->
+
+            <article
+                class="
+                    dac-capability-card
+                    dac-capability-main
+                "
+            >
+
+                <span class="dac-card-tag">
+                    DOCUMENTACIÓN
+                </span>
+
+                <div>
+
+                    <h3>
+                        Documentos Técnicos
+                    </h3>
+
+                    <p>
+                        Genera documentación técnica y manuales
+                        de instalación utilizando información
+                        extraída directamente de los artefactos
+                        del desarrollo.
+                    </p>
+
+                    <div class="dac-document-types">
+
+                        <span>
+                            DS140
+                        </span>
+
+                        <span>
+                            IM090
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- MATRIZ -->
+
+            <article class="dac-capability-card">
+
+                <span class="dac-card-tag">
+                    TRAZABILIDAD
+                </span>
+
+                <div>
+
+                    <h3>
+                        Matriz de Objetos
+                    </h3>
+
+                    <p>
+                        Registra y actualiza integraciones,
+                        reportes, modelos de datos y objetos
+                        de Base de Datos manteniendo
+                        trazabilidad del pase.
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <!-- TOOLS -->
+
+            <article class="dac-capability-card">
+
+                <span class="dac-card-tag">
+                    ANÁLISIS
+                </span>
+
+                <div>
+
+                    <h3>
+                        Herramientas de Análisis
+                    </h3>
+
+                    <p>
+                        Explora paquetes y archivos Oracle
+                        para obtener estructura, componentes
+                        y metadatos sin analizarlos
+                        manualmente.
+                    </p>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         BENEFICIOS
+    ====================================================== -->
+
+    <section class="dac-benefits">
+
+        <div class="dac-benefits-copy">
+
+            <span class="dac-eyebrow">
+                POR QUÉ USARLO
+            </span>
+
+            <h2>
+                Un proceso técnico más claro,
+                rápido y estandarizado.
+            </h2>
+
+            <p>
+                El objetivo no es solamente generar documentos:
+                es eliminar tareas manuales repetitivas y
+                mantener la información técnica centralizada.
+            </p>
+
+        </div>
+
+
+        <div class="dac-benefit-list">
+
+            <div class="dac-benefit-item">
+
+                <strong>
+                    01
+                </strong>
+
+                <span>
+                    Reduce trabajo manual
+                </span>
+
+            </div>
+
+
+            <div class="dac-benefit-item">
+
+                <strong>
+                    02
+                </strong>
+
+                <span>
+                    Minimiza omisiones
+                </span>
+
+            </div>
+
+
+            <div class="dac-benefit-item">
+
+                <strong>
+                    03
+                </strong>
+
+                <span>
+                    Estandariza entregables
+                </span>
+
+            </div>
+
+
+            <div class="dac-benefit-item">
+
+                <strong>
+                    04
+                </strong>
+
+                <span>
+                    Centraliza conocimiento
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SUPPORTED TECHNOLOGIES
+    ====================================================== -->
+
+    <section class="dac-technologies">
+
+        <div class="dac-technologies-heading">
+
+            <span class="dac-eyebrow dac-eyebrow-red">
+                ECOSISTEMA ORACLE
+            </span>
+
+            <h2>
+                Trabaja con los artefactos
+                que ya forman parte de tu proyecto.
+            </h2>
+
+        </div>
+
+
+        <div class="dac-tech-grid">
+
+            <div class="dac-tech-item">
+
+                <strong>
+                    Oracle Integration Cloud
+                </strong>
+
+                <span>
+                    .PAR · .IAR
+                </span>
+
+            </div>
+
+
+            <div class="dac-tech-item">
+
+                <strong>
+                    BI Publisher
+                </strong>
+
+                <span>
+                    .XDOZ · .XDMZ · .XDRZ
+                </span>
+
+            </div>
+
+
+            <div class="dac-tech-item">
+
+                <strong>
+                    Base de Datos Oracle
+                </strong>
+
+                <span>
+                    .SQL
+                </span>
+
+            </div>
+
+
+            <div class="dac-tech-item">
+
+                <strong>
+                    Visual Builder
+                </strong>
+
+                <span>
+                    Aplicaciones y recursos
+                </span>
+
+            </div>
+
+
+            <div class="dac-tech-item">
+
+                <strong>
+                    Oracle APEX
+                </strong>
+
+                <span>
+                    Aplicaciones y componentes
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FINAL CTA
+    ====================================================== -->
+
+    <section class="dac-final-cta">
+
+        <span class="dac-eyebrow dac-eyebrow-red">
+            EMPIEZA AHORA
+        </span>
+
+        <h2>
+            Del artefacto al entregable,
+            en un solo lugar.
+        </h2>
 
         <p>
-
-            Oracle Integration Cloud • Visual Builder • APEX • BI Publisher • Base de Datos
-
+            Centraliza el trabajo técnico y reduce
+            el tiempo destinado a tareas manuales.
         </p>
 
-        <button class="btn-primary">
-
-            Comenzar
-
-        </button>
-
-    </div>
-
-</section>
-
-<!-- QUICK ACCESS -->
-
-<section class="section">
-
-    <h2 class="section-title">
-
-        Accesos Rápidos
-
-    </h2>
-
-    <div class="cards">
-
-        <a href="#ds140" class="card">
-
-            <div class="card-icon">
-                📘
-            </div>
-
-            <div class="card-title">
-                DS140
-            </div>
-
-            <div class="card-desc">
-                Generación automática de documentación técnica de proyectos Oracle.
-            </div>
-
-        </a>
-        <a href="#im090" class="card">
-
-            <div class="card-icon">
-                📑
-            </div>
-
-            <div class="card-title">
-                IM090
-            </div>
-
-            <div class="card-desc">
-                Elaboración automática de documentación funcional.
-            </div>
-
-        </a>
-        <a href="#tools" class="card">
-
-            <div class="card-icon">
-                🛠️
-            </div>
-
-            <div class="card-title">
-                Tool
-            </div>
-
-            <div class="card-desc">
-                Herramientas de apoyo para análisis y extracción de artefactos Oracle.
-            </div>
-
+        <a
+            href="#ds140"
+            class="dac-btn dac-btn-primary"
+        >
+            Ir a Documentos Técnicos
         </a>
 
-    </div>
+    </section>
 
-</section>
-
-<!-- FEATURES -->
-
-<section class="section">
-
-    <h2 class="section-title">
-
-        Capacidades
-
-    </h2>
-
-    <div class="feature-grid">
-
-        <div class="feature-card">
-
-            <h3>
-
-                OIC
-
-            </h3>
-
-            <p>
-
-                Análisis de integraciones .PAR y .IAR.
-
-            </p>
-
-        </div>
-
-        <div class="feature-card">
-
-            <h3>
-
-                Visual Builder
-
-            </h3>
-
-            <p>
-
-                Documentación automática de aplicaciones Visual Builder.
-
-            </p>
-
-        </div>
-
-        <div class="feature-card">
-
-            <h3>
-
-                BI Publisher
-
-            </h3>
-
-            <p>
-
-                Extracción de modelos de datos, datasets y layouts.
-
-            </p>
-
-        </div>
-
-        <div class="feature-card">
-
-            <h3>
-
-                SQL
-
-            </h3>
-
-            <p>
-
-                Generación de DER, tablas, secuencias y paquetes.
-
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-<!-- ABOUT -->
-
-<section class="section about-section">
-
-    <h2 class="section-title">
-
-        Acerca de la Plataforma
-
-    </h2>
-
-    <p>
-
-        Plataforma diseñada para automatizar la generación de documentación técnica
-        y funcional en proyectos Oracle Cloud, reduciendo tiempos de análisis,
-        estandarizando entregables y facilitando la transferencia de conocimiento.
-
-    </p>
-
-</section>
+</div>

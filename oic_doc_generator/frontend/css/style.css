@@ -1,367 +1,1850 @@
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:
-"Segoe UI",
-Arial,
-sans-serif;
+/* =========================================================
+   DOCUMENTATION AUTOMATION CENTER
+   HOME V2
+   ========================================================= */
+
+.dac-home {
+
+    --dac-red:
+        #C74634;
+
+    --dac-red-dark:
+        #B83D2D;
+
+    --dac-dark:
+        #172026;
+
+    --dac-dark-soft:
+        #202A30;
+
+    --dac-text:
+        #1D252A;
+
+    --dac-muted:
+        #68727A;
+
+    --dac-border:
+        #E3E7E9;
+
+    --dac-bg:
+        #F5F6F7;
+
+    --dac-white:
+        #FFFFFF;
+
+    width: 100%;
+
+    overflow: hidden;
+
+    background:
+        var(
+            --dac-bg
+        );
+
+    color:
+        var(
+            --dac-text
+        );
 }
 
-body{
-background:#f5f6f8;
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.dac-hero {
+
+    min-height:
+        610px;
+
+    padding:
+        80px
+        max(
+            6vw,
+            50px
+        );
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(
+            0,
+            1.25fr
+        )
+        minmax(
+            340px,
+            .75fr
+        );
+
+    gap:
+        70px;
+
+    align-items:
+        center;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(
+                8,
+                16,
+                22,
+                .96
+            ),
+            rgba(
+                8,
+                16,
+                22,
+                .80
+            )
+            57%,
+            rgba(
+                8,
+                16,
+                22,
+                .30
+            )
+        ),
+
+        url(
+            "https://images.unsplash.com/photo-1451187580459-43490279c0fa"
+        );
+
+    background-size:
+        cover;
+
+    background-position:
+        center;
+
+    color:
+        white;
 }
 
-/* =========================================
-HEADER
-========================================= */
-.logoneora{
-    max-height: 50px;
-    max-width: 100px;
-}
-.logooracle{
-    max-height: 100px;
-    max-width: 150px;
+
+.dac-hero-copy {
+
+    max-width:
+        850px;
 }
 
-.header{
 
+.dac-eyebrow {
 
-height:80px;
+    display:
+        inline-block;
 
-background:white;
+    color:
+        #F0B1A7;
 
-display:flex;
+    font-size:
+        12px;
 
-justify-content:space-between;
+    font-weight:
+        800;
 
-align-items:center;
+    letter-spacing:
+        .20em;
 
-padding:0 40px;
-
-box-shadow:
-    0 2px 10px rgba(
-        0,
-        0,
-        0,
-        .08
-    );
-
-
+    line-height:
+        1.4;
 }
 
-.logo{
 
+.dac-eyebrow-red {
 
-font-size:28px;
-
-font-weight:bold;
-
-
+    color:
+        var(
+            --dac-red
+        );
 }
 
-.oracle{
-color:#C74634;
+
+.dac-hero h1 {
+
+    max-width:
+        850px;
+
+    margin:
+        16px
+        0
+        24px;
+
+    font-size:
+        clamp(
+            48px,
+            5vw,
+            74px
+        );
+
+    font-weight:
+        750;
+
+    line-height:
+        1.03;
+
+    letter-spacing:
+        -.045em;
 }
 
-.neora{
-color:#1E3A8A;
+
+.dac-hero h1 span {
+
+    display:
+        block;
+
+    color:
+        #F3F5F6;
 }
 
-.center-title{
 
+.dac-hero-description {
 
-font-size:24px;
+    max-width:
+        760px;
 
-font-weight:600;
+    margin:
+        0;
 
-color:#444;
+    color:
+        #D5DDE1;
 
+    font-size:
+        19px;
 
+    line-height:
+        1.7;
 }
 
-/* =========================================
-MENU
-========================================= */
 
-.navbar{
+/* =========================================================
+   HERO ACTIONS
+   ========================================================= */
 
+.dac-hero-actions {
 
-background:white;
+    display:
+        flex;
 
-display:flex;
+    flex-wrap:
+        wrap;
 
-justify-content:center;
+    gap:
+        14px;
 
-gap:40px;
-
-padding:16px;
-
-border-top:
-    1px solid #ececec;
-
-border-bottom:
-    1px solid #ececec;
-
-
+    margin:
+        32px
+        0
+        28px;
 }
 
-.nav-item{
 
+.dac-btn {
 
-text-decoration:none;
+    min-height:
+        50px;
 
-color:#555;
+    padding:
+        0
+        24px;
 
-font-weight:600;
+    display:
+        inline-flex;
 
-transition:.3s;
+    align-items:
+        center;
 
+    justify-content:
+        center;
 
+    border-radius:
+        10px;
+
+    border:
+        none;
+
+    font-size:
+        14px;
+
+    font-weight:
+        750;
+
+    text-decoration:
+        none;
+
+    cursor:
+        pointer;
+
+    transition:
+        transform .2s,
+        background .2s,
+        border-color .2s,
+        box-shadow .2s;
 }
 
-.nav-item:hover{
 
+.dac-btn-primary {
 
-color:#C74634;
+    background:
+        var(
+            --dac-red
+        );
 
+    color:
+        white;
 
+    box-shadow:
+        0
+        12px
+        26px
+        rgba(
+            199,
+            70,
+            52,
+            .24
+        );
 }
 
-/* =========================================
-HERO
-========================================= */
 
-.hero{
+.dac-btn-primary:hover {
 
+    background:
+        var(
+            --dac-red-dark
+        );
 
-height:350px;
+    color:
+        white;
 
-background:
-    linear-gradient(
-        rgba(0,0,0,.45),
-        rgba(0,0,0,.45)
-    ),
-    url(
-        "https://images.unsplash.com/photo-1451187580459-43490279c0fa"
-    );
-
-background-size:cover;
-
-background-position:center;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-text-align:center;
-
-
+    transform:
+        translateY(
+            -2px
+        );
 }
 
-.hero-content{
 
+.dac-btn-secondary {
 
-color:white;
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .34
+        );
 
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
 
+    color:
+        white;
 }
 
-.hero h1{
 
+.dac-btn-secondary:hover {
 
-font-size:42px;
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .14
+        );
 
-margin-bottom:20px;
-
-
+    transform:
+        translateY(
+            -2px
+        );
 }
 
-.hero p{
 
+/* =========================================================
+   TECHNOLOGY PILLS
+   ========================================================= */
 
-font-size:20px;
+.dac-platforms {
 
-margin-bottom:25px;
+    display:
+        flex;
 
+    flex-wrap:
+        wrap;
 
+    gap:
+        9px;
 }
 
-.hero button{
 
+.dac-platforms span {
 
-background:#C74634;
+    padding:
+        7px
+        11px;
 
-color:white;
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
 
-border:none;
+    border-radius:
+        999px;
 
-border-radius:8px;
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .06
+        );
 
-padding:14px 35px;
+    color:
+        #CDD5DA;
 
-cursor:pointer;
-
-font-size:16px;
-
-font-weight:bold;
-
-
+    font-size:
+        12px;
 }
 
-/* =========================================
-CARDS
-========================================= */
 
-.section{
+/* =========================================================
+   FLOW PANEL
+   ========================================================= */
 
+.dac-flow-panel {
 
-max-width:1300px;
+    padding:
+        30px;
 
-margin:auto;
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
 
-padding:50px;
+    border-radius:
+        22px;
 
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .10
+        );
 
+    box-shadow:
+        0
+        30px
+        70px
+        rgba(
+            0,
+            0,
+            0,
+            .28
+        );
+
+    backdrop-filter:
+        blur(
+            18px
+        );
+
+    -webkit-backdrop-filter:
+        blur(
+            18px
+        );
 }
 
-.section-title{
 
+.dac-flow-panel-title {
 
-text-align:center;
+    margin-bottom:
+        24px;
 
-font-size:30px;
+    color:
+        #CAD3D8;
 
-color:#444;
+    font-size:
+        11px;
 
-margin-bottom:40px;
+    font-weight:
+        800;
 
-
+    letter-spacing:
+        .18em;
 }
 
-.cards{
+
+.dac-flow-item {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        52px
+        1fr;
+
+    gap:
+        15px;
+
+    align-items:
+        start;
+}
 
 
-display:grid;
+.dac-flow-number {
 
-grid-template-columns:
-    repeat(
-        3,
+    width:
+        42px;
+
+    height:
+        42px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        50%;
+
+    background:
+        var(
+            --dac-red
+        );
+
+    color:
+        white;
+
+    font-size:
+        13px;
+
+    font-weight:
+        800;
+}
+
+
+.dac-flow-item strong {
+
+    display:
+        block;
+
+    margin-bottom:
+        5px;
+
+    color:
+        white;
+
+    font-size:
+        17px;
+}
+
+
+.dac-flow-item p {
+
+    margin:
+        0;
+
+    color:
+        #CBD4D9;
+
+    font-size:
+        14px;
+
+    line-height:
+        1.55;
+}
+
+
+.dac-flow-connector {
+
+    width:
+        1px;
+
+    height:
+        30px;
+
+    margin:
+        6px
+        0
+        6px
+        20px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .24
+        );
+}
+
+
+/* =========================================================
+   GENERAL SECTION
+   ========================================================= */
+
+.dac-section {
+
+    max-width:
+        1320px;
+
+    margin:
+        auto;
+
+    padding:
+        90px
+        50px;
+}
+
+
+.dac-section-heading {
+
+    max-width:
+        820px;
+
+    margin-bottom:
+        44px;
+}
+
+
+.dac-section-heading h2,
+.dac-benefits h2,
+.dac-technologies h2,
+.dac-final-cta h2 {
+
+    margin:
+        13px
+        0
+        17px;
+
+    font-size:
+        clamp(
+            34px,
+            4vw,
+            54px
+        );
+
+    font-weight:
+        720;
+
+    line-height:
+        1.08;
+
+    letter-spacing:
+        -.035em;
+}
+
+
+.dac-section-heading p {
+
+    margin:
+        0;
+
+    color:
+        var(
+            --dac-muted
+        );
+
+    font-size:
+        18px;
+
+    line-height:
+        1.65;
+}
+
+
+/* =========================================================
+   CAPABILITY CARDS
+   ========================================================= */
+
+.dac-capability-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1.2fr
         1fr
-    );
+        1fr;
 
-gap:30px;
+    gap:
+        18px;
+}
 
+
+.dac-capability-card {
+
+    min-height:
+        310px;
+
+    padding:
+        30px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        space-between;
+
+    border:
+        1px solid
+        var(
+            --dac-border
+        );
+
+    border-radius:
+        18px;
+
+    background:
+        white;
+
+    box-shadow:
+        0
+        8px
+        28px
+        rgba(
+            20,
+            30,
+            36,
+            .05
+        );
+
+    transition:
+        transform .25s,
+        box-shadow .25s;
+}
+
+
+.dac-capability-card:hover {
+
+    transform:
+        translateY(
+            -5px
+        );
+
+    box-shadow:
+        0
+        18px
+        38px
+        rgba(
+            20,
+            30,
+            36,
+            .10
+        );
+}
+
+
+.dac-capability-main {
+
+    background:
+        var(
+            --dac-dark
+        );
+
+    color:
+        white;
+}
+
+
+.dac-card-tag {
+
+    color:
+        var(
+            --dac-red
+        );
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        .14em;
+}
+
+
+.dac-capability-main
+.dac-card-tag {
+
+    color:
+        #F0AEA4;
+}
+
+
+.dac-capability-card h3 {
+
+    margin:
+        20px
+        0
+        12px;
+
+    font-size:
+        25px;
+
+    line-height:
+        1.2;
+}
+
+
+.dac-capability-card p {
+
+    margin:
+        0;
+
+    color:
+        #6C757B;
+
+    font-size:
+        15px;
+
+    line-height:
+        1.65;
+}
+
+
+.dac-capability-main p {
+
+    color:
+        #CBD2D6;
+}
+
+
+.dac-document-types {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    margin-top:
+        24px;
+}
+
+
+.dac-document-types span {
+
+    padding:
+        7px
+        11px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .20
+        );
+
+    border-radius:
+        999px;
+
+    color:
+        white;
+
+    font-size:
+        11px;
+
+    font-weight:
+        700;
+}
+
+
+/* =========================================================
+   BENEFITS
+   ========================================================= */
+
+.dac-benefits {
+
+    padding:
+        85px
+        max(
+            6vw,
+            50px
+        );
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr
+        1fr;
+
+    gap:
+        80px;
+
+    align-items:
+        start;
+
+    background:
+        var(
+            --dac-dark
+        );
+
+    color:
+        white;
+}
+
+
+.dac-benefits-copy p {
+
+    max-width:
+        630px;
+
+    color:
+        #AEB8BE;
+
+    font-size:
+        16px;
+
+    line-height:
+        1.7;
+}
+
+
+.dac-benefit-list {
+
+    border-top:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+}
+
+
+.dac-benefit-item {
+
+    padding:
+        22px
+        0;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        55px
+        1fr;
+
+    align-items:
+        center;
+
+    border-bottom:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .14
+        );
+}
+
+
+.dac-benefit-item strong {
+
+    color:
+        #E79A8D;
+
+    font-size:
+        13px;
+}
+
+
+.dac-benefit-item span {
+
+    font-size:
+        18px;
+
+    font-weight:
+        650;
+}
+
+
+/* =========================================================
+   TECHNOLOGIES
+   ========================================================= */
+
+.dac-technologies {
+
+    max-width:
+        1320px;
+
+    margin:
+        auto;
+
+    padding:
+        90px
+        50px;
+}
+
+
+.dac-technologies-heading {
+
+    max-width:
+        850px;
+
+    margin-bottom:
+        44px;
+}
+
+
+.dac-tech-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            5,
+            1fr
+        );
+
+    border-top:
+        1px solid
+        var(
+            --dac-border
+        );
+
+    border-left:
+        1px solid
+        var(
+            --dac-border
+        );
+}
+
+
+.dac-tech-item {
+
+    min-height:
+        145px;
+
+    padding:
+        22px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        space-between;
+
+    border-right:
+        1px solid
+        var(
+            --dac-border
+        );
+
+    border-bottom:
+        1px solid
+        var(
+            --dac-border
+        );
+
+    background:
+        white;
+}
+
+
+.dac-tech-item strong {
+
+    color:
+        var(
+            --dac-text
+        );
+
+    font-size:
+        15px;
+
+    line-height:
+        1.4;
+}
+
+
+.dac-tech-item span {
+
+    color:
+        var(
+            --dac-muted
+        );
+
+    font-size:
+        12px;
+
+    line-height:
+        1.5;
+}
+
+
+/* =========================================================
+   FINAL CTA
+   ========================================================= */
+
+.dac-final-cta {
+
+    padding:
+        100px
+        30px;
+
+    text-align:
+        center;
+
+    background:
+        white;
+}
+
+
+.dac-final-cta h2 {
+
+    max-width:
+        880px;
+
+    margin-left:
+        auto;
+
+    margin-right:
+        auto;
+}
+
+
+.dac-final-cta p {
+
+    max-width:
+        650px;
+
+    margin:
+        0
+        auto
+        30px;
+
+    color:
+        var(
+            --dac-muted
+        );
+
+    font-size:
+        17px;
+
+    line-height:
+        1.6;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+    max-width:
+        1000px
+) {
+
+    .dac-hero {
+
+        grid-template-columns:
+            1fr;
+
+        padding:
+            65px
+            32px;
+    }
+
+
+    .dac-flow-panel {
+
+        max-width:
+            650px;
+    }
+
+
+    .dac-capability-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .dac-benefits {
+
+        grid-template-columns:
+            1fr;
+
+        gap:
+            45px;
+    }
+
+
+    .dac-tech-grid {
+
+        grid-template-columns:
+            repeat(
+                2,
+                1fr
+            );
+    }
 
 }
 
-.card{
+
+@media (
+    max-width:
+        650px
+) {
+
+    .dac-hero {
+
+        min-height:
+            auto;
+
+        padding:
+            55px
+            20px;
+    }
 
 
-background:white;
+    .dac-hero h1 {
 
-border-radius:15px;
-
-padding:35px;
-
-text-align:center;
-
-cursor:pointer;
-
-transition:.3s;
-
-box-shadow:
-    0 4px 12px rgba(
-        0,
-        0,
-        0,
-        .08
-    );
+        font-size:
+            43px;
+    }
 
 
-}
+    .dac-hero-description {
 
-.card:hover{
-
-
-transform:
-    translateY(-5px);
-
-box-shadow:
-    0 8px 20px rgba(
-        0,
-        0,
-        0,
-        .12
-    );
+        font-size:
+            17px;
+    }
 
 
-}
+    .dac-hero-actions {
 
-.card-icon{
+        flex-direction:
+            column;
 
-
-font-size:60px;
-
-margin-bottom:20px;
-
-
-}
-
-.card-title{
+        align-items:
+            stretch;
+    }
 
 
-font-size:24px;
+    .dac-btn {
 
-font-weight:bold;
-
-color:#333;
-
-margin-bottom:15px;
+        width:
+            100%;
+    }
 
 
-}
+    .dac-section,
+    .dac-technologies {
 
-.card-desc{
-
-
-color:#777;
-
-
-}
-
-/* =========================================
-FOOTER
-========================================= */
-
-.footer{
+        padding:
+            65px
+            20px;
+    }
 
 
-background:white;
+    .dac-benefits {
 
-margin-top:40px;
+        padding:
+            65px
+            20px;
+    }
 
-padding:20px;
 
-text-align:center;
+    .dac-tech-grid {
 
-color:#888;
+        grid-template-columns:
+            1fr;
+    }
 
-border-top:
-    1px solid #ececec;
 
+    .dac-final-cta {
+
+        padding:
+            75px
+            20px;
+    }
 
 }
 
-.card {
+/* =========================================================
+   DOCUMENTOS TÉCNICOS
+   ACCIONES / ENTREGABLES
+   ========================================================= */
 
-    text-decoration: none;
+.generate-section {
 
-    color: inherit;
+    margin-top:
+        55px;
 
-    display: block;
+    padding:
+        38px;
 
-    cursor: pointer;
+    border:
+        1px solid
+        #E3E7E9;
+
+    border-radius:
+        20px;
+
+    background:
+        #FFFFFF;
+
+    box-shadow:
+        0
+        10px
+        35px
+        rgba(
+            22,
+            32,
+            38,
+            .06
+        );
+
+    text-align:
+        left;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.doc-actions-header {
+
+    max-width:
+        720px;
+
+    margin-bottom:
+        28px;
+}
+
+
+.doc-actions-eyebrow {
+
+    display:
+        inline-block;
+
+    margin-bottom:
+        9px;
+
+    color:
+        #C74634;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        .17em;
+}
+
+
+.doc-actions-header h2 {
+
+    margin:
+        0
+        0
+        9px;
+
+    color:
+        #172026;
+
+    font-size:
+        27px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        -.02em;
+}
+
+
+.doc-actions-header p {
+
+    max-width:
+        650px;
+
+    margin:
+        0;
+
+    color:
+        #6C757B;
+
+    font-size:
+        14px;
+
+    line-height:
+        1.65;
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.doc-actions-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap:
+        16px;
+}
+
+
+/* =========================================================
+   ACTION CARD
+   ========================================================= */
+
+.doc-action-card {
+
+    position:
+        relative;
+
+    min-width:
+        0;
+
+    min-height:
+        195px;
+
+    padding:
+        24px;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        48px
+        1fr
+        25px;
+
+    gap:
+        16px;
+
+    align-items:
+        start;
+
+    border:
+        1px solid
+        #E2E6E8;
+
+    border-radius:
+        15px;
+
+    background:
+        #FFFFFF;
+
+    color:
+        #172026;
+
+    font-family:
+        inherit;
+
+    text-align:
+        left;
+
+    cursor:
+        pointer;
+
+    appearance:
+        none;
+
+    -webkit-appearance:
+        none;
+
+    transition:
+        border-color .22s,
+        transform .22s,
+        box-shadow .22s,
+        background .22s;
+}
+
+
+.doc-action-card:hover {
+
+    border-color:
+        #C8CED2;
+
+    transform:
+        translateY(
+            -4px
+        );
+
+    box-shadow:
+        0
+        14px
+        30px
+        rgba(
+            20,
+            30,
+            36,
+            .09
+        );
+}
+
+
+.doc-action-card:active {
+
+    transform:
+        translateY(
+            -1px
+        );
+}
+
+
+.doc-action-card:focus-visible {
+
+    outline:
+        none;
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            199,
+            70,
+            52,
+            .16
+        );
+}
+
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.doc-action-icon {
+
+    width:
+        46px;
+
+    height:
+        46px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        12px;
+
+    flex-shrink:
+        0;
+}
+
+
+.doc-action-icon svg {
+
+    width:
+        23px;
+
+    height:
+        23px;
+
+    fill:
+        none;
+
+    stroke:
+        currentColor;
+
+    stroke-width:
+        1.7;
+
+    stroke-linecap:
+        round;
+
+    stroke-linejoin:
+        round;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.doc-action-content {
+
+    min-width:
+        0;
+}
+
+
+.doc-action-label {
+
+    display:
+        block;
+
+    margin:
+        2px
+        0
+        9px;
+
+    color:
+        #8A949A;
+
+    font-size:
+        10px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        .13em;
+}
+
+
+.doc-action-content strong {
+
+    display:
+        block;
+
+    margin-bottom:
+        9px;
+
+    color:
+        #172026;
+
+    font-size:
+        18px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.25;
+}
+
+
+.doc-action-content small {
+
+    display:
+        block;
+
+    color:
+        #707A80;
+
+    font-size:
+        13px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.55;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.doc-action-arrow {
+
+    margin-top:
+        9px;
+
+    color:
+        #A3ACB1;
+
+    font-size:
+        22px;
+
+    line-height:
+        1;
+
+    transition:
+        transform .22s,
+        color .22s;
+}
+
+
+.doc-action-card:hover
+.doc-action-arrow {
+
+    color:
+        #C74634;
+
+    transform:
+        translateX(
+            4px
+        );
+}
+
+
+/* =========================================================
+   DS140
+   ========================================================= */
+
+.doc-action-ds140 {
+
+    border-top:
+        3px solid
+        #C74634;
+}
+
+
+.doc-action-ds140
+.doc-action-icon {
+
+    background:
+        #FFF1EE;
+
+    color:
+        #C74634;
+}
+
+
+/* =========================================================
+   MATRIX
+   ========================================================= */
+
+.doc-action-matrix {
+
+    border-top:
+        3px solid
+        #59666E;
+}
+
+
+.doc-action-matrix
+.doc-action-icon {
+
+    background:
+        #EEF1F2;
+
+    color:
+        #39464D;
+}
+
+
+/* =========================================================
+   IM090
+   ========================================================= */
+
+.doc-action-im090 {
+
+    border-top:
+        3px solid
+        #172026;
+}
+
+
+.doc-action-im090
+.doc-action-icon {
+
+    background:
+        #172026;
+
+    color:
+        #FFFFFF;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+    max-width:
+        1050px
+) {
+
+    .doc-actions-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .doc-action-card {
+
+        min-height:
+            auto;
+    }
+
+}
+
+
+@media (
+    max-width:
+        650px
+) {
+
+    .generate-section {
+
+        padding:
+            24px
+            18px;
+    }
+
+
+    .doc-action-card {
+
+        grid-template-columns:
+            44px
+            1fr;
+
+        padding:
+            20px;
+    }
+
+
+    .doc-action-arrow {
+
+        display:
+            none;
+    }
+
+
+    .doc-action-icon {
+
+        width:
+            42px;
+
+        height:
+            42px;
+    }
+
 }
