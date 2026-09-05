@@ -86,7 +86,8 @@ from oic_doc_generator.backend.utils.oic_installation_plan import (
 
 from oic_doc_generator.backend.parsers.project_parser import (
     get_project_name,
-    get_project_version
+    get_project_version,
+    get_integration_trigger_type
 )
 
 from oic_doc_generator.backend.parsers.schedule_parser import (
@@ -472,7 +473,7 @@ def build_oic_objects(
 
 
                 # =============================================
-                # TYPE
+                # INTEGRATION TYPE
                 # =============================================
 
                 scheduled = (
@@ -482,15 +483,73 @@ def build_oic_objects(
                 )
 
 
-                integration_type = (
+                # Fallback adicional al análisis estructural
+                # del project.xml.
+                if not scheduled:
 
-                    "Integración Programada"
+                    scheduled = (
+                        is_scheduled_integration(
+                            extracted_iar
+                        )
+                    )
 
-                    if scheduled
 
-                    else
+                if scheduled:
 
-                    "Integración REST"
+                    integration_type = (
+                        "Integración Programada"
+                    )
+
+
+                else:
+
+                    trigger_type = (
+                        get_integration_trigger_type(
+                            extracted_iar
+                        )
+                    )
+
+
+                    trigger_type_map = {
+
+                        "REST":
+                            "Integración REST",
+
+                        "SOAP":
+                            "Integración SOAP",
+
+                        "EVENT":
+                            "Integración por Eventos"
+                    }
+
+
+                    integration_type = (
+                        trigger_type_map.get(
+                            trigger_type
+                        )
+                    )
+
+
+                    if not integration_type:
+
+                        print(
+                            "[MATRIZ OIC] WARNING: "
+                            "No se pudo determinar el tipo "
+                            "de trigger de la integración:",
+                            integration_name,
+                            "| Trigger detectado:",
+                            trigger_type
+                        )
+
+                        # No registramos un tipo falso.
+                        continue
+
+
+                print(
+                    "[MATRIZ OIC] Tipo detectado:",
+                    integration_name,
+                    "=>",
+                    integration_type
                 )
 
 

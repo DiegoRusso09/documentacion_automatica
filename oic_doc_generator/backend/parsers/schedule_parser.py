@@ -20,19 +20,97 @@ def is_scheduled_integration(
     extracted_iar
 ):
 
+    # =====================================================
+    # 1. PROJECT.XML
+    # =====================================================
+    #
+    # Es la validación importante para exports como
+    # NEO PE DONA Transaction Submission.
+    #
+    # Ese IAR contiene <scheduleReceive>, pero NO contiene
+    # una carpeta cuyo nombre incluya "schedule".
+    #
+    # =====================================================
+
     for root, dirs, files in os.walk(
         extracted_iar
     ):
 
-        if "schedule" in root.lower():
+        for file in files:
 
-            for file in files:
+            if file.lower() != "project.xml":
 
-                if file.lower().endswith(
-                    ".xml"
-                ):
+                continue
 
-                    return True
+
+            xml_path = os.path.join(
+                root,
+                file
+            )
+
+
+            try:
+
+                tree = ET.parse(
+                    xml_path
+                )
+
+                xml_root = (
+                    tree.getroot()
+                )
+
+
+                for elem in xml_root.iter():
+
+                    tag = (
+                        clean_tag(
+                            elem.tag
+                        )
+                        .strip()
+                        .lower()
+                    )
+
+
+                    if tag in {
+                        "schedulereceive",
+                        "scheduledreceive",
+                        "schedule"
+                    }:
+
+                        return True
+
+
+            except Exception:
+
+                continue
+
+
+    # =====================================================
+    # 2. LEGACY FALLBACK
+    # =====================================================
+    #
+    # Conservamos tu validación anterior porque puede ser
+    # útil para otros formatos de export.
+    #
+    # =====================================================
+
+    for root, dirs, files in os.walk(
+        extracted_iar
+    ):
+
+        if "schedule" not in root.lower():
+
+            continue
+
+
+        for file in files:
+
+            if file.lower().endswith(
+                ".xml"
+            ):
+
+                return True
+
 
     return False
 

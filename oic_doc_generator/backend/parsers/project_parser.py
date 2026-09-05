@@ -480,6 +480,9 @@ def map_connection_type(
     if "erp" in lower:
 
         return "ERP"
+    if "event" in lower:
+
+        return "EVENT"
 
     if "ociobjectstorage" in lower:
 
@@ -664,6 +667,7 @@ def read_project_xml(
         adapter_name = ""
         adapter_code = ""
         adapter_type = ""
+        application_role = ""
 
         # =================================================
         # ADAPTER
@@ -692,6 +696,34 @@ def read_project_xml(
                     adapter_type = (
                         child.text.strip()
                     )
+
+            # =============================================
+            # ROLE
+            # =============================================
+
+            elif child_tag.lower() == "role":
+
+                if child.text:
+
+                    role_value = (
+                        child.text
+                        .strip()
+                        .lower()
+                    )
+
+
+                    if (
+                        not application_role
+                        and
+                        role_value in {
+                            "source",
+                            "target"
+                        }
+                    ):
+
+                        application_role = (
+                            role_value
+                        )
 
             # =============================================
             # CODE
@@ -781,6 +813,8 @@ def read_project_xml(
 
         applications.append({
 
+            "Role":
+                application_role,
             "Codigo":
                 application_id,
 
@@ -829,6 +863,76 @@ def read_project_xml(
 
 
     return applications
+
+
+# =========================================================
+# GET INTEGRATION TRIGGER TYPE
+# =========================================================
+
+def get_integration_trigger_type(
+    extracted_iar
+):
+
+    applications = (
+        read_project_xml(
+            extracted_iar
+        )
+    )
+
+
+    for application in applications:
+
+        role = (
+            application.get(
+                "Role",
+                ""
+            )
+            or
+            ""
+        ).strip().lower()
+
+
+        if role != "source":
+
+            continue
+
+
+        connection_type = (
+            application.get(
+                "Tipo",
+                ""
+            )
+            or
+            ""
+        ).strip().upper()
+
+
+        if connection_type == "REST":
+
+            return "REST"
+
+
+        if connection_type == "SOAP":
+
+            return "SOAP"
+
+
+        if connection_type == "EVENT":
+
+            return "EVENT"
+
+
+        # No inventamos un tipo.
+        # Es preferible UNKNOWN a registrar algo como REST
+        # cuando realmente no sabemos qué trigger tiene.
+        return (
+            connection_type
+            or
+            "UNKNOWN"
+        )
+
+
+    return "UNKNOWN"
 
 
 # =========================================================
