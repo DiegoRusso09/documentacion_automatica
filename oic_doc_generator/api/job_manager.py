@@ -129,6 +129,15 @@ def create_job():
             0,
 
         "completed_points":
+            0,
+
+        "progress_initialized":
+            False,
+
+        "activity_current":
+            0,
+
+        "activity_total":
             0
     }
 
@@ -222,8 +231,8 @@ def get_job(
 def update_activity(
     job_id,
     activity,
-    current=0,
-    total=0
+    current=None,
+    total=None
 ):
 
     job = get_job(
@@ -236,19 +245,26 @@ def update_activity(
         return
 
 
-    job["activity"] = (
-        activity
-    )
+    job[
+        "activity"
+    ] = activity
 
 
-    job["current"] = (
-        current
-    )
+    # El current/total GLOBAL pertenece al progreso.
+    # Estos son únicamente contadores locales opcionales.
+
+    if current is not None:
+
+        job[
+            "activity_current"
+        ] = current
 
 
-    job["total"] = (
-        total
-    )
+    if total is not None:
+
+        job[
+            "activity_total"
+        ] = total
 
 
     _save_job(
@@ -358,24 +374,63 @@ def initialize_progress(
         return
 
 
-    job["total_points"] = (
-        total_points
+    # =====================================================
+    # INITIALIZE ONLY ONCE
+    # =====================================================
+
+    if job.get(
+        "progress_initialized",
+        False
+    ):
+
+        return
+
+
+    try:
+
+        total_points = int(
+            total_points
+        )
+
+    except Exception:
+
+        total_points = 1
+
+
+    total_points = max(
+        total_points,
+        1
     )
 
 
-    job["completed_points"] = (
-        0
-    )
+    job[
+        "total_points"
+    ] = total_points
 
 
-    job["current"] = (
-        0
-    )
+    job[
+        "completed_points"
+    ] = 0
 
 
-    job["total"] = (
-        total_points
-    )
+    job[
+        "current"
+    ] = 0
+
+
+    job[
+        "total"
+    ] = total_points
+
+
+    job[
+        "progress"
+    ] = 0
+
+
+    job[
+        "progress_initialized"
+    ] = True
 
 
     _save_job(
@@ -440,11 +495,13 @@ def advance_progress(
     )
 
 
-    if progress > 100:
+    # =====================================================
+    # 100% SOLO SIGNIFICA TERMINADO
+    # =====================================================
 
-        progress = (
-            100
-        )
+    if progress >= 100:
+
+        progress = 99
 
 
     job["progress"] = (

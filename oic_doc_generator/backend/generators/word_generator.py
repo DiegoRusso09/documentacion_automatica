@@ -8,7 +8,6 @@ from datetime import datetime
 import os
 
 from oic_doc_generator.api.job_manager import (
-    initialize_progress,
     advance_progress,
     update_activity
 )
@@ -859,6 +858,333 @@ def add_process_table(
             row["Descripción de la Acción"]
         )
 
+# =========================================================
+# CALCULATE DS140 GLOBAL PROGRESS PLAN
+# =========================================================
+
+def calculate_ds140_progress_plan(
+
+    package_path,
+
+    visual_builder_apps,
+
+    bip_files=None,
+
+    database_metadata=None
+
+):
+
+    # =====================================================
+    # RESULT
+    # =====================================================
+
+    plan = {
+
+        "oic_endpoints":
+            0,
+
+        "oic_services":
+            0,
+
+        "vb_pages":
+            0,
+
+        "bip_objects":
+            0,
+
+        "database_objects":
+            0,
+
+        # Word final + ZIP final
+        "fixed":
+            2
+    }
+
+
+    # =====================================================
+    # OIC
+    # =====================================================
+
+    if package_path:
+
+        try:
+
+            iar_files = (
+                find_all_iar_files(
+                    package_path
+                )
+            )
+
+
+            for iar in iar_files:
+
+                extracted_iar = (
+                    extract_iar(
+                        iar
+                    )
+                )
+
+
+                applications = (
+                    read_project_xml(
+                        extracted_iar
+                    )
+                )
+
+
+                app_map = (
+                    build_application_map(
+                        applications
+                    )
+                )
+
+
+                root = (
+                    get_project_root(
+                        extracted_iar
+                    )
+                )
+
+
+                endpoint_flows = (
+                    get_endpoint_flows(
+                        root,
+                        app_map
+                    )
+                )
+
+
+                plan[
+                    "oic_endpoints"
+                ] += len(
+                    endpoint_flows
+                )
+
+
+                # Las programadas no pasan por
+                # add_service_design_section().
+                if not is_scheduled_integration(
+                    extracted_iar
+                ):
+
+                    plan[
+                        "oic_services"
+                    ] += 1
+
+
+        except Exception as error:
+
+            print(
+                "[PROGRESS PLAN] "
+                "Error analizando OIC:",
+                repr(
+                    error
+                )
+            )
+
+
+    # =====================================================
+    # VISUAL BUILDER
+    # =====================================================
+
+    if visual_builder_apps:
+
+        vb_apps = (
+            visual_builder_apps
+            if isinstance(
+                visual_builder_apps,
+                list
+            )
+            else [
+                visual_builder_apps
+            ]
+        )
+
+
+        for vb_zip in vb_apps:
+
+            try:
+
+                if hasattr(
+                    vb_zip,
+                    "seek"
+                ):
+
+                    vb_zip.seek(
+                        0
+                    )
+
+
+                extraction_metadata = (
+                    build_extraction_metadata(
+                        vb_zip
+                    )
+                )
+
+
+                vb_metadata = (
+                    build_page_metadata(
+                        extraction_metadata
+                    )
+                )
+
+
+                pages = (
+                    vb_metadata.get(
+                        "pages",
+                        []
+                    )
+                )
+
+
+                plan[
+                    "vb_pages"
+                ] += len(
+                    pages
+                )
+
+
+                if hasattr(
+                    vb_zip,
+                    "seek"
+                ):
+
+                    vb_zip.seek(
+                        0
+                    )
+
+
+                extraction_root = (
+                    extraction_metadata.get(
+                        "root_path"
+                    )
+                )
+
+
+                if extraction_root:
+
+                    import shutil
+
+                    shutil.rmtree(
+                        extraction_root,
+                        ignore_errors=True
+                    )
+
+
+            except Exception as error:
+
+                print(
+                    "[PROGRESS PLAN] "
+                    "Error analizando Visual Builder:",
+                    repr(
+                        error
+                    )
+                )
+
+
+    # =====================================================
+    # BI PUBLISHER
+    # =====================================================
+
+    plan[
+        "bip_objects"
+    ] = len(
+        bip_files
+        or
+        []
+    )
+
+
+    # =====================================================
+    # DATABASE
+    # =====================================================
+
+    if database_metadata:
+
+        for key in [
+
+            "tables",
+
+            "views",
+
+            "packages",
+
+            "sequences",
+
+            "indexes",
+
+            "triggers"
+
+        ]:
+
+            plan[
+                "database_objects"
+            ] += len(
+                database_metadata.get(
+                    key,
+                    []
+                )
+            )
+
+
+    # =====================================================
+    # TOTAL
+    # =====================================================
+
+    total_points = (
+
+        plan[
+            "oic_endpoints"
+        ]
+
+        +
+
+        plan[
+            "oic_services"
+        ]
+
+        +
+
+        plan[
+            "vb_pages"
+        ]
+
+        +
+
+        plan[
+            "bip_objects"
+        ]
+
+        +
+
+        plan[
+            "database_objects"
+        ]
+
+        +
+
+        plan[
+            "fixed"
+        ]
+
+    )
+
+
+    plan[
+        "total_points"
+    ] = max(
+        total_points,
+        1
+    )
+
+
+    print(
+        "[DS140 PROGRESS PLAN]",
+        plan
+    )
+
+
+    return plan
 
 # =========================================================
 # GENERATE WORD DOCUMENT
@@ -1048,218 +1374,6 @@ def generate_word_document(
     # 2 VISIÓN GENERAL
     # =====================================================
     
-    # =====================================================
-    # CALCULAR TOTAL DE PUNTOS
-    # =====================================================
-
-    total_points = 0
-
-    # -----------------------------------------------------
-    # OIC 2.5
-    # 4 puntos por endpoint
-    # -----------------------------------------------------
-
-    if package_path:
-
-        try:
-
-            iar_files = find_all_iar_files(
-                package_path
-            )
-
-            for iar in iar_files:
-
-                extracted_iar = extract_iar(
-                    iar
-                )
-
-                applications = read_project_xml(
-                    extracted_iar
-                )
-
-                app_map = build_application_map(
-                    applications
-                )
-
-                root = get_project_root(
-                    extracted_iar
-                )
-
-                endpoint_flows = get_endpoint_flows(
-                    root,
-                    app_map
-                )
-
-                total_points += (
-                    len(endpoint_flows)
-                    * 4
-                )
-
-        except:
-
-            pass
-
-    # -----------------------------------------------------
-    # VB
-    # 8 puntos por pantalla
-    # -----------------------------------------------------
-
-    if visual_builder_apps:
-
-        try:
-
-            vb_apps = visual_builder_apps
-
-            if not isinstance(
-                vb_apps,
-                list
-            ):
-                vb_apps = [vb_apps]
-
-            for vb_zip in vb_apps:
-
-                extraction_metadata = (
-                    build_extraction_metadata(
-                        vb_zip
-                    )
-                )
-
-                vb_metadata = (
-                    build_page_metadata(
-                        extraction_metadata
-                    )
-                )
-
-                pages = vb_metadata.get(
-                    "pages",
-                    []
-                )
-
-                total_points += (
-                    len(pages)
-                    * 8
-                )
-
-        except:
-
-            pass
-
-    # -----------------------------------------------------
-    # OIC SERVICIOS
-    # 2 puntos por endpoint
-    # -----------------------------------------------------
-
-    if package_path:
-
-        try:
-
-            iar_files = find_all_iar_files(
-                package_path
-            )
-
-            for iar in iar_files:
-
-                extracted_iar = extract_iar(
-                    iar
-                )
-
-                applications = read_project_xml(
-                    extracted_iar
-                )
-
-                app_map = build_application_map(
-                    applications
-                )
-
-                root = get_project_root(
-                    extracted_iar
-                )
-
-                endpoint_flows = get_endpoint_flows(
-                    root,
-                    app_map
-                )
-
-                total_points += (
-                    len(endpoint_flows)
-                    * 2
-                )
-
-        except:
-
-            pass
-
-    # -----------------------------------------------------
-    # BI REPORTES
-    # 3 puntos por reporte
-    # -----------------------------------------------------
-
-    if bip_files:
-
-        total_points += (
-            len(bip_files)
-            * 3
-        )
-
-    # -----------------------------------------------------
-    # BD
-    # 1 punto por objeto
-    # -----------------------------------------------------
-
-    if database_metadata:
-
-        total_points += len(
-            database_metadata.get(
-                "tables",
-                []
-            )
-        )
-
-        total_points += len(
-            database_metadata.get(
-                "views",
-                []
-            )
-        )
-
-        total_points += len(
-            database_metadata.get(
-                "packages",
-                []
-            )
-        )
-
-        total_points += len(
-            database_metadata.get(
-                "sequences",
-                []
-            )
-        )
-
-        total_points += len(
-            database_metadata.get(
-                "indexes",
-                []
-            )
-        )
-
-        total_points += len(
-            database_metadata.get(
-                "triggers",
-                []
-            )
-        )
-
-    if total_points < 1:
-
-        total_points = 1
-
-    if job_id:
-
-        initialize_progress(
-            job_id,
-            total_points
-        )
 
     document.add_page_break()
     create_header(
@@ -2029,6 +2143,32 @@ def generate_word_document(
 
                 document.add_paragraph("")
                 document.add_paragraph("")
+
+
+                # =============================================
+                # ENDPOINT COMPLETADO
+                # =============================================
+
+                if job_id:
+
+                    advance_progress(
+
+                        job_id,
+
+                        component=
+                            "OIC",
+
+                        detail=
+                            "Endpoint documentado",
+
+                        object_name=
+                            endpoint,
+
+                        points=
+                            1
+
+                    )
+
                
     # =====================================================
     # 3 DISEÑO DE PANTALLA
@@ -2199,12 +2339,12 @@ def generate_word_document(
                         # BUILD HTML
                         # =================================
 
-                        advance_progress(
+                        update_activity(
+
                             job_id,
-                            component="Visual Builder",
-                            detail="Construyendo HTML",
-                            object_name=page_name,
-                            points=2
+
+                            f"Construyendo HTML: {page_name}"
+
                         )
 
                         complete_html = (
@@ -2227,12 +2367,12 @@ def generate_word_document(
 
                         try:
 
-                            advance_progress(
+                            update_activity(
+
                                 job_id,
-                                component="Visual Builder",
-                                detail="Generando imagen",
-                                object_name=page_name,
-                                points=3
+
+                                f"Generando imagen: {page_name}"
+
                             )
 
                             image_path = render_html_to_image(
@@ -2263,12 +2403,12 @@ def generate_word_document(
                             )
                         ):
 
-                            advance_progress(
+                            update_activity(
+
                                 job_id,
-                                component="Visual Builder",
-                                detail="Insertando captura",
-                                object_name=page_name,
-                                points=2
+
+                                f"Insertando captura: {page_name}"
+
                             )
 
                             add_framed_image(
@@ -2456,13 +2596,6 @@ def generate_word_document(
                                         )
                                     )
 
-                                advance_progress(
-                                    job_id,
-                                    component="Visual Builder",
-                                    detail="Pantalla completada",
-                                    object_name=page_name,
-                                    points=1
-                                )
 
                         else:
 
@@ -2475,6 +2608,32 @@ def generate_word_document(
                         document.add_paragraph(
                             f"Error renderizando pantalla: {str(e)}"
                         )
+
+
+                    # =========================================
+                    # PAGE COMPLETED
+                    # =========================================
+
+                    if job_id:
+
+                        advance_progress(
+
+                            job_id,
+
+                            component=
+                                "Visual Builder",
+
+                            detail=
+                                "Pantalla procesada",
+
+                            object_name=
+                                page_name,
+
+                            points=
+                                1
+
+                        )
+
 
                     document.add_paragraph("")
                     document.add_page_break()
@@ -2509,19 +2668,6 @@ def generate_word_document(
                     cleanup_error
                 )
 
-
-    if job_id and visual_builder_apps:
-
-        advance_progress(
-
-            job_id,
-
-            component="Visual Builder",
-
-            detail="Procesamiento finalizado",
-
-            object_name="VB"
-        )
 
     # =====================================================
     # 4 DISEÑO DE SERVICIOS
@@ -2575,6 +2721,16 @@ def generate_word_document(
                 ):
 
                     continue
+
+
+                integration_name = (
+                    integration.get(
+                        "name",
+                        "Integración"
+                    )
+                )
+
+
                 try:
 
                     add_service_design_section(
@@ -2585,9 +2741,7 @@ def generate_word_document(
                             "path"
                         ),
 
-                        integration.get(
-                            "name"
-                        ),
+                        integration_name,
 
                         integration.get(
                             "version",
@@ -2598,6 +2752,7 @@ def generate_word_document(
                     document.add_paragraph("")
                     document.add_paragraph("")
 
+
                 except Exception as e:
 
                     document.add_paragraph(
@@ -2606,18 +2761,28 @@ def generate_word_document(
                         f"de servicio: {str(e)}"
                     )
 
-    if job_id and package_path:
 
-        advance_progress(
+                finally:
 
-            job_id,
+                    if job_id:
 
-            component="OIC",
+                        advance_progress(
 
-            detail="Diseño de Interfaces completado",
+                            job_id,
 
-            object_name="Interfaces"
-        )
+                            component=
+                                "OIC",
+
+                            detail=
+                                "Diseño de servicio procesado",
+
+                            object_name=
+                                integration_name,
+
+                            points=
+                                1
+
+                        )
 
     # =====================================================
     # 5 DISEÑO DEL REPORTE
@@ -2668,6 +2833,30 @@ def generate_word_document(
                 f"{str(e)}"
             )
 
+        finally:
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "BI Publisher",
+
+                    detail=
+                        "Artefactos BI Publisher procesados",
+
+                    object_name=
+                        f"{len(bip_files)} archivo(s)",
+
+                    points=
+                        len(
+                            bip_files
+                        )
+
+                )
+
     # =====================================================
     # 6 SENTENCIAS SQL
     # =====================================================
@@ -2700,8 +2889,67 @@ def generate_word_document(
 
     if database_metadata:
 
+        database_progress_points = (
+
+            len(
+                database_metadata.get(
+                    "tables",
+                    []
+                )
+            )
+
+            +
+
+            len(
+                database_metadata.get(
+                    "views",
+                    []
+                )
+            )
+
+            +
+
+            len(
+                database_metadata.get(
+                    "packages",
+                    []
+                )
+            )
+
+            +
+
+            len(
+                database_metadata.get(
+                    "sequences",
+                    []
+                )
+            )
+
+            +
+
+            len(
+                database_metadata.get(
+                    "indexes",
+                    []
+                )
+            )
+
+            +
+
+            len(
+                database_metadata.get(
+                    "triggers",
+                    []
+                )
+            )
+
+        )
+
+
         try:
+
             document.add_page_break()
+
             add_database_design_section(
 
                 document,
@@ -2711,8 +2959,11 @@ def generate_word_document(
                 database_export_info
             )
 
+
         except Exception as e:
+
             document.add_page_break()
+
             create_header(
                 document,
                 "7\tDiseño de Base de Datos"
@@ -2725,6 +2976,37 @@ def generate_word_document(
                 f"{str(e)}"
             )
 
+
+        finally:
+
+            if (
+                job_id
+                and
+                database_progress_points > 0
+            ):
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "Base de Datos",
+
+                    detail=
+                        "Objetos de Base de Datos procesados",
+
+                    object_name=
+                        (
+                            f"{database_progress_points} "
+                            f"objeto(s)"
+                        ),
+
+                    points=
+                        database_progress_points
+
+                )
+
+                
     # =====================================================
     # 8 CONTROL DE ACCESOS
     # =====================================================

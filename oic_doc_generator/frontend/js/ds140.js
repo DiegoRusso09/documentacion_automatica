@@ -15,6 +15,217 @@
 
 
     // =====================================================
+    // PROGRESS ANIMATION
+    // =====================================================
+
+    let displayedProgress = 0;
+
+    let targetProgress = 0;
+
+    let progressAnimationFrame = null;
+
+
+    // =====================================================
+    // RESET PROGRESS STATE
+    // =====================================================
+
+    function resetProgressState() {
+
+        displayedProgress = 0;
+
+        targetProgress = 0;
+
+
+        if (progressAnimationFrame) {
+
+            cancelAnimationFrame(
+                progressAnimationFrame
+            );
+
+            progressAnimationFrame = null;
+        }
+
+
+        const progressBar =
+            document.getElementById(
+                "progress-bar"
+            );
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                "0%";
+        }
+    }
+
+
+    // =====================================================
+    // SET PROGRESS TARGET
+    // =====================================================
+
+    function setProgressTarget(
+        value
+    ) {
+
+        let newTarget =
+            Number(
+                value
+            );
+
+
+        if (
+            !Number.isFinite(
+                newTarget
+            )
+        ) {
+
+            newTarget = 0;
+        }
+
+
+        newTarget = Math.max(
+            0,
+            Math.min(
+                100,
+                newTarget
+            )
+        );
+
+
+        // =================================================
+        // NEVER MOVE BACKWARDS
+        // =================================================
+
+        targetProgress = Math.max(
+            targetProgress,
+            newTarget
+        );
+
+
+        if (!progressAnimationFrame) {
+
+            progressAnimationFrame =
+                requestAnimationFrame(
+                    animateProgress
+                );
+        }
+    }
+
+
+    // =====================================================
+    // ANIMATE PROGRESS
+    // =====================================================
+
+    function animateProgress() {
+
+        const progressBar =
+            document.getElementById(
+                "progress-bar"
+            );
+
+
+        if (!progressBar) {
+
+            progressAnimationFrame =
+                null;
+
+            return;
+        }
+
+
+        const difference =
+
+            targetProgress
+            -
+            displayedProgress;
+
+
+        // =================================================
+        // TARGET REACHED
+        // =================================================
+
+        if (
+            Math.abs(
+                difference
+            )
+            <
+            0.05
+        ) {
+
+            displayedProgress =
+                targetProgress;
+
+
+            progressBar.style.width =
+                `${displayedProgress}%`;
+
+
+            progressAnimationFrame =
+                null;
+
+            return;
+        }
+
+
+        // =================================================
+        // SMOOTH MOVEMENT
+        // =================================================
+        //
+        // Avanza proporcionalmente a la distancia.
+        //
+        // Ejemplo:
+        //
+        // 20 -> 35
+        //
+        // no salta inmediatamente a 35.
+        //
+        // =================================================
+
+        let increment =
+            difference * 0.08;
+
+
+        // Evita que movimientos pequeños sean
+        // excesivamente lentos.
+
+        if (
+            increment > 0
+            &&
+            increment < 0.08
+        ) {
+
+            increment = 0.08;
+        }
+
+
+        displayedProgress +=
+            increment;
+
+
+        if (
+            displayedProgress
+            >
+            targetProgress
+        ) {
+
+            displayedProgress =
+                targetProgress;
+        }
+
+
+        progressBar.style.width =
+            `${displayedProgress}%`;
+
+
+        progressAnimationFrame =
+            requestAnimationFrame(
+                animateProgress
+            );
+    }
+
+
+    // =====================================================
     // FILE STORE
     // =====================================================
 
@@ -770,7 +981,7 @@
 
             const button =
                 document.querySelector(
-                    ".generate-btn"
+                    ".doc-action-ds140"
                 );
 
 
@@ -780,8 +991,9 @@
                     true;
 
 
-                button.innerText =
-                    "Generando...";
+                button.classList.add(
+                    "is-processing"
+                );
             }
 
 
@@ -814,11 +1026,7 @@
             }
 
 
-            if (progressBar) {
-
-                progressBar.style.width =
-                    "0%";
-            }
+            resetProgressState();
 
 
             if (progressText) {
@@ -1105,8 +1313,9 @@
 
             if (progressBar) {
 
-                progressBar.style.width =
-                    `${progress}%`;
+                setProgressTarget(
+                    progress
+                );
             }
 
 
@@ -1126,8 +1335,31 @@
 
             if (detailText) {
 
+                let detail = "";
+
+
+                if (objectName) {
+
+                    detail +=
+                        objectName;
+                }
+
+
+                if (total > 0) {
+
+                    if (detail) {
+
+                        detail += " · ";
+                    }
+
+
+                    detail +=
+                        `${current} de ${total} pasos`;
+                }
+
+
                 detailText.innerText =
-                    `${objectName} (${current}/${total})`;
+                    detail;
             }
 
 
@@ -1149,9 +1381,46 @@
                     null;
 
 
-                window.location.href =
+                setProgressTarget(
+                    100
+                );
 
-                    `/api/ds140/download/${currentJobId}`;
+
+                if (progressText) {
+
+                    progressText.innerText =
+                        "100% - Finalizado";
+                }
+
+
+                if (activityText) {
+
+                    activityText.innerText =
+                        "Documento generado correctamente.";
+                }
+
+
+                if (detailText) {
+
+                    detailText.innerText =
+                        `${total} de ${total} pasos`;
+                }
+
+
+                // =============================================
+                // DOWNLOAD
+                // =============================================
+
+                setTimeout(
+                    () => {
+
+                        window.location.href =
+
+                            `/api/ds140/download/${currentJobId}`;
+
+                    },
+                    650
+                );
 
 
                 resetButton();
@@ -1226,7 +1495,7 @@
 
         const button =
             document.querySelector(
-                ".generate-btn"
+                ".doc-action-ds140"
             );
 
 
@@ -1240,8 +1509,9 @@
             false;
 
 
-        button.innerText =
-            "Generar Documento DS140";
+        button.classList.remove(
+            "is-processing"
+        );
     }
 
     // =====================================================

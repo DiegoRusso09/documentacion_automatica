@@ -30,12 +30,15 @@ from oic_doc_generator.backend.utils.sql_exporter import (
 )
 
 from oic_doc_generator.backend.generators.word_generator import (
-    generate_word_document
+    generate_word_document,
+    calculate_ds140_progress_plan
 )
 
 from oic_doc_generator.api.job_manager import (
     complete_job,
-    advance_progress
+    advance_progress,
+    initialize_progress,
+    update_activity
 )
 
 
@@ -211,19 +214,7 @@ def generate_ds140_service(
                     )
 
 
-        advance_progress(
 
-            job_id,
-
-            component=
-                "OIC",
-
-            detail=
-                "Integraciones procesadas",
-
-            object_name=
-                f"{len(oic_files)} archivo(s)"
-        )
 
 
     # =====================================================
@@ -322,20 +313,6 @@ def generate_ds140_service(
         )
 
 
-        advance_progress(
-
-            job_id,
-
-            component=
-                "Base de Datos",
-
-            detail=
-                "Objetos SQL procesados",
-
-            object_name=
-                f"{len(sql_files)} archivo(s)"
-        )
-
 
     # =====================================================
     # BI PUBLISHER
@@ -355,20 +332,59 @@ def generate_ds140_service(
         )
 
 
-        advance_progress(
 
-            job_id,
 
-            component=
-                "BI Publisher",
+    # =====================================================
+    # GLOBAL PROGRESS PLAN
+    # =====================================================
 
-            detail=
-                "Reportes procesados",
+    update_activity(
+        job_id,
+        "Calculando pasos totales del documento..."
+    )
 
-            object_name=
-                f"{len(bip_files)} archivo(s)"
+
+    progress_plan = (
+        calculate_ds140_progress_plan(
+
+            package_path=
+                package_path,
+
+            visual_builder_apps=
+                vb_files,
+
+            bip_files=
+                bip_files,
+
+            database_metadata=
+                database_metadata
+
+        )
+    )
+
+
+    initialize_progress(
+
+        job_id,
+
+        progress_plan[
+            "total_points"
+        ]
+
+    )
+
+
+    update_activity(
+
+        job_id,
+
+        (
+            f"Plan preparado: "
+            f"{progress_plan['total_points']} "
+            f"pasos detectados."
         )
 
+    )
 
     # =====================================================
     # SELECTED COMPONENTS

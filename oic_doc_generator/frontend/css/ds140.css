@@ -1188,3 +1188,36 @@
     line-height: 1.6;
     font-size: 15px;
 }
+
+/* =========================================================
+   DS140 PROCESSING STATE
+   ========================================================= */
+
+.doc-action-ds140.is-processing {
+
+    cursor:
+        wait;
+
+    opacity:
+        .72;
+
+    transform:
+        none;
+
+    pointer-events:
+        none;
+}
+
+
+/* =========================================================
+   SMOOTH PROGRESS BAR
+   ========================================================= */
+
+#progress-bar {
+
+    will-change:
+        width;
+
+    transition:
+        width .12s linear;
+}
