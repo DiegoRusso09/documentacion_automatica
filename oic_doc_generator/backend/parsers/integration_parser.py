@@ -99,27 +99,38 @@ def get_integration_metadata(
     )
 
 
-    props = read_properties_file(
-        properties_file
+    props = (
+        read_properties_file(
+            properties_file
+        )
+    )
+
+
+    # =====================================================
+    # SMART TAGS
+    # =====================================================
+
+    smart_tags = (
+        props.get(
+            "smartTags",
+            ""
+        )
+        or
+        ""
+    )
+
+
+    # En el .properties Oracle escapa ":" como "\:"
+    smart_tags_normalized = (
+        smart_tags.replace(
+            "\\:",
+            ":"
+        )
     )
 
 
     # =====================================================
     # INTEGRATION STYLE
-    # =====================================================
-    #
-    # Algunos exports antiguos/nuevos no contienen:
-    #
-    # integrationStyle=...
-    #
-    # sino que Oracle guarda el estilo dentro de:
-    #
-    # smartTags=...,style\:scheduled orchestration
-    #
-    # o:
-    #
-    # smartTags=...,style\:app driven orchestration
-    #
     # =====================================================
 
     integration_style = (
@@ -132,40 +143,22 @@ def get_integration_metadata(
     ).strip()
 
 
-    smart_tags = (
-        props.get(
-            "smartTags",
-            ""
-        )
-        or
-        ""
-    ).strip()
+    # Algunos exports no tienen integrationStyle,
+    # pero sí contienen el style dentro de smartTags.
 
+    if not integration_style:
 
-    if (
-        not integration_style
-        and
-        smart_tags
-    ):
-
-        normalized_tags = (
-            smart_tags
-            .replace(
-                "\\:",
-                ":"
-            )
-            .lower()
+        smart_tags_lower = (
+            smart_tags_normalized.lower()
         )
 
 
         if (
             "style:scheduled orchestration"
-            in
-            normalized_tags
+            in smart_tags_lower
             or
             "style:scheduled"
-            in
-            normalized_tags
+            in smart_tags_lower
         ):
 
             integration_style = (
@@ -175,22 +168,15 @@ def get_integration_metadata(
 
         elif (
             "style:app driven orchestration"
-            in
-            normalized_tags
+            in smart_tags_lower
             or
             "style:app driven"
-            in
-            normalized_tags
+            in smart_tags_lower
         ):
 
             integration_style = (
                 "app driven orchestration"
             )
-
-
-    if not integration_style:
-
-        integration_style = "UNKNOWN"
 
 
     # =====================================================
@@ -212,7 +198,9 @@ def get_integration_metadata(
             ),
 
         "integration_style":
-            integration_style,
+            integration_style
+            or
+            "UNKNOWN",
 
         "project_code":
             props.get(
@@ -226,20 +214,24 @@ def get_integration_metadata(
                 ""
             ),
 
-        # Útiles para diagnóstico y futuras reglas.
         "smart_tags":
-            smart_tags,
+            smart_tags_normalized,
 
         "mep_type":
             props.get(
                 "mep_type",
+                ""
+            ),
+
+        "package_name":
+            props.get(
+                "package_name",
                 ""
             )
     }
 
 
     return result
-
 
 # =========================================================
 # INTEGRATION IS ACTIVE

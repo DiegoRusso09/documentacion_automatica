@@ -22,6 +22,10 @@ from oic_doc_generator.backend.parsers.integration_parser import (
     integration_is_scheduled
 )
 
+from oic_doc_generator.backend.parsers.project_parser import (
+    read_project_xml
+)
+
 from oic_doc_generator.backend.parsers.connections_parser import (
     get_installation_connections
 )
@@ -331,6 +335,264 @@ def get_api_library_names(
     )
 
 
+
+# =========================================================
+# FORMAT OIC VERSION
+# =========================================================
+
+def format_oic_version(
+    version
+):
+
+    value = str(
+        version
+        or
+        ""
+    ).strip()
+
+
+    if not value:
+
+        return ""
+
+
+    parts = (
+        value.split(
+            "."
+        )
+    )
+
+
+    formatted = []
+
+
+    for part in parts:
+
+        part = (
+            part.strip()
+        )
+
+
+        if part.isdigit():
+
+            formatted.append(
+                str(
+                    int(
+                        part
+                    )
+                )
+            )
+
+        else:
+
+            formatted.append(
+                part
+            )
+
+
+    return ".".join(
+        formatted
+    )
+
+
+# =========================================================
+# GET ADAPTERS FROM SMART TAGS
+# =========================================================
+
+def get_smart_tag_adapters(
+    smart_tags
+):
+
+    smart_tags = (
+        smart_tags
+        or
+        ""
+    )
+
+
+    smart_tags = (
+        smart_tags.replace(
+            "\\:",
+            ":"
+        )
+    )
+
+
+    adapters = []
+
+    seen = set()
+
+
+    for raw_tag in (
+        smart_tags.split(
+            ","
+        )
+    ):
+
+        tag = (
+            raw_tag.strip()
+        )
+
+
+        if not tag:
+
+            continue
+
+
+        if not tag.lower().startswith(
+            "app:"
+        ):
+
+            continue
+
+
+        adapter = (
+            tag.split(
+                ":",
+                1
+            )[1]
+            .strip()
+            .lower()
+        )
+
+
+        if not adapter:
+
+            continue
+
+
+        if adapter in seen:
+
+            continue
+
+
+        seen.add(
+            adapter
+        )
+
+
+        adapters.append(
+            adapter
+        )
+
+
+    return adapters
+
+
+# =========================================================
+# GET INTEGRATION DEPENDENCIES
+# =========================================================
+
+def get_integration_dependencies(
+    extracted_iar
+):
+
+    dependencies = []
+
+    seen = set()
+
+
+    applications = (
+        read_project_xml(
+            extracted_iar
+        )
+    )
+
+
+    for application in applications:
+
+        if not application.get(
+            "IsIntegration",
+            False
+        ):
+
+            continue
+
+
+        integration_code = (
+            application.get(
+                "IntegrationCode",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        integration_version = (
+            application.get(
+                "IntegrationVersion",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        integration_operation = (
+            application.get(
+                "IntegrationOperation",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        integration_service = (
+            application.get(
+                "IntegrationService",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        if not integration_code:
+
+            continue
+
+
+        key = (
+
+            integration_code.upper(),
+
+            integration_version.upper()
+
+        )
+
+
+        if key in seen:
+
+            continue
+
+
+        seen.add(
+            key
+        )
+
+
+        dependencies.append({
+
+            "code":
+                integration_code,
+
+            "version":
+                integration_version,
+
+            "operation":
+                integration_operation,
+
+            "service":
+                integration_service
+
+        })
+
+
+    return dependencies
+
+
 # =========================================================
 # BUILD INTEGRATION INFO
 # =========================================================
@@ -346,21 +608,65 @@ def build_integration_info(
     )
 
 
+    scheduled = (
+        integration_is_scheduled(
+            metadata
+        )
+    )
+
+
     integration_type = (
 
         "Scheduled"
 
-        if integration_is_scheduled(
-            metadata
-        )
+        if scheduled
 
         else
 
         "App Driven"
+
+    )
+
+
+    smart_tags = (
+        metadata.get(
+            "smart_tags",
+            ""
+        )
+        or
+        ""
+    )
+
+
+    adapters = (
+        get_smart_tag_adapters(
+            smart_tags
+        )
+    )
+
+
+    dependencies = (
+        get_integration_dependencies(
+            extracted_iar
+        )
+    )
+
+
+    version = (
+        metadata.get(
+            "project_version",
+            ""
+        )
+        or
+        ""
     )
 
 
     return {
+
+        # =================================================
+        # IDENTITY
+        # =================================================
 
         "name":
             (
@@ -382,10 +688,17 @@ def build_integration_info(
             ),
 
         "version":
-            metadata.get(
-                "project_version",
-                ""
+            version,
+
+        "version_display":
+            format_oic_version(
+                version
             ),
+
+
+        # =================================================
+        # SOURCE METADATA
+        # =================================================
 
         "state":
             metadata.get(
@@ -393,9 +706,562 @@ def build_integration_info(
                 ""
             ),
 
+        "source_state":
+            metadata.get(
+                "project_persisted_state",
+                ""
+            ),
+
+        "smart_tags":
+            smart_tags,
+
+        "mep_type":
+            metadata.get(
+                "mep_type",
+                ""
+            ),
+
+        "package_name":
+            metadata.get(
+                "package_name",
+                ""
+            ),
+
+
+        # =================================================
+        # INSTALLATION REPRESENTATION
+        # =================================================
+
         "type":
-            integration_type
+            integration_type,
+
+        "style_display":
+            (
+                "Schedule"
+                if scheduled
+                else
+                "Application"
+            ),
+
+        "trigger_icon":
+            (
+                "schedule"
+                if scheduled
+                else
+                "rest"
+            ),
+
+        "adapter_tags":
+            adapters,
+
+
+        # El IM090 representa el estado esperado
+        # al comenzar la instalación en destino.
+        "installation_status":
+            "Configured",
+
+
+        # =================================================
+        # DEPENDENCIES
+        # =================================================
+
+        "dependencies":
+            dependencies
     }
+
+
+
+# =========================================================
+# BUILD ACTIVATION ORDER
+# =========================================================
+
+def build_activation_order(
+    integrations
+):
+
+    integrations = (
+        integrations
+        or
+        []
+    )
+
+
+    # =====================================================
+    # UNIQUE INTEGRATIONS
+    # =====================================================
+
+    unique_integrations = []
+
+    seen = set()
+
+
+    for integration in integrations:
+
+        code = (
+            integration.get(
+                "code",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        version = (
+            integration.get(
+                "version",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        if not code:
+
+            continue
+
+
+        key = (
+
+            code.upper(),
+
+            version.upper()
+
+        )
+
+
+        if key in seen:
+
+            continue
+
+
+        seen.add(
+            key
+        )
+
+
+        unique_integrations.append(
+            integration
+        )
+
+
+    # =====================================================
+    # NODE INDEXES
+    # =====================================================
+
+    nodes = {}
+
+    nodes_by_code = {}
+
+    original_order = {}
+
+
+    for index, integration in enumerate(
+        unique_integrations
+    ):
+
+        code = (
+            integration.get(
+                "code",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        version = (
+            integration.get(
+                "version",
+                ""
+            )
+            or
+            ""
+        ).strip()
+
+
+        key = (
+
+            code.upper(),
+
+            version.upper()
+
+        )
+
+
+        nodes[
+            key
+        ] = integration
+
+
+        nodes_by_code.setdefault(
+            code.upper(),
+            []
+        ).append(
+            key
+        )
+
+
+        original_order[
+            key
+        ] = index
+
+
+    # =====================================================
+    # GRAPH
+    #
+    # Si A llama B:
+    #
+    # B -> A
+    #
+    # porque B debe activarse primero.
+    # =====================================================
+
+    indegree = {
+
+        key:
+            0
+
+        for key in nodes
+
+    }
+
+
+    dependents = {
+
+        key:
+            []
+
+        for key in nodes
+
+    }
+
+
+    for node_key, integration in (
+        nodes.items()
+    ):
+
+        resolved_dependencies = []
+
+
+        for dependency in (
+            integration.get(
+                "dependencies",
+                []
+            )
+        ):
+
+            dependency_code = (
+                dependency.get(
+                    "code",
+                    ""
+                )
+                or
+                ""
+            ).strip()
+
+
+            dependency_version = (
+                dependency.get(
+                    "version",
+                    ""
+                )
+                or
+                ""
+            ).strip()
+
+
+            if not dependency_code:
+
+                continue
+
+
+            # =============================================
+            # EXACT CODE + VERSION
+            # =============================================
+
+            dependency_key = (
+
+                dependency_code.upper(),
+
+                dependency_version.upper()
+
+            )
+
+
+            resolved_key = None
+
+
+            if dependency_key in nodes:
+
+                resolved_key = (
+                    dependency_key
+                )
+
+
+            # =============================================
+            # FALLBACK BY CODE
+            #
+            # Solo cuando en el conjunto existe
+            # una única versión de ese código.
+            # =============================================
+
+            else:
+
+                candidates = (
+                    nodes_by_code.get(
+                        dependency_code.upper(),
+                        []
+                    )
+                )
+
+
+                if len(
+                    candidates
+                ) == 1:
+
+                    resolved_key = (
+                        candidates[
+                            0
+                        ]
+                    )
+
+
+            if not resolved_key:
+
+                continue
+
+
+            if resolved_key == node_key:
+
+                continue
+
+
+            if (
+                resolved_key
+                in
+                resolved_dependencies
+            ):
+
+                continue
+
+
+            resolved_dependencies.append(
+                resolved_key
+            )
+
+
+            # La integración actual depende de resolved_key.
+
+            indegree[
+                node_key
+            ] += 1
+
+
+            dependents[
+                resolved_key
+            ].append(
+                node_key
+            )
+
+
+        integration[
+            "resolved_dependencies"
+        ] = [
+
+            {
+
+                "code":
+                    nodes[
+                        dependency_key
+                    ].get(
+                        "code",
+                        ""
+                    ),
+
+                "name":
+                    nodes[
+                        dependency_key
+                    ].get(
+                        "name",
+                        ""
+                    ),
+
+                "version":
+                    nodes[
+                        dependency_key
+                    ].get(
+                        "version",
+                        ""
+                    )
+
+            }
+
+            for dependency_key
+            in resolved_dependencies
+
+        ]
+
+
+    # =====================================================
+    # FIRST NODES
+    # =====================================================
+
+    queue = [
+
+        key
+
+        for key in nodes
+
+        if indegree[
+            key
+        ] == 0
+
+    ]
+
+
+    queue.sort(
+        key=lambda key:
+            original_order[
+                key
+            ]
+    )
+
+
+    ordered_keys = []
+
+
+    # =====================================================
+    # TOPOLOGICAL SORT
+    # =====================================================
+
+    while queue:
+
+        current = (
+            queue.pop(
+                0
+            )
+        )
+
+
+        ordered_keys.append(
+            current
+        )
+
+
+        for dependent in (
+            dependents[
+                current
+            ]
+        ):
+
+            indegree[
+                dependent
+            ] -= 1
+
+
+            if (
+                indegree[
+                    dependent
+                ]
+                ==
+                0
+            ):
+
+                queue.append(
+                    dependent
+                )
+
+
+                queue.sort(
+                    key=lambda key:
+                        original_order[
+                            key
+                        ]
+                )
+
+
+    # =====================================================
+    # CYCLE PROTECTION
+    # =====================================================
+
+    warnings = []
+
+
+    if len(
+        ordered_keys
+    ) < len(
+        nodes
+    ):
+
+        remaining = [
+
+            key
+
+            for key in nodes
+
+            if key not in ordered_keys
+
+        ]
+
+
+        remaining.sort(
+            key=lambda key:
+                original_order[
+                    key
+                ]
+        )
+
+
+        warnings.append(
+            (
+                "Se detectó una dependencia circular "
+                "entre integraciones OIC. "
+                "Las integraciones involucradas se "
+                "mantuvieron en el orden original."
+            )
+        )
+
+
+        ordered_keys.extend(
+            remaining
+        )
+
+
+    # =====================================================
+    # RESULT
+    # =====================================================
+
+    ordered_integrations = []
+
+
+    for activation_order, key in enumerate(
+        ordered_keys,
+        start=1
+    ):
+
+        integration = (
+            nodes[
+                key
+            ]
+        )
+
+
+        integration[
+            "activation_order"
+        ] = activation_order
+
+
+        ordered_integrations.append(
+            integration
+        )
+
+
+    return (
+        ordered_integrations,
+        warnings
+    )
 
 
 # =========================================================
@@ -838,6 +1704,9 @@ def build_oic_installation_plan(
         "items":
             [],
 
+        "activation_plan":
+            [],
+
         "warnings":
             []
     }
@@ -931,6 +1800,137 @@ def build_oic_installation_plan(
                     f"{str(error)}"
                 )
             )
+
+
+    # =====================================================
+    # GLOBAL ACTIVATION PLAN
+    # =====================================================
+
+    all_integrations = []
+
+
+    for item in result[
+        "items"
+    ]:
+
+        artifact_type = (
+            item.get(
+                "artifact_type",
+                ""
+            )
+        )
+
+
+        # =================================================
+        # PAR
+        # =================================================
+
+        if artifact_type == "par":
+
+            for integration in (
+                item.get(
+                    "integrations",
+                    []
+                )
+            ):
+
+                integration[
+                    "source_artifact_type"
+                ] = "par"
+
+
+                integration[
+                    "source_file"
+                ] = item.get(
+                    "file_name",
+                    ""
+                )
+
+
+                all_integrations.append(
+                    integration
+                )
+
+
+        # =================================================
+        # IAR
+        # =================================================
+
+        elif artifact_type == "iar":
+
+            integration = (
+                item.get(
+                    "integration",
+                    {}
+                )
+            )
+
+
+            if integration:
+
+                integration[
+                    "source_artifact_type"
+                ] = "iar"
+
+
+                integration[
+                    "source_file"
+                ] = item.get(
+                    "file_name",
+                    ""
+                )
+
+
+                all_integrations.append(
+                    integration
+                )
+
+
+    # =====================================================
+    # SORT BY DEPENDENCIES
+    # =====================================================
+
+    (
+        activation_plan,
+        activation_warnings
+    ) = build_activation_order(
+        all_integrations
+    )
+
+
+    result[
+        "activation_plan"
+    ] = activation_plan
+
+
+    result[
+        "warnings"
+    ].extend(
+        activation_warnings
+    )
+
+
+    # =====================================================
+    # LOG
+    # =====================================================
+
+    print(
+        "[IM090][OIC] ACTIVATION ORDER"
+    )
+
+
+    for integration in activation_plan:
+
+        print(
+            (
+                f"  "
+                f"{integration.get('activation_order')}. "
+                f"{integration.get('name')} "
+                f"({integration.get('version_display')}) "
+                f"depends_on="
+                f"{integration.get('resolved_dependencies', [])}"
+            )
+        )
 
 
     return result

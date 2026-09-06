@@ -49,6 +49,13 @@ from oic_doc_generator.backend.renderers.bip_installation_renderer import (
     render_bip_validation_image
 )
 
+from oic_doc_generator.backend.renderers.oic_installation_renderer import (
+    render_oic_integration_row_image,
+    render_oic_activate_icon_image,
+    render_oic_activation_drawer_image,
+    render_oic_package_active_image
+)
+
 # =========================================================
 # TEMPLATE PATH
 # =========================================================
@@ -3306,6 +3313,620 @@ def add_oic_name_list(
         )
 
 
+
+# =========================================================
+# REMOVE TEMP IMAGE
+# =========================================================
+
+def remove_temp_image(
+    image_path
+):
+
+    if not image_path:
+
+        return
+
+
+    try:
+
+        if os.path.exists(
+            image_path
+        ):
+
+            os.remove(
+                image_path
+            )
+
+    except Exception:
+
+        pass
+
+
+# =========================================================
+# OIC ACTIVATION SECTION
+# =========================================================
+
+def add_oic_activation_section(
+    document,
+    oic_installation_plan,
+    subsection
+):
+
+    activation_plan = (
+        oic_installation_plan.get(
+            "activation_plan",
+            []
+        )
+        or
+        []
+    )
+
+
+    if not activation_plan:
+
+        return subsection
+
+
+    # =====================================================
+    # HEADER
+    # =====================================================
+
+    create_header(
+
+        document,
+
+        (
+            f"3.3.{subsection}\t"
+            "Activación de integraciones"
+        ),
+
+        size=11
+    )
+
+
+    subsection += 1
+
+
+    document.add_paragraph(
+        (
+            "Una vez configuradas las conexiones, active las "
+            "integraciones de Oracle Integration Cloud. "
+            "El orden indicado a continuación considera las "
+            "dependencias detectadas entre las integraciones "
+            "incluidas en los artefactos de instalación."
+        )
+    )
+
+
+    add_information_box(
+
+        document,
+
+        "Importante",
+
+        (
+            "Cuando una integración invoque a otra integración "
+            "incluida en la misma instalación, deberá activarse "
+            "primero la integración invocada y posteriormente "
+            "la integración que realiza la llamada."
+        ),
+
+        fill="FFF2CC"
+    )
+
+
+    document.add_paragraph("")
+
+
+    # =====================================================
+    # ACTIVATION ORDER
+    # =====================================================
+
+    p = document.add_paragraph()
+
+
+    run = p.add_run(
+        "Orden de activación"
+    )
+
+
+    run.bold = True
+
+
+    for integration in activation_plan:
+
+        order = (
+            integration.get(
+                "activation_order",
+                ""
+            )
+        )
+
+
+        name = (
+            integration.get(
+                "name",
+                ""
+            )
+        )
+
+
+        version = (
+            integration.get(
+                "version_display",
+                ""
+            )
+            or
+            integration.get(
+                "version",
+                ""
+            )
+        )
+
+
+        dependencies = (
+            integration.get(
+                "resolved_dependencies",
+                []
+            )
+            or
+            []
+        )
+
+
+        text = (
+            f"{order}. "
+            f"{name} "
+            f"({version})"
+        )
+
+
+        if dependencies:
+
+            dependency_names = ", ".join(
+
+                dependency.get(
+                    "name",
+                    ""
+                )
+
+                for dependency
+                in dependencies
+
+                if dependency.get(
+                    "name",
+                    ""
+                )
+
+            )
+
+
+            if dependency_names:
+
+                text += (
+                    " - Requiere que previamente "
+                    "se encuentre activa: "
+                    f"{dependency_names}"
+                )
+
+
+        add_im090_bullet(
+            document,
+            text,
+            left_indent=0.75
+        )
+
+
+    document.add_paragraph("")
+
+
+    # =====================================================
+    # EACH INTEGRATION
+    # =====================================================
+
+    for index, integration in enumerate(
+        activation_plan
+    ):
+
+        if index > 0:
+
+            document.add_page_break()
+
+
+        order = (
+            integration.get(
+                "activation_order",
+                index + 1
+            )
+        )
+
+
+        name = (
+            integration.get(
+                "name",
+                ""
+            )
+        )
+
+
+        version = (
+            integration.get(
+                "version_display",
+                ""
+            )
+            or
+            integration.get(
+                "version",
+                ""
+            )
+        )
+
+
+        # =================================================
+        # TITLE
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        p.paragraph_format.space_before = Pt(
+            5
+        )
+
+
+        run = p.add_run(
+            (
+                f"{order}. Activar integración "
+                f"{name} ({version})"
+            )
+        )
+
+
+        run.bold = True
+
+
+        # =================================================
+        # DEPENDENCY TEXT
+        # =================================================
+
+        dependencies = (
+            integration.get(
+                "resolved_dependencies",
+                []
+            )
+            or
+            []
+        )
+
+
+        if dependencies:
+
+            dependency_names = ", ".join(
+
+                dependency.get(
+                    "name",
+                    ""
+                )
+
+                for dependency
+                in dependencies
+
+                if dependency.get(
+                    "name",
+                    ""
+                )
+
+            )
+
+
+            if dependency_names:
+
+                document.add_paragraph(
+                    (
+                        "Antes de continuar, verifique que "
+                        "la siguiente integración dependiente "
+                        "ya se encuentre activa: "
+                        f"{dependency_names}."
+                    )
+                )
+
+
+        # =================================================
+        # STEP 1
+        # =================================================
+
+        configured_image = None
+        activate_icon = None
+        drawer_image = None
+        active_image = None
+
+
+        try:
+
+            configured_image = (
+                render_oic_integration_row_image(
+
+                    integration,
+
+                    status=
+                        "Configured",
+
+                    highlight_activate=
+                        True
+
+                )
+            )
+
+
+            activate_icon = (
+                render_oic_activate_icon_image()
+            )
+
+
+            # =============================================
+            # TEXT + SYMBOL + TEXT
+            # =============================================
+
+            paragraph = (
+                document.add_paragraph()
+            )
+
+
+            paragraph.paragraph_format.space_after = Pt(
+                4
+            )
+
+
+            paragraph.add_run(
+                (
+                    "Ubique la integración en "
+                    "Design > Integrations, acerque el cursor "
+                    "sobre el registro y seleccione el icono "
+                )
+            )
+
+
+            if (
+                activate_icon
+                and
+                os.path.exists(
+                    activate_icon
+                )
+            ):
+
+                icon_run = (
+                    paragraph.add_run()
+                )
+
+
+                icon_run.add_picture(
+                    activate_icon,
+                    width=Cm(0.45)
+                )
+
+
+            paragraph.add_run(
+                " Activar."
+            )
+
+
+            # =============================================
+            # CONFIGURED IMAGE
+            # =============================================
+
+            add_centered_image(
+
+                document,
+
+                configured_image,
+
+                Cm(16)
+
+            )
+
+
+            # =================================================
+            # STEP 2
+            # =================================================
+
+            drawer_image = (
+                render_oic_activation_drawer_image(
+                    integration
+                )
+            )
+
+
+            document.add_paragraph(
+                (
+                    "Se mostrará el panel "
+                    "\"Activate integration\". "
+                    "Mantenga seleccionado el nivel de "
+                    "trazabilidad \"Production\", salvo que "
+                    "el procedimiento de instalación indique "
+                    "una configuración diferente. "
+                    "Finalmente, seleccione el botón "
+                    "\"Activate\"."
+                )
+            )
+
+
+            add_centered_image(
+
+                document,
+
+                drawer_image,
+
+                Cm(7.4)
+
+            )
+
+
+            # =================================================
+            # STEP 3
+            # =================================================
+
+            active_image = (
+                render_oic_integration_row_image(
+
+                    integration,
+
+                    status=
+                        "Active",
+
+                    highlight_activate=
+                        False
+
+                )
+            )
+
+
+            document.add_paragraph(
+                (
+                    "Finalizada la activación, verifique que "
+                    "el estado de la integración cambie de "
+                    "\"Configured\" a \"Active\" antes de "
+                    "continuar con la siguiente integración."
+                )
+            )
+
+
+            add_centered_image(
+
+                document,
+
+                active_image,
+
+                Cm(16)
+
+            )
+
+
+        finally:
+
+            remove_temp_image(
+                configured_image
+            )
+
+
+            remove_temp_image(
+                activate_icon
+            )
+
+
+            remove_temp_image(
+                drawer_image
+            )
+
+
+            remove_temp_image(
+                active_image
+            )
+
+
+    # =====================================================
+    # FINAL PACKAGE VALIDATION
+    # =====================================================
+
+    par_groups = {}
+
+
+    for integration in activation_plan:
+
+        if (
+            integration.get(
+                "source_artifact_type"
+            )
+            !=
+            "par"
+        ):
+
+            continue
+
+
+        source_file = (
+            integration.get(
+                "source_file",
+                ""
+            )
+            or
+            "Paquete OIC"
+        )
+
+
+        par_groups.setdefault(
+            source_file,
+            []
+        ).append(
+            integration
+        )
+
+
+    for source_file, integrations in (
+        par_groups.items()
+    ):
+
+        document.add_page_break()
+
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "Validación final del paquete"
+        )
+
+
+        run.bold = True
+
+
+        document.add_paragraph(
+            (
+                "Después de completar la activación de todas "
+                "las integraciones del paquete, verifique que "
+                "cada una figure con estado \"Active\" en la "
+                "etapa de activación del paquete."
+            )
+        )
+
+
+        package_image = None
+
+
+        try:
+
+            package_image = (
+                render_oic_package_active_image(
+
+                    source_file,
+
+                    integrations
+
+                )
+            )
+
+
+            add_centered_image(
+
+                document,
+
+                package_image,
+
+                Cm(16)
+
+            )
+
+
+        finally:
+
+            remove_temp_image(
+                package_image
+            )
+
+
+    return subsection
+
+
+
 # =========================================================
 # OIC INSTALLATION SECTION
 # =========================================================
@@ -3787,6 +4408,23 @@ def add_oic_installation_section(
 
 
         document.add_paragraph("")
+
+
+    # =====================================================
+    # ACTIVATION
+    # =====================================================
+
+    subsection = (
+        add_oic_activation_section(
+
+            document,
+
+            oic_installation_plan,
+
+            subsection
+
+        )
+    )
 
 
 # =========================================================
