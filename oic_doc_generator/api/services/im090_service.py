@@ -588,6 +588,9 @@ def calculate_im090_progress_plan(
         "database_document_points":
             0,
 
+        "oic_schedule_points":
+            0,
+
         # BI Publisher genera actualmente:
         #
         # 1. Ruta
@@ -713,6 +716,10 @@ def calculate_im090_progress_plan(
         ] += 1
 
 
+        # =================================================
+        # OIC ARTIFACTS
+        # =================================================
+
         # Un punto por artefacto IAR/PAR documentado.
 
         plan[
@@ -722,7 +729,16 @@ def calculate_im090_progress_plan(
         )
 
 
-        # Cuatro imágenes por integración.
+        # =================================================
+        # OIC ACTIVATION
+        # =================================================
+
+        # Cada integración genera:
+        #
+        # 1. Configured
+        # 2. Icono Activate
+        # 3. Drawer
+        # 4. Active
 
         plan[
             "oic_activation_points"
@@ -735,9 +751,77 @@ def calculate_im090_progress_plan(
         )
 
 
-        # =============================================
+        # =================================================
+        # OIC SCHEDULES
+        # =================================================
+
+        schedule_points = 0
+
+
+        for integration in activation_plan:
+
+            is_scheduled = (
+                integration.get(
+                    "is_scheduled",
+                    False
+                )
+                or
+                integration.get(
+                    "type",
+                    ""
+                )
+                ==
+                "Scheduled"
+            )
+
+
+            if not is_scheduled:
+
+                continue
+
+
+            # =============================================
+            # SCHEDULED CON ICAL
+            # =============================================
+            #
+            # 1. Menú -> Schedule
+            # 2. Schedule and future runs
+            # 3. Editor iCal
+            # 4. Start schedule dialog
+            #
+            # =============================================
+
+            if integration.get(
+                "has_schedule",
+                False
+            ):
+
+                schedule_points += 4
+
+
+            # =============================================
+            # SCHEDULED SIN ICAL
+            # =============================================
+            #
+            # Solo:
+            #
+            # 1. Menú -> Run
+            #
+            # =============================================
+
+            else:
+
+                schedule_points += 1
+
+
+        plan[
+            "oic_schedule_points"
+        ] = schedule_points
+
+
+        # =================================================
         # UNIQUE PAR FILES
-        # =============================================
+        # =================================================
 
         par_files = set()
 

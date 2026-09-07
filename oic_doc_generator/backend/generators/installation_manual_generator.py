@@ -38,6 +38,13 @@ from oic_doc_generator.api.job_manager import (
     advance_progress
 )
 
+from oic_doc_generator.backend.renderers.oic_schedule_renderer import (
+    render_oic_schedule_menu_image,
+    render_oic_schedule_overview_image,
+    render_oic_ical_editor_image,
+    render_oic_start_schedule_dialog_image
+)
+
 from oic_doc_generator.backend.utils.word_utils import (
     create_document_styles,
     apply_table_header_style,
@@ -4084,7 +4091,730 @@ def add_oic_activation_section(
 
     return subsection
 
+# =========================================================
+# OIC SCHEDULE SECTION
+# =========================================================
 
+def add_oic_schedule_section(
+    document,
+    oic_installation_plan,
+    subsection,
+    job_id=None
+):
+
+    activation_plan = (
+        oic_installation_plan.get(
+            "activation_plan",
+            []
+        )
+        or
+        []
+    )
+
+
+    scheduled_integrations = [
+
+        integration
+
+        for integration
+        in activation_plan
+
+        if (
+            integration.get(
+                "is_scheduled",
+                False
+            )
+            or
+            integration.get(
+                "type",
+                ""
+            )
+            ==
+            "Scheduled"
+        )
+
+    ]
+
+
+    if not scheduled_integrations:
+
+        return subsection
+
+
+    # =====================================================
+    # HEADER
+    # =====================================================
+
+    create_header(
+
+        document,
+
+        (
+            f"3.3.{subsection}\t"
+            "Programación y ejecución de "
+            "integraciones programadas"
+        ),
+
+        size=11
+    )
+
+
+    subsection += 1
+
+
+    # =====================================================
+    # INTRODUCTION
+    # =====================================================
+
+    document.add_paragraph(
+        (
+            "Las integraciones de tipo programado pueden "
+            "ejecutarse mediante una programación recurrente "
+            "o de forma manual a demanda."
+        )
+    )
+
+
+    document.add_paragraph(
+        (
+            "Para efectos de la instalación, cuando una "
+            "integración programada incluya una expresión "
+            "iCal, deberá configurarse dicha programación "
+            "y posteriormente iniciarse."
+        )
+    )
+
+
+    document.add_paragraph(
+        (
+            "Cuando una integración programada no incluya "
+            "una expresión iCal, se considera que no requiere "
+            "una programación recurrente. En este caso deberá "
+            "ejecutarse una única vez después de haber sido "
+            "activada."
+        )
+    )
+
+
+    add_information_box(
+
+        document,
+
+        "Criterio de instalación",
+
+        (
+            "Programación iCal disponible: configurar e iniciar "
+            "la programación. "
+            "Programación iCal no disponible: ejecutar una sola "
+            "vez mediante la opción Run."
+        ),
+
+        fill="FFF2CC"
+    )
+
+
+    document.add_paragraph("")
+
+
+    # =====================================================
+    # SUMMARY TABLE
+    # =====================================================
+
+    p = document.add_paragraph()
+
+
+    run = p.add_run(
+        "Resumen de integraciones programadas"
+    )
+
+
+    run.bold = True
+
+
+    table = document.add_table(
+        rows=1,
+        cols=3
+    )
+
+
+    table.style = (
+        "Table Grid"
+    )
+
+
+    table.alignment = (
+        WD_TABLE_ALIGNMENT.CENTER
+    )
+
+
+    headers = [
+
+        "Integración",
+
+        "Modalidad posterior a la activación",
+
+        "Programación iCal"
+
+    ]
+
+
+    for index, header in enumerate(
+        headers
+    ):
+
+        cell = table.cell(
+            0,
+            index
+        )
+
+
+        cell.text = header
+
+
+        apply_header_style(
+            cell,
+            fill="D9D9D9"
+        )
+
+
+    for integration in scheduled_integrations:
+
+        cells = (
+            table.add_row().cells
+        )
+
+
+        name = (
+            integration.get(
+                "name",
+                ""
+            )
+        )
+
+
+        version = (
+            integration.get(
+                "version_display",
+                ""
+            )
+            or
+            integration.get(
+                "version",
+                ""
+            )
+        )
+
+
+        cells[
+            0
+        ].text = (
+            f"{name} ({version})"
+        )
+
+
+        cells[
+            1
+        ].text = (
+            integration.get(
+                "execution_mode",
+                ""
+            )
+        )
+
+
+        cells[
+            2
+        ].text = (
+            integration.get(
+                "schedule_display",
+                "No aplica"
+            )
+            or
+            "No aplica"
+        )
+
+
+        for cell in cells:
+
+            for paragraph in cell.paragraphs:
+
+                for run in paragraph.runs:
+
+                    run.font.name = (
+                        "Arial"
+                    )
+
+
+                    run.font.size = (
+                        Pt(8)
+                    )
+
+
+    document.add_paragraph("")
+
+
+    # =====================================================
+    # DETAILED INSTRUCTIONS
+    # =====================================================
+
+    for integration in scheduled_integrations:
+
+        document.add_page_break()
+
+
+        name = (
+            integration.get(
+                "name",
+                ""
+            )
+        )
+
+
+        version = (
+            integration.get(
+                "version_display",
+                ""
+            )
+            or
+            integration.get(
+                "version",
+                ""
+            )
+        )
+
+
+        has_schedule = (
+            integration.get(
+                "has_schedule",
+                False
+            )
+        )
+
+
+        # =================================================
+        # TITLE
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            (
+                f"Integración: "
+                f"{name} ({version})"
+            )
+        )
+
+
+        run.bold = True
+
+
+        # =================================================
+        # NO SCHEDULE
+        # =================================================
+
+        if not has_schedule:
+
+            document.add_paragraph(
+                (
+                    "La integración no cuenta con una "
+                    "programación recurrente definida. "
+                    "Después de activarla, abra el menú de "
+                    "acciones mediante el icono de tres puntos "
+                    "y seleccione la opción \"Run\" para "
+                    "ejecutarla una única vez."
+                )
+            )
+
+
+            menu_image = None
+
+
+            try:
+
+                menu_image = (
+                    render_oic_schedule_menu_image(
+
+                        integration,
+
+                        action=
+                            "Run"
+                    )
+                )
+
+
+                add_centered_image(
+
+                    document,
+
+                    menu_image,
+
+                    Cm(6)
+
+                )
+
+
+                if job_id:
+
+                    advance_progress(
+
+                        job_id,
+
+                        component=
+                            "IM090 - OIC",
+
+                        detail=
+                            "Ejecución manual documentada",
+
+                        object_name=
+                            name,
+
+                        points=
+                            1
+                    )
+
+
+            finally:
+
+                remove_temp_image(
+                    menu_image
+                )
+
+
+            continue
+
+
+        # =================================================
+        # HAS SCHEDULE
+        # =================================================
+
+        schedule = (
+            integration.get(
+                "schedule",
+                {}
+            )
+            or
+            {}
+        )
+
+
+        ical_expression = (
+            schedule.get(
+                "ical_expression",
+                ""
+            )
+        )
+
+
+        # =================================================
+        # STEP 1
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "1. Acceso a la programación"
+        )
+
+
+        run.bold = True
+
+
+        document.add_paragraph(
+            (
+                "Sobre la integración activa, abra el menú "
+                "de acciones mediante el icono de tres puntos "
+                "y seleccione la opción \"Schedule\"."
+            )
+        )
+
+
+        menu_image = None
+
+
+        try:
+
+            menu_image = (
+                render_oic_schedule_menu_image(
+
+                    integration,
+
+                    action=
+                        "Schedule"
+                )
+            )
+
+
+            add_centered_image(
+                document,
+                menu_image,
+                Cm(6)
+            )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Acceso a programación documentado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
+
+
+        finally:
+
+            remove_temp_image(
+                menu_image
+            )
+
+
+        # =================================================
+        # STEP 2
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "2. Edición de la programación"
+        )
+
+
+        run.bold = True
+
+
+        document.add_paragraph(
+            (
+                "En la pantalla \"Schedule and future runs\", "
+                "seleccione el botón \"Edit\" para definir "
+                "la recurrencia de la integración."
+            )
+        )
+
+
+        overview_image = None
+
+
+        try:
+
+            overview_image = (
+                render_oic_schedule_overview_image(
+                    integration
+                )
+            )
+
+
+            add_centered_image(
+                document,
+                overview_image,
+                Cm(16)
+            )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Pantalla de programación generada",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
+
+
+        finally:
+
+            remove_temp_image(
+                overview_image
+            )
+
+
+        # =================================================
+        # STEP 3
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "3. Configuración de la expresión iCal"
+        )
+
+
+        run.bold = True
+
+
+        document.add_paragraph(
+            (
+                "Seleccione el tipo de recurrencia \"iCal\", "
+                "registre la expresión indicada para la "
+                "integración, seleccione \"Validate expression\" "
+                "y posteriormente guarde la configuración."
+            )
+        )
+
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "Expresión iCal: "
+        )
+
+
+        run.bold = True
+
+
+        run = p.add_run(
+            ical_expression
+        )
+
+
+        run.font.name = (
+            "Courier New"
+        )
+
+
+        ical_image = None
+
+
+        try:
+
+            ical_image = (
+                render_oic_ical_editor_image(
+                    integration
+                )
+            )
+
+
+            add_centered_image(
+                document,
+                ical_image,
+                Cm(16)
+            )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Configuración iCal documentada",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
+
+
+        finally:
+
+            remove_temp_image(
+                ical_image
+            )
+
+
+        # =================================================
+        # STEP 4
+        # =================================================
+
+        p = document.add_paragraph()
+
+
+        run = p.add_run(
+            "4. Inicio de la programación"
+        )
+
+
+        run.bold = True
+
+
+        document.add_paragraph(
+            (
+                "Después de guardar la programación, regrese "
+                "a \"Schedule and future runs\" y seleccione "
+                "\"Start\". En la ventana de confirmación, "
+                "seleccione el usuario autorizado para la "
+                "ejecución y haga clic en \"Confirm\"."
+            )
+        )
+
+
+        dialog_image = None
+
+
+        try:
+
+            dialog_image = (
+                render_oic_start_schedule_dialog_image(
+                    integration
+                )
+            )
+
+
+            add_centered_image(
+                document,
+                dialog_image,
+                Cm(10.5)
+            )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Inicio de programación documentado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
+
+
+        finally:
+
+            remove_temp_image(
+                dialog_image
+            )
+
+
+    return subsection
 
 # =========================================================
 # OIC INSTALLATION SECTION
@@ -4596,6 +5326,25 @@ def add_oic_installation_section(
 
     subsection = (
         add_oic_activation_section(
+
+            document,
+
+            oic_installation_plan,
+
+            subsection,
+
+            job_id=
+                job_id
+
+        )
+    )
+
+    # =====================================================
+    # SCHEDULES
+    # =====================================================
+
+    subsection = (
+        add_oic_schedule_section(
 
             document,
 

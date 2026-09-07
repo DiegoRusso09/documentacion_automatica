@@ -38,6 +38,10 @@ from oic_doc_generator.backend.parsers.javascript_parser import (
     get_javascript_names
 )
 
+from oic_doc_generator.backend.parsers.schedule_parser import (
+    get_schedule_information
+)
+
 
 # =========================================================
 # FILE NAME
@@ -614,6 +618,134 @@ def build_integration_info(
         )
     )
 
+    # =====================================================
+    # SCHEDULE INFORMATION
+    # =====================================================
+
+    schedule_info = {
+
+        "frequency":
+            "No definida",
+
+        "ical_expression":
+            "",
+
+        "schedule_name":
+            ""
+    }
+
+
+    if scheduled:
+
+        schedule_info = (
+            get_schedule_information(
+                extracted_iar
+            )
+            or
+            schedule_info
+        )
+
+
+    ical_expression = (
+        schedule_info.get(
+            "ical_expression",
+            ""
+        )
+        or
+        ""
+    ).strip()
+
+
+    schedule_name = (
+        schedule_info.get(
+            "schedule_name",
+            ""
+        )
+        or
+        ""
+    ).strip()
+
+
+    # =====================================================
+    # DOES IT REALLY HAVE A RECURRENT SCHEDULE?
+    # =====================================================
+
+    has_schedule = (
+
+        scheduled
+
+        and
+
+        bool(
+            ical_expression
+        )
+
+    )
+
+
+    # =====================================================
+    # SCHEDULE NAME FALLBACK
+    # =====================================================
+
+    if (
+        scheduled
+        and
+        not schedule_name
+    ):
+
+        schedule_name = (
+            "Schedule "
+            +
+            (
+                metadata.get(
+                    "project_code",
+                    ""
+                )
+                or
+                "Integration"
+            )
+        )
+
+
+    # =====================================================
+    # INSTALLATION RULE
+    # =====================================================
+
+    if scheduled:
+
+        if has_schedule:
+
+            execution_mode = (
+                "Ejecución programada"
+            )
+
+
+            schedule_display = (
+                ical_expression
+            )
+
+        else:
+
+            execution_mode = (
+                "Ejecución única posterior a la activación"
+            )
+
+
+            schedule_display = (
+                "No aplica"
+            )
+
+    else:
+
+        execution_mode = (
+            "No aplica"
+        )
+
+
+        schedule_display = (
+            "No aplica"
+        )
+
 
     integration_type = (
 
@@ -694,6 +826,39 @@ def build_integration_info(
             format_oic_version(
                 version
             ),
+
+        # =================================================
+        # SCHEDULE
+        # =================================================
+
+        "is_scheduled":
+            scheduled,
+
+        "has_schedule":
+            has_schedule,
+
+        "schedule":
+            {
+
+                "name":
+                    schedule_name,
+
+                "frequency":
+                    schedule_info.get(
+                        "frequency",
+                        "No definida"
+                    ),
+
+                "ical_expression":
+                    ical_expression
+
+            },
+
+        "execution_mode":
+            execution_mode,
+
+        "schedule_display":
+            schedule_display,
 
 
         # =================================================
