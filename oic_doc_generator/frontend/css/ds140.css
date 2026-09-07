@@ -1221,3 +1221,16 @@
     transition:
         width .12s linear;
 }
+
+/* =========================================================
+   IM090 / DS140 PROGRESS
+   ========================================================= */
+
+#progress-bar {
+
+    transition:
+        width .45s ease-out;
+
+    will-change:
+        width;
+}

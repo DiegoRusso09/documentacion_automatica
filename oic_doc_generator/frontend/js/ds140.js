@@ -2945,6 +2945,18 @@
                 );
 
 
+            const activityText =
+                document.getElementById(
+                    "activity-text"
+                );
+
+
+            const detailText =
+                document.getElementById(
+                    "detail-text"
+                );
+
+
             if (progressContainer) {
 
                 progressContainer.style.display =
@@ -2962,7 +2974,21 @@
             if (progressText) {
 
                 progressText.innerText =
-                    "Generando IM090...";
+                    "0% - Preparando IM090";
+            }
+
+
+            if (activityText) {
+
+                activityText.innerText =
+                    "Analizando archivos y calculando pasos totales...";
+            }
+
+
+            if (detailText) {
+
+                detailText.innerText =
+                    "Preparando plan de generación...";
             }
 
 
@@ -2983,7 +3009,7 @@
 
                     checkIM090Status,
 
-                    1000
+                    700
                 );
 
         }
@@ -3047,9 +3073,43 @@
                 await response.json();
 
 
-            const progress =
-                job.progress || 0;
+            // =================================================
+            // JOB DATA
+            // =================================================
 
+            const progress =
+                Number(
+                    job.progress || 0
+                );
+
+
+            const component =
+                job.step || "IM090";
+
+
+            const activity =
+                job.activity || "";
+
+
+            const objectName =
+                job.object || "";
+
+
+            const current =
+                Number(
+                    job.current || 0
+                );
+
+
+            const total =
+                Number(
+                    job.total || 0
+                );
+
+
+            // =================================================
+            // UI
+            // =================================================
 
             const progressBar =
                 document.getElementById(
@@ -3075,6 +3135,10 @@
                 );
 
 
+            // =================================================
+            // BAR
+            // =================================================
+
             if (progressBar) {
 
                 progressBar.style.width =
@@ -3082,24 +3146,96 @@
             }
 
 
+            // =================================================
+            // MAIN STATUS
+            //
+            // Ejemplo:
+            //
+            // 42% - IM090 - OIC
+            // =================================================
+
             if (progressText) {
 
                 progressText.innerText =
-                    `${progress}% - ${job.step || "IM090"}`;
+                    `${progress}% - ${component}`;
             }
 
+
+            // =================================================
+            // CURRENT ACTIVITY
+            //
+            // Ejemplo:
+            //
+            // Panel de activación generado
+            // =================================================
 
             if (activityText) {
 
-                activityText.innerText =
-                    job.activity || "";
+                if (
+                    total > 0
+                    &&
+                    current > 0
+                ) {
+
+                    activityText.innerText =
+                        (
+                            `Paso ${current} de ${total}: `
+                            +
+                            activity
+                        );
+                }
+
+                else {
+
+                    activityText.innerText =
+                        activity
+                        ||
+                        "Analizando archivos y calculando pasos...";
+                }
             }
 
 
+            // =================================================
+            // CURRENT OBJECT
+            //
+            // Ejemplo:
+            //
+            // NEO PE GRE UOM SYNC
+            // 18 de 69 pasos completados
+            // =================================================
+
             if (detailText) {
 
+                let detailParts = [];
+
+
+                if (objectName) {
+
+                    detailParts.push(
+                        objectName
+                    );
+                }
+
+
+                if (total > 0) {
+
+                    detailParts.push(
+                        `${current} de ${total} pasos completados`
+                    );
+                }
+
+                else {
+
+                    detailParts.push(
+                        "Preparando plan de generación..."
+                    );
+                }
+
+
                 detailText.innerText =
-                    job.object || "";
+                    detailParts.join(
+                        " · "
+                    );
             }
 
 
@@ -3121,12 +3257,64 @@
                     null;
 
 
-                window.location.href =
+                // =============================================
+                // FORCE FINAL UI
+                // =============================================
 
-                    `/api/im090/download/${currentIM090JobId}`;
+                if (progressBar) {
+
+                    progressBar.style.width =
+                        "100%";
+                }
+
+
+                if (progressText) {
+
+                    progressText.innerText =
+                        "100% - IM090 Finalizado";
+                }
+
+
+                if (activityText) {
+
+                    activityText.innerText =
+                        "Paquete de instalación generado correctamente.";
+                }
+
+
+                if (detailText) {
+
+                    if (total > 0) {
+
+                        detailText.innerText =
+                            `${total} de ${total} pasos completados`;
+                    }
+
+                    else {
+
+                        detailText.innerText =
+                            "Proceso completado";
+                    }
+                }
+
+
+                // =============================================
+                // DOWNLOAD
+                // =============================================
+
+                setTimeout(
+                    () => {
+
+                        window.location.href =
+                            `/api/im090/download/${currentIM090JobId}`;
+
+                    },
+                    500
+                );
 
 
                 resetIM090Button();
+
 
                 return;
             }
@@ -3162,6 +3350,7 @@
             }
 
         }
+
         catch (error) {
 
             console.error(
