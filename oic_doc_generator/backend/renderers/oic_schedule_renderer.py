@@ -6,7 +6,8 @@
 
 from oic_doc_generator.backend.renderers.oic_installation_renderer import (
     render_html_exact,
-    escape_html
+    escape_html,
+    icon_svg
 )
 
 
@@ -171,6 +172,13 @@ def render_oic_schedule_menu_image(
 
     menu_html = "".join(
         rows
+    )
+
+    power_icon = (
+        icon_svg(
+            "power",
+            size=28
+        )
     )
 
 
@@ -346,11 +354,45 @@ def render_oic_schedule_menu_image(
 
             .power {{
 
-                font-size:
-                    27px;
+                width:
+                    30px;
 
-                line-height:
-                    1;
+                height:
+                    30px;
+
+                display:
+                    flex;
+
+                align-items:
+                    center;
+
+                justify-content:
+                    center;
+            }}
+
+
+            .power svg {{
+
+                width:
+                    28px;
+
+                height:
+                    28px;
+
+                fill:
+                    none;
+
+                stroke:
+                    #161513;
+
+                stroke-width:
+                    1.8;
+
+                stroke-linecap:
+                    round;
+
+                stroke-linejoin:
+                    round;
             }}
 
 
@@ -413,9 +455,9 @@ def render_oic_schedule_menu_image(
                     Active
                 </span>
 
-                <span class="power">
-                    ◴
-                </span>
+                    <span class="power">
+                        {power_icon}
+                    </span>
 
                 <span class="more">
                     •••
@@ -1312,7 +1354,6 @@ def render_oic_ical_editor_image(
 
             <span class="title">
 
-                Schedule
                 {data["schedule_name"]}
 
             </span>

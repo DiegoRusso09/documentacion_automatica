@@ -906,6 +906,12 @@ def calculate_im090_progress_plan(
         +
 
         plan[
+            "oic_schedule_points"
+        ]
+
+        +
+
+        plan[
             "fixed_points"
         ]
 

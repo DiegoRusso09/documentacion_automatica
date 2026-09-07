@@ -657,9 +657,30 @@ def add_bip_installation_section(
         )
 
 
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - BI Publisher",
+
+                detail=
+                    "Menú de tareas generado",
+
+                object_name=
+                    object_name,
+
+                points=
+                    1
+            )
+
+
         # =================================================
         # STEP 3 - FILE
         # =================================================
+
 
         p = document.add_paragraph()
 
@@ -5553,7 +5574,8 @@ def generate_installation_manual(
 
         add_oic_installation_section(
             document,
-            oic_installation_plan
+            oic_installation_plan,
+            job_id=job_id
         )
 
 
