@@ -4271,9 +4271,8 @@ def add_oic_schedule_section(
         cell.text = header
 
 
-        apply_header_style(
-            cell,
-            fill="D9D9D9"
+        apply_table_header_style(
+            cell
         )
 
 
