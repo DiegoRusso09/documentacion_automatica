@@ -34,6 +34,10 @@ from docx.oxml.ns import (
     qn
 )
 
+from oic_doc_generator.api.job_manager import (
+    advance_progress
+)
+
 from oic_doc_generator.backend.utils.word_utils import (
     create_document_styles,
     apply_table_header_style,
@@ -258,7 +262,8 @@ def add_bip_installation_plan_table(
 
 def add_bip_installation_section(
     document,
-    bip_installation_plan
+    bip_installation_plan,
+    job_id=None
 ):
 
     if not bip_installation_plan:
@@ -588,6 +593,25 @@ def add_bip_installation_section(
             Cm(15)
         )
 
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - BI Publisher",
+
+                detail=
+                    "Ruta de instalación generada",
+
+                object_name=
+                    object_name,
+
+                points=
+                    1
+            )
+
 
         # =================================================
         # STEP 2 - TASKS
@@ -669,6 +693,25 @@ def add_bip_installation_section(
             upload_image,
             Cm(15)
         )
+
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - BI Publisher",
+
+                detail=
+                    "Pantalla de carga generada",
+
+                object_name=
+                    object_name,
+
+                points=
+                    1
+            )
 
 
         # =================================================
@@ -806,6 +849,25 @@ def add_bip_installation_section(
             validation_image,
             Cm(13.5)
         )
+
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - BI Publisher",
+
+                detail=
+                    "Validación generada",
+
+                object_name=
+                    object_name,
+
+                points=
+                    1
+            )
 
 
         document.add_paragraph("")
@@ -3349,7 +3411,8 @@ def remove_temp_image(
 def add_oic_activation_section(
     document,
     oic_installation_plan,
-    subsection
+    subsection,
+    job_id=None
 ):
 
     activation_plan = (
@@ -3662,6 +3725,24 @@ def add_oic_activation_section(
                 render_oic_activate_icon_image()
             )
 
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Indicador de activación generado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
 
             # =============================================
             # TEXT + SYMBOL + TEXT
@@ -3724,6 +3805,25 @@ def add_oic_activation_section(
 
             )
 
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Estado Configured generado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
+
 
             # =================================================
             # STEP 2
@@ -3759,6 +3859,26 @@ def add_oic_activation_section(
                 Cm(7.4)
 
             )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Panel de activación generado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
 
 
             # =================================================
@@ -3799,6 +3919,26 @@ def add_oic_activation_section(
                 Cm(16)
 
             )
+
+
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Estado Active generado",
+
+                    object_name=
+                        name,
+
+                    points=
+                        1
+                )
 
 
         finally:
@@ -3915,6 +4055,25 @@ def add_oic_activation_section(
 
             )
 
+            if job_id:
+
+                advance_progress(
+
+                    job_id,
+
+                    component=
+                        "IM090 - OIC",
+
+                    detail=
+                        "Validación final del paquete generada",
+
+                    object_name=
+                        source_file,
+
+                    points=
+                        1
+                )
+
 
         finally:
 
@@ -3933,7 +4092,8 @@ def add_oic_activation_section(
 
 def add_oic_installation_section(
     document,
-    oic_installation_plan
+    oic_installation_plan,
+    job_id=None
 ):
 
     if not oic_installation_plan:
@@ -4410,6 +4570,26 @@ def add_oic_installation_section(
         document.add_paragraph("")
 
 
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - OIC",
+
+                detail=
+                    "Artefacto documentado",
+
+                object_name=
+                    file_name,
+
+                points=
+                    1
+            )
+
+
     # =====================================================
     # ACTIVATION
     # =====================================================
@@ -4421,7 +4601,10 @@ def add_oic_installation_section(
 
             oic_installation_plan,
 
-            subsection
+            subsection,
+
+            job_id=
+                job_id
 
         )
     )
@@ -4441,7 +4624,8 @@ def generate_installation_manual(
     schema_name="",
     database_export_info=None,
     bip_installation_plan=None,
-    oic_installation_plan=None
+    oic_installation_plan=None,
+    job_id=None
 ):
 
     document = Document()
@@ -4580,13 +4764,34 @@ def generate_installation_manual(
             database_export_info
         )
 
+
+        if job_id:
+
+            advance_progress(
+
+                job_id,
+
+                component=
+                    "IM090 - Base de Datos",
+
+                detail=
+                    "Sección de instalación generada",
+
+                object_name=
+                    "Base de Datos",
+
+                points=
+                    1
+            )
+
     if bip_installation_plan:
 
         document.add_page_break()
 
         add_bip_installation_section(
             document,
-            bip_installation_plan
+            bip_installation_plan,
+            job_id=job_id
         )
 
 

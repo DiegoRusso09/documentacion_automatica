@@ -27,7 +27,9 @@ from oic_doc_generator.backend.generators.installation_manual_generator import (
 
 from oic_doc_generator.api.job_manager import (
     complete_job,
-    advance_progress
+    advance_progress,
+    initialize_progress,
+    update_activity
 )
 
 from oic_doc_generator.backend.parsers.bip_archive_parser import (
@@ -562,6 +564,308 @@ def export_oic_delivery_files(
     return oic_folder
 
 # =========================================================
+# CALCULATE IM090 PROGRESS PLAN
+# =========================================================
+
+def calculate_im090_progress_plan(
+
+    sql_files,
+
+    bip_installation_plan,
+
+    oic_installation_plan
+
+):
+
+    plan = {
+
+        # Planes que ya fueron analizados antes
+        # de comenzar la generación del documento.
+        "analysis_points":
+            0,
+
+        # Generación de la sección de BD en Word.
+        "database_document_points":
+            0,
+
+        # BI Publisher genera actualmente:
+        #
+        # 1. Ruta
+        # 2. Tasks
+        # 3. Upload
+        # 4. Validación
+        #
+        # = 4 imágenes por artefacto.
+        "bip_render_points":
+            0,
+
+        # Importación / metadata / conexiones
+        # de cada artefacto IAR o PAR.
+        "oic_artifact_points":
+            0,
+
+        # Por cada integración:
+        #
+        # 1. Fila Configured
+        # 2. Icono Activate
+        # 3. Drawer
+        # 4. Fila Active
+        #
+        # = 4 renders.
+        "oic_activation_points":
+            0,
+
+        # Review and activate.
+        # Una imagen por PAR.
+        "oic_package_points":
+            0,
+
+        # Word terminado + ZIP terminado.
+        "fixed_points":
+            2
+    }
+
+
+    # =====================================================
+    # DATABASE
+    # =====================================================
+
+    if sql_files:
+
+        plan[
+            "analysis_points"
+        ] += 1
+
+
+        plan[
+            "database_document_points"
+        ] = 1
+
+
+    # =====================================================
+    # BI PUBLISHER
+    # =====================================================
+
+    bip_items = []
+
+
+    if bip_installation_plan:
+
+        bip_items = (
+            bip_installation_plan.get(
+                "items",
+                []
+            )
+            or
+            []
+        )
+
+
+        plan[
+            "analysis_points"
+        ] += 1
+
+
+        plan[
+            "bip_render_points"
+        ] = (
+            len(
+                bip_items
+            )
+            *
+            4
+        )
+
+
+    # =====================================================
+    # OIC
+    # =====================================================
+
+    activation_plan = []
+
+    oic_items = []
+
+
+    if oic_installation_plan:
+
+        oic_items = (
+            oic_installation_plan.get(
+                "items",
+                []
+            )
+            or
+            []
+        )
+
+
+        activation_plan = (
+            oic_installation_plan.get(
+                "activation_plan",
+                []
+            )
+            or
+            []
+        )
+
+
+        plan[
+            "analysis_points"
+        ] += 1
+
+
+        # Un punto por artefacto IAR/PAR documentado.
+
+        plan[
+            "oic_artifact_points"
+        ] = len(
+            oic_items
+        )
+
+
+        # Cuatro imágenes por integración.
+
+        plan[
+            "oic_activation_points"
+        ] = (
+            len(
+                activation_plan
+            )
+            *
+            4
+        )
+
+
+        # =============================================
+        # UNIQUE PAR FILES
+        # =============================================
+
+        par_files = set()
+
+
+        for integration in activation_plan:
+
+            if (
+                integration.get(
+                    "source_artifact_type"
+                )
+                !=
+                "par"
+            ):
+
+                continue
+
+
+            source_file = (
+                integration.get(
+                    "source_file",
+                    ""
+                )
+                or
+                ""
+            )
+
+
+            if source_file:
+
+                par_files.add(
+                    source_file
+                )
+
+
+        plan[
+            "oic_package_points"
+        ] = len(
+            par_files
+        )
+
+
+    # =====================================================
+    # TOTAL
+    # =====================================================
+
+    total_points = (
+
+        plan[
+            "analysis_points"
+        ]
+
+        +
+
+        plan[
+            "database_document_points"
+        ]
+
+        +
+
+        plan[
+            "bip_render_points"
+        ]
+
+        +
+
+        plan[
+            "oic_artifact_points"
+        ]
+
+        +
+
+        plan[
+            "oic_activation_points"
+        ]
+
+        +
+
+        plan[
+            "oic_package_points"
+        ]
+
+        +
+
+        plan[
+            "fixed_points"
+        ]
+
+    )
+
+
+    plan[
+        "total_points"
+    ] = max(
+        total_points,
+        1
+    )
+
+
+    plan[
+        "bip_item_count"
+    ] = len(
+        bip_items
+    )
+
+
+    plan[
+        "oic_item_count"
+    ] = len(
+        oic_items
+    )
+
+
+    plan[
+        "integration_count"
+    ] = len(
+        activation_plan
+    )
+
+
+    print(
+        "[IM090 PROGRESS PLAN]",
+        plan
+    )
+
+
+    return plan
+
+# =========================================================
 # GENERATE IM090
 # =========================================================
 
@@ -739,18 +1043,15 @@ def generate_im090_service(
         )
 
 
-        advance_progress(
+        update_activity(
 
             job_id,
 
-            component=
-                "IM090 - Base de Datos",
-
-            detail=
-                "Plan de instalación generado",
-
-            object_name=
+            (
+                "Analizando Base de Datos: "
                 f"{len(sql_files)} archivo(s)"
+            )
+
         )
 
 
@@ -874,18 +1175,15 @@ def generate_im090_service(
                 )
 
 
-            advance_progress(
+            update_activity(
 
                 job_id,
 
-                component=
-                    "IM090 - BI Publisher",
-
-                detail=
-                    "Plan de instalación generado",
-
-                object_name=
+                (
+                    "Analizando BI Publisher: "
                     f"{len(installation_items)} artefacto(s)"
+                )
+
             )
 
 
@@ -1004,19 +1302,102 @@ def generate_im090_service(
                 pass
 
 
+        update_activity(
+
+            job_id,
+
+            (
+                "Analizando OIC: "
+                f"{len(installation_items)} artefacto(s)"
+            )
+
+        )
+
+
+    # =====================================================
+    # GLOBAL IM090 PROGRESS PLAN
+    # =====================================================
+
+    update_activity(
+
+        job_id,
+
+        "Calculando pasos totales del IM090..."
+
+    )
+
+
+    progress_plan = (
+        calculate_im090_progress_plan(
+
+            sql_files=
+                sql_files,
+
+            bip_installation_plan=
+                bip_installation_plan,
+
+            oic_installation_plan=
+                oic_installation_plan
+
+        )
+    )
+
+
+    initialize_progress(
+
+        job_id,
+
+        progress_plan[
+            "total_points"
+        ]
+
+    )
+
+
+    # =====================================================
+    # ANALYSIS ALREADY COMPLETED
+    # =====================================================
+
+    analysis_points = (
+        progress_plan.get(
+            "analysis_points",
+            0
+        )
+    )
+
+
+    if analysis_points > 0:
+
         advance_progress(
 
             job_id,
 
             component=
-                "IM090 - OIC",
+                "IM090",
 
             detail=
-                "Plan de instalación generado",
+                "Análisis de artefactos completado",
 
             object_name=
-                f"{len(installation_items)} artefacto(s)"
+                (
+                    f"{progress_plan['total_points']} "
+                    f"pasos detectados"
+                ),
+
+            points=
+                analysis_points
+
         )
+
+
+    print(
+        (
+            "[IM090] "
+            f"{progress_plan['total_points']} "
+            "pasos totales"
+        )
+    )
+
 
     # =====================================================
     # GENERATE WORD
@@ -1024,6 +1405,9 @@ def generate_im090_service(
 
     document_stream = (
         generate_installation_manual(
+
+            job_id=
+                job_id,
 
             author_name=
                 author_name,

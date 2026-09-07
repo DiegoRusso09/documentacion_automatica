@@ -29,8 +29,7 @@ from oic_doc_generator.api.services.im090_service import (
 from oic_doc_generator.api.job_manager import (
     create_job,
     get_job,
-    fail_job,
-    initialize_progress
+    fail_job
 )
 
 
@@ -130,47 +129,6 @@ def run_im090_job(
 ):
 
     try:
-
-        # =================================================
-        # PROGRESS
-        # =================================================
-        #
-        # ETAPAS FIJAS:
-        #
-        # +1 Generación del Word
-        # +1 Generación del ZIP
-        #
-        # ETAPAS DINÁMICAS:
-        #
-        # +1 si existen objetos de Base de Datos
-        # +1 si existen artefactos BI Publisher
-        # +1 si existen artefactos OIC
-        #
-        # =================================================
-
-        total_points = 2
-
-
-        if sql_files:
-
-            total_points += 1
-
-
-        if bip_files:
-
-            total_points += 1
-
-
-        if oic_files:
-
-            total_points += 1
-
-
-        initialize_progress(
-            job_id,
-            total_points
-        )
-
 
         generate_im090_service(
 
