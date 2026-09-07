@@ -1234,3 +1234,129 @@
     will-change:
         width;
 }
+
+/* =========================================================
+   IM090 DIALOG - SCROLL
+========================================================= */
+
+#im090-dialog .custom-dialog {
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+}
+
+#im090-dialog .custom-dialog-header,
+#im090-dialog .custom-dialog-footer {
+    flex-shrink: 0;
+}
+
+#im090-dialog .custom-dialog-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+
+/* =========================================================
+   IM090 REQUIREMENTS
+========================================================= */
+
+.im090-requirements-title {
+    margin: 22px 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #222;
+}
+
+.im090-requirement-card {
+    margin-bottom: 16px;
+    padding: 14px;
+    border: 1px solid #e0e3e7;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.im090-requirement-card-title {
+    margin-bottom: 4px;
+    font-weight: 700;
+    color: #2b2b2b;
+}
+
+.im090-requirement-help {
+    margin-bottom: 12px;
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.im090-role-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.im090-role-row input,
+.im090-db-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #d4d8dc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.im090-add-btn,
+.im090-remove-btn {
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.im090-add-btn {
+    margin-top: 4px;
+    padding: 8px 12px;
+    border: 1px solid #C74634;
+    background: white;
+    color: #C74634;
+}
+
+.im090-remove-btn {
+    width: 38px;
+    border: 1px solid #d0d5dd;
+    background: white;
+    color: #667085;
+}
+
+.im090-db-entry {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.im090-db-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.im090-db-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border: 1px solid #d0d5dd;
+    border-radius: 16px;
+    background: white;
+    font-size: 12px;
+}
+
+.im090-db-chip button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #667085;
+    cursor: pointer;
+}

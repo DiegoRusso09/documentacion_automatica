@@ -3,11 +3,11 @@
     <section class="page-header">
 
         <h1>
-            DS140
+            Generación Automática de Documentación Técnica
         </h1>
 
         <p>
-            Generación Automática de Documentación Técnica
+            Todo lo que necesitas en un mismo lugar
         </p>
 
     </section>
@@ -603,10 +603,38 @@
             </div>
 
             <div id="detail-text" style="
-            margin-top:4px;
-            color:#777;
-            font-size:12px;
-        ">
+    margin-top:4px;
+    color:#777;
+    font-size:12px;
+">
+            </div>
+
+
+            <div id="im090-duration-notice" style="
+    display:none;
+    margin-top:14px;
+    padding:11px 14px;
+    border:1px solid #d6d6d6;
+    border-radius:6px;
+    background:#f7f7f7;
+    color:#555;
+    font-size:12px;
+    line-height:1.5;
+">
+
+                <span style="
+        display:inline-block;
+        margin-right:6px;
+        font-weight:bold;
+        color:#555;
+    ">
+                    ⓘ
+                </span>
+
+                <span id="im090-duration-notice-text">
+                    La generación del IM090 puede tardar más de 10 minutos.
+                </span>
+
             </div>
 
         </div>
@@ -739,34 +767,112 @@
 
 
             <!-- =========================================
-                 ERP ROLES
-                 ONLY WHEN BIP EXISTS
+                ACCESS AND PRIVILEGE REQUIREMENTS
             ========================================== -->
 
-            <div id="im090_erp_roles_group" style="display:none;">
+            <div id="im090_requirements_title" class="im090-requirements-title" style="display:none;">
+                Requisitos de acceso y privilegios
+            </div>
 
-                <div class="dialog-form-group">
 
-                    <label>
-                        Roles requeridos en Oracle ERP Cloud
-                    </label>
+            <!-- =========================================
+                ERP CLOUD / BI PUBLISHER
+            ========================================== -->
 
-                    <input id="im090_erp_role_1" type="text" placeholder="Rol 1">
+            <div id="im090_erp_roles_group" class="im090-requirement-card" style="display:none;">
+
+                <div class="im090-requirement-card-title">
+                    Oracle ERP Cloud / BI Publisher
+                </div>
+
+                <div class="im090-requirement-help">
+                    Especifique los roles que deberá tener asignados el usuario
+                    responsable de instalar o administrar los artefactos de
+                    BI Publisher. Este dato es opcional.
+                </div>
+
+                <div id="im090_erp_roles_container">
+                </div>
+
+                <button type="button" class="im090-add-btn" onclick="addIM090Role('erp')">
+                    + Agregar rol
+                </button>
+
+            </div>
+
+
+            <!-- =========================================
+                                OIC
+            ========================================== -->
+
+            <div id="im090_oic_roles_group" class="im090-requirement-card" style="display:none;">
+
+                <div class="im090-requirement-card-title">
+                    Oracle Integration Cloud (OIC)
+                </div>
+
+                <div class="im090-requirement-help">
+                    Especifique los roles necesarios para importar, configurar,
+                    activar o administrar las integraciones del pase.
+                    Este dato es opcional.
+                </div>
+
+                <div id="im090_oic_roles_container">
+                </div>
+
+                <button type="button" class="im090-add-btn" onclick="addIM090Role('oic')">
+                    + Agregar rol
+                </button>
+
+            </div>
+
+
+            <!-- =========================================
+                        DATABASE PRIVILEGES
+            ========================================== -->
+
+            <div id="im090_db_privileges_group" class="im090-requirement-card" style="display:none;">
+
+                <div class="im090-requirement-card-title">
+                    Oracle Database
+                </div>
+
+                <div class="im090-requirement-help">
+                    Seleccione un privilegio frecuente o escriba uno
+                    personalizado y agréguelo a la lista.
+                    CREATE PROCEDURE cubre procedimientos, funciones y paquetes.
+                    Los índices creados sobre tablas del mismo esquema no requieren
+                    un privilegio CREATE INDEX independiente.
+                </div>
+
+                <div class="im090-db-entry">
+
+                    <input id="im090_db_privilege_input" class="im090-db-input" type="text"
+                        list="im090_db_privileges_options" placeholder="Seleccione o escriba un privilegio">
+
+                    <button type="button" class="im090-add-btn" onclick="addIM090DbPrivilege()">
+                        Agregar
+                    </button>
 
                 </div>
 
 
-                <div class="dialog-form-group">
+                <datalist id="im090_db_privileges_options">
 
-                    <input id="im090_erp_role_2" type="text" placeholder="Rol 2">
+                    <option value="CREATE TABLE"></option>
 
-                </div>
+                    <option value="CREATE VIEW"></option>
+
+                    <option value="CREATE SEQUENCE"></option>
+
+                    <option value="CREATE PROCEDURE"></option>
+
+                    <option value="CREATE TRIGGER"></option>
+
+                </datalist>
 
 
-                <div class="dialog-form-group">
-
-                    <input id="im090_erp_role_3" type="text" placeholder="Rol 3">
-
+                <div id="im090_db_privileges_list" class="im090-db-chips">
                 </div>
 
             </div>

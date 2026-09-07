@@ -2441,6 +2441,291 @@
 
 
     // =====================================================
+    // IM090 REQUIREMENTS
+    // =====================================================
+
+    let im090DatabasePrivileges = [];
+
+
+    // =====================================================
+    // ADD ROLE
+    // =====================================================
+
+    function addIM090Role(
+        type,
+        initialValue = ""
+    ) {
+
+        const container =
+            document.getElementById(
+                `im090_${type}_roles_container`
+            );
+
+
+        if (!container) {
+
+            return;
+        }
+
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+
+        row.className =
+            "im090-role-row";
+
+
+        const input =
+            document.createElement(
+                "input"
+            );
+
+
+        input.type =
+            "text";
+
+        input.className =
+            "im090-role-input";
+
+        input.dataset.roleType =
+            type;
+
+        input.placeholder =
+            "Ingrese el nombre del rol";
+
+        input.value =
+            initialValue;
+
+
+        const removeButton =
+            document.createElement(
+                "button"
+            );
+
+
+        removeButton.type =
+            "button";
+
+        removeButton.className =
+            "im090-remove-btn";
+
+        removeButton.innerText =
+            "×";
+
+
+        removeButton.onclick =
+            () => {
+
+                row.remove();
+
+            };
+
+
+        row.appendChild(
+            input
+        );
+
+        row.appendChild(
+            removeButton
+        );
+
+
+        container.appendChild(
+            row
+        );
+    }
+
+
+    // =====================================================
+    // ENSURE FIRST ROLE INPUT
+    // =====================================================
+
+    function ensureIM090RoleInput(
+        type
+    ) {
+
+        const container =
+            document.getElementById(
+                `im090_${type}_roles_container`
+            );
+
+
+        if (
+            container
+            &&
+            container.children.length === 0
+        ) {
+
+            addIM090Role(
+                type
+            );
+        }
+    }
+
+
+    // =====================================================
+    // DATABASE PRIVILEGES
+    // =====================================================
+
+    function addIM090DbPrivilege() {
+
+        const input =
+            document.getElementById(
+                "im090_db_privilege_input"
+            );
+
+
+        if (!input) {
+
+            return;
+        }
+
+
+        const value =
+            input.value
+                .trim()
+                .toUpperCase();
+
+
+        if (!value) {
+
+            return;
+        }
+
+
+        const exists =
+            im090DatabasePrivileges
+                .some(
+                    item =>
+                        item.toUpperCase()
+                        ===
+                        value
+                );
+
+
+        if (!exists) {
+
+            im090DatabasePrivileges.push(
+                value
+            );
+        }
+
+
+        input.value =
+            "";
+
+
+        renderIM090DbPrivileges();
+    }
+
+
+    // =====================================================
+    // REMOVE DATABASE PRIVILEGE
+    // =====================================================
+
+    function removeIM090DbPrivilege(
+        value
+    ) {
+
+        im090DatabasePrivileges =
+            im090DatabasePrivileges.filter(
+                item =>
+                    item !== value
+            );
+
+
+        renderIM090DbPrivileges();
+    }
+
+
+    // =====================================================
+    // RENDER DATABASE PRIVILEGES
+    // =====================================================
+
+    function renderIM090DbPrivileges() {
+
+        const container =
+            document.getElementById(
+                "im090_db_privileges_list"
+            );
+
+
+        if (!container) {
+
+            return;
+        }
+
+
+        container.innerHTML =
+            "";
+
+
+        im090DatabasePrivileges.forEach(
+            privilege => {
+
+                const chip =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                chip.className =
+                    "im090-db-chip";
+
+
+                const text =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                text.innerText =
+                    privilege;
+
+
+                const removeButton =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                removeButton.type =
+                    "button";
+
+                removeButton.innerText =
+                    "×";
+
+
+                removeButton.onclick =
+                    () => {
+
+                        removeIM090DbPrivilege(
+                            privilege
+                        );
+                    };
+
+
+                chip.appendChild(
+                    text
+                );
+
+                chip.appendChild(
+                    removeButton
+                );
+
+
+                container.appendChild(
+                    chip
+                );
+            }
+        );
+    }
+
+
+    // =====================================================
     // OPEN IM090 DIALOG
     // =====================================================
 
@@ -2451,6 +2736,84 @@
                 "im090-dialog"
             );
 
+        const requirementsTitle =
+            document.getElementById(
+                "im090_requirements_title"
+            );
+
+
+        if (requirementsTitle) {
+
+            requirementsTitle.style.display =
+                (
+                    fileStore.bip.length > 0
+                    ||
+                    fileStore.oic.length > 0
+                    ||
+                    fileStore.sql.length > 0
+                )
+                    ?
+                    "block"
+                    :
+                    "none";
+        }
+
+        // =================================================
+        // ERP ROLE INPUT
+        // =================================================
+
+        if (fileStore.bip.length > 0) {
+
+            ensureIM090RoleInput(
+                "erp"
+            );
+        }
+
+
+        // =================================================
+        // OIC ROLES
+        // =================================================
+
+        const oicRolesGroup =
+            document.getElementById(
+                "im090_oic_roles_group"
+            );
+
+
+        if (oicRolesGroup) {
+
+            oicRolesGroup.style.display =
+                fileStore.oic.length > 0
+                    ? "block"
+                    : "none";
+        }
+
+
+        if (fileStore.oic.length > 0) {
+
+            ensureIM090RoleInput(
+                "oic"
+            );
+        }
+
+
+        // =================================================
+        // DATABASE PRIVILEGES
+        // =================================================
+
+        const dbPrivilegesGroup =
+            document.getElementById(
+                "im090_db_privileges_group"
+            );
+
+
+        if (dbPrivilegesGroup) {
+
+            dbPrivilegesGroup.style.display =
+                fileStore.sql.length > 0
+                    ? "block"
+                    : "none";
+        }
 
         if (!dialog) {
 
@@ -2689,6 +3052,108 @@
 
             );
 
+            // =================================================
+            // GENERATION TIME NOTICE
+            // =================================================
+
+            const durationNotice =
+                document.getElementById(
+                    "im090-duration-notice"
+                );
+
+
+            const durationNoticeText =
+                document.getElementById(
+                    "im090-duration-notice-text"
+                );
+
+
+            const hasOIC =
+                fileStore.oic.length > 0;
+
+
+            const hasVisualBuilder =
+                fileStore.vb.length > 0;
+
+
+            // =================================================
+            // SHOW ONLY FOR HEAVY IM090 SECTIONS
+            // =================================================
+
+            if (durationNotice) {
+
+                durationNotice.style.display =
+                    (
+                        hasOIC
+                        ||
+                        hasVisualBuilder
+                    )
+                        ?
+                        "block"
+                        :
+                        "none";
+            }
+
+
+            // =================================================
+            // MESSAGE
+            // =================================================
+
+            if (
+                durationNoticeText
+                &&
+                (
+                    hasOIC
+                    ||
+                    hasVisualBuilder
+                )
+            ) {
+
+                if (
+                    hasOIC
+                    &&
+                    hasVisualBuilder
+                ) {
+
+                    durationNoticeText.innerText =
+                        (
+                            "La generación del IM090 puede tardar "
+                            +
+                            "más de 10 minutos. El tiempo de procesamiento "
+                            +
+                            "depende de la cantidad de integraciones OIC "
+                            +
+                            "y puede incrementarse cuando el documento "
+                            +
+                            "incluye aplicaciones de Visual Builder."
+                        );
+                }
+
+                else if (hasOIC) {
+
+                    durationNoticeText.innerText =
+                        (
+                            "La generación del IM090 puede tardar "
+                            +
+                            "más de 10 minutos dependiendo de la cantidad "
+                            +
+                            "de integraciones OIC incluidas en el documento."
+                        );
+                }
+
+                else {
+
+                    durationNoticeText.innerText =
+                        (
+                            "La generación del IM090 puede requerir "
+                            +
+                            "varios minutos debido al procesamiento de "
+                            +
+                            "las aplicaciones de Visual Builder incluidas."
+                        );
+                }
+            }
+
 
             if (!hasComponents) {
 
@@ -2818,30 +3283,69 @@
             // ERP ROLES
             // =================================================
 
-            [
-                "im090_erp_role_1",
-                "im090_erp_role_2",
-                "im090_erp_role_3"
+            // =================================================
+            // ERP ROLES
+            // =================================================
 
-            ].forEach(
-                id => {
+            document
+                .querySelectorAll(
+                    '.im090-role-input[data-role-type="erp"]'
+                )
+                .forEach(
+                    input => {
 
-                    const value =
-                        document
-                            .getElementById(
-                                id
-                            )
-                            ?.value
-                            .trim();
+                        const value =
+                            input.value.trim();
 
 
-                    if (value) {
+                        if (value) {
 
-                        formData.append(
-                            "erp_roles",
-                            value
-                        );
+                            formData.append(
+                                "erp_roles",
+                                value
+                            );
+                        }
                     }
+                );
+
+
+            // =================================================
+            // OIC ROLES
+            // =================================================
+
+            document
+                .querySelectorAll(
+                    '.im090-role-input[data-role-type="oic"]'
+                )
+                .forEach(
+                    input => {
+
+                        const value =
+                            input.value.trim();
+
+
+                        if (value) {
+
+                            formData.append(
+                                "oic_roles",
+                                value
+                            );
+                        }
+                    }
+                );
+
+
+            // =================================================
+            // DATABASE PRIVILEGES
+            // =================================================
+
+            im090DatabasePrivileges.forEach(
+                privilege => {
+
+                    formData.append(
+                        "database_privileges",
+                        privilege
+                    );
                 }
             );
 
@@ -3401,6 +3905,19 @@
             button.innerText =
                 "Generar IM090";
         }
+
+        const durationNotice =
+            document.getElementById(
+                "im090-duration-notice"
+            );
+
+
+        if (durationNotice) {
+
+            durationNotice.style.display =
+                "none";
+        }
+
     }
 
     // =====================================================
@@ -3436,6 +3953,13 @@
 
     window.generateIM090 =
         generateIM090;
+
+    window.addIM090Role =
+        addIM090Role;
+
+
+    window.addIM090DbPrivilege =
+        addIM090DbPrivilege;
 
     // =====================================================
     // INITIALIZACIÓN DE DROPZONES
