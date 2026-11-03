@@ -177,7 +177,8 @@ def add_report_general_info_table(
             ""
         ),
 
-        report.get(
+        report.get("data_model_path")
+        or report.get(
             "data_model",
             ""
         ),

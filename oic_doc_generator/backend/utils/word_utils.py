@@ -14,8 +14,7 @@ from docx.shared import (
 
 from docx.enum.text import (
     WD_PARAGRAPH_ALIGNMENT,
-    WD_TAB_ALIGNMENT,
-    WD_TAB_LEADER
+    WD_TAB_ALIGNMENT
 )
 
 from docx.oxml import (
@@ -1172,169 +1171,6 @@ def _add_internal_hyperlink(
 
 
 # =========================================================
-# ADD PAGE REFERENCE FIELD
-# =========================================================
-
-def _add_pageref_field(
-    paragraph,
-    bookmark_name
-):
-
-    run = paragraph.add_run()
-
-
-    # =====================================================
-    # FIELD BEGIN
-    # =====================================================
-
-    field_begin = OxmlElement(
-        "w:fldChar"
-    )
-
-    field_begin.set(
-        qn("w:fldCharType"),
-        "begin"
-    )
-
-    field_begin.set(
-        qn("w:dirty"),
-        "true"
-    )
-
-
-    # =====================================================
-    # FIELD INSTRUCTION
-    # =====================================================
-
-    instruction = OxmlElement(
-        "w:instrText"
-    )
-
-    instruction.set(
-        qn("xml:space"),
-        "preserve"
-    )
-
-    instruction.text = (
-        f" PAGEREF {bookmark_name} \\h "
-    )
-
-
-    # =====================================================
-    # FIELD SEPARATOR
-    # =====================================================
-
-    field_separator = OxmlElement(
-        "w:fldChar"
-    )
-
-    field_separator.set(
-        qn("w:fldCharType"),
-        "separate"
-    )
-
-
-    # =====================================================
-    # INITIAL RESULT
-    # =====================================================
-
-    result_run = OxmlElement(
-        "w:r"
-    )
-
-    result_properties = OxmlElement(
-        "w:rPr"
-    )
-
-
-    fonts = OxmlElement(
-        "w:rFonts"
-    )
-
-    fonts.set(
-        qn("w:ascii"),
-        "Arial"
-    )
-
-    fonts.set(
-        qn("w:hAnsi"),
-        "Arial"
-    )
-
-    result_properties.append(
-        fonts
-    )
-
-
-    size = OxmlElement(
-        "w:sz"
-    )
-
-    size.set(
-        qn("w:val"),
-        "18"
-    )
-
-    result_properties.append(
-        size
-    )
-
-
-    result_run.append(
-        result_properties
-    )
-
-
-    result_text = OxmlElement(
-        "w:t"
-    )
-
-    # Word reemplazará este valor al actualizar el campo.
-    result_text.text = "1"
-
-    result_run.append(
-        result_text
-    )
-
-
-    # =====================================================
-    # FIELD END
-    # =====================================================
-
-    field_end = OxmlElement(
-        "w:fldChar"
-    )
-
-    field_end.set(
-        qn("w:fldCharType"),
-        "end"
-    )
-
-
-    run._r.append(
-        field_begin
-    )
-
-    run._r.append(
-        instruction
-    )
-
-    run._r.append(
-        field_separator
-    )
-
-    paragraph._p.append(
-        result_run
-    )
-
-    end_run = paragraph.add_run()
-
-    end_run._r.append(
-        field_end
-    )
-
-
-# =========================================================
 # CREATE TABLE OF CONTENTS PLACEHOLDER
 # =========================================================
 
@@ -1423,42 +1259,6 @@ def populate_toc_table(
         )
 
         return
-
-
-    # =====================================================
-    # AVAILABLE PAGE WIDTH
-    # =====================================================
-
-    section = document.sections[
-        0
-    ]
-
-
-    available_width = (
-
-        section.page_width
-
-        -
-
-        section.left_margin
-
-        -
-
-        section.right_margin
-    )
-
-
-    # Leave a little space before right margin.
-    page_number_position = (
-
-        available_width
-
-        -
-
-        Cm(
-            0.15
-        )
-    )
 
 
     # =====================================================
@@ -1558,17 +1358,6 @@ def populate_toc_table(
             )
 
 
-        # Right tab with dot leader.
-        tab_stops.add_tab_stop(
-
-            page_number_position,
-
-            WD_TAB_ALIGNMENT.RIGHT,
-
-            WD_TAB_LEADER.DOTS
-        )
-
-
         # =================================================
         # NUMBER
         # =================================================
@@ -1595,34 +1384,14 @@ def populate_toc_table(
         # TITLE / INTERNAL LINK
         # =================================================
 
+        # Sin número de página: un campo PAGEREF obliga a Word a
+        # pedir "actualizar campos" al abrir el documento. El
+        # título es un enlace clicable a su sección.
         _add_internal_hyperlink(
 
             paragraph,
 
             title,
-
-            bookmark
-        )
-
-
-        # =================================================
-        # DOT LEADER
-        # =================================================
-
-        separator_run = (
-            paragraph.add_run()
-        )
-
-        separator_run.add_tab()
-
-
-        # =================================================
-        # PAGE NUMBER
-        # =================================================
-
-        _add_pageref_field(
-
-            paragraph,
 
             bookmark
         )

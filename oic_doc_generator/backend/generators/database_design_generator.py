@@ -5,6 +5,9 @@
 # =========================================================
 
 import os
+import shutil
+
+from PIL import Image
 
 from docx.shared import (
     Inches
@@ -130,11 +133,39 @@ def add_erd_image(
             )
         ):
 
+            # Tamaño real del diagrama (diseñado al ancho útil
+            # de la página); si es más alto que la página, se
+            # reduce para que quepa.
+            with Image.open(image_path) as image:
+
+                dpi = (image.info.get("dpi") or (220, 220))[0]
+
+                width_in = image.width / dpi
+
+                height_in = image.height / dpi
+
+            section = document.sections[-1]
+
+            max_width = (
+                section.page_width - section.left_margin - section.right_margin
+            ) / 914400
+
+            max_height = (
+                section.page_height - section.top_margin - section.bottom_margin
+            ) / 914400 - 1.0
+
+            scale = min(1.0, max_width / width_in, max_height / height_in)
+
             document.add_picture(
 
                 image_path,
 
-                width=Inches(6.5)
+                width=Inches(width_in * scale)
+            )
+
+            shutil.rmtree(
+                os.path.dirname(image_path),
+                ignore_errors=True
             )
 
             document.add_paragraph("")

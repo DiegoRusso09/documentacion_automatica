@@ -6,6 +6,9 @@
 from io import BytesIO
 from datetime import datetime
 import os
+import shutil
+
+from PIL import Image
 
 from oic_doc_generator.api.job_manager import (
     advance_progress,
@@ -38,11 +41,6 @@ from docx.oxml.ns import (
     qn
 )
 
-from oic_doc_generator.backend.parsers.iar_parser import (
-    find_all_iar_files,
-    extract_iar
-)
-
 from oic_doc_generator.backend.parsers.project_parser import (
     get_project_name,
     read_project_xml,
@@ -52,6 +50,7 @@ from oic_doc_generator.backend.parsers.project_parser import (
 )
 
 from oic_doc_generator.backend.parsers.orchestration_parser import (
+    analyze_flow,
     get_endpoint_flows,
     generate_description
 )
@@ -98,8 +97,15 @@ from oic_doc_generator.backend.utils.xml_utils import (
     extract_application_from_refuri
 )
 
-from oic_doc_generator.backend.generators.diagram_generator import (
-    generate_sequence_diagram_png
+from oic_doc_generator.backend.generators.component_diagram_generator import (
+    collect_development_components,
+    latest_integration_versions,
+    render_component_diagram
+)
+
+from oic_doc_generator.backend.generators.sequence_diagram_generator import (
+    generate_general_sequence_diagram,
+    generate_integration_sequence_diagram
 )
 
 from oic_doc_generator.backend.parsers.vb_extractor import (
@@ -168,7 +174,8 @@ def apply_header_style(
 def add_framed_image(
     document,
     image_path,
-    width=Inches(6.5)
+    width=Inches(6.5),
+    native_size=False
 ):
 
     table = document.add_table(
@@ -209,12 +216,109 @@ def add_framed_image(
         WD_PARAGRAPH_ALIGNMENT.CENTER
     )
 
+    # =====================================================
+    # FIT TO PAGE
+    # =====================================================
+    #
+    # La imagen debe caber dentro de la celda: ancho útil de
+    # la página menos el relleno y el borde de la celda. Si
+    # no, Word recorta el lado derecho. Los diagramas altos
+    # se limitan también a la altura útil de la página.
+    # =====================================================
+
+    section = document.sections[-1]
+
+    max_width = (
+        section.page_width
+        - section.left_margin
+        - section.right_margin
+        - Inches(0.3)
+    )
+
+    max_height = (
+        section.page_height
+        - section.top_margin
+        - section.bottom_margin
+        - Inches(1.2)
+    )
+
+    with Image.open(image_path) as image:
+
+        ratio = image.height / image.width
+
+        dpi = (image.info.get("dpi") or (0, 0))[0]
+
+        pixel_width = image.width
+
+    picture_width = min(width, max_width)
+
+    # Diagramas diseñados en pulgadas: se insertan a su tamaño
+    # real (sin estirarlos), así la letra queda como se diseñó.
+    if native_size and dpi:
+        picture_width = min(picture_width, Inches(pixel_width / dpi))
+
+    if picture_width * ratio > max_height:
+        picture_width = int(max_height / ratio)
+
+    cell.width = max_width + Inches(0.2)
+
     run = paragraph.add_run()
 
     run.add_picture(
         image_path,
-        width=width
+        width=int(picture_width)
     )
+
+# =========================================================
+# ADD DIAGRAM IMAGE
+# =========================================================
+#
+# Genera un diagrama y lo inserta enmarcado. Si falla, el
+# DS140 se genera igual, sin la imagen.
+# =========================================================
+
+def add_diagram_image(
+    document,
+    build_image,
+    label
+):
+
+    try:
+
+        images = build_image()
+
+    except Exception as diagram_error:
+
+        print(
+            f"[DIAGRAMA] No se pudo generar {label}:",
+            repr(diagram_error)
+        )
+
+        return
+
+    # Un diagrama largo llega partido en varias imágenes.
+    if isinstance(images, str):
+        images = [images]
+
+    for index, image_path in enumerate(images or []):
+
+        if not image_path or not os.path.exists(image_path):
+            continue
+
+        if index:
+            document.add_paragraph("")
+
+        add_framed_image(
+            document,
+            image_path,
+            native_size=True
+        )
+
+        shutil.rmtree(
+            os.path.dirname(image_path),
+            ignore_errors=True
+        )
+
 
 # =========================================================
 # CREATE CUSTOM STYLES
@@ -909,20 +1013,13 @@ def calculate_ds140_progress_plan(
 
         try:
 
-            iar_files = (
-                find_all_iar_files(
+            # Una sola versión por integración (la más alta): un
+            # .par puede traer varias versiones de la misma.
+            for _integration_name, extracted_iar in (
+                latest_integration_versions(
                     package_path
                 )
-            )
-
-
-            for iar in iar_files:
-
-                extracted_iar = (
-                    extract_iar(
-                        iar
-                    )
-                )
+            ):
 
 
                 applications = (
@@ -1063,7 +1160,6 @@ def calculate_ds140_progress_plan(
 
                 if extraction_root:
 
-                    import shutil
 
                     shutil.rmtree(
                         extraction_root,
@@ -1206,39 +1302,8 @@ def generate_word_document(
 
     document = Document()
 
-    # =====================================================
-    # ACTUALIZAR CAMPOS AUTOMÁTICAMENTE AL ABRIR WORD
-    # =====================================================
-
-    settings = document.settings.element
-
-
-    existing_update_fields = settings.find(
-        qn("w:updateFields")
-    )
-
-
-    if existing_update_fields is not None:
-
-        settings.remove(
-            existing_update_fields
-        )
-
-
-    update_fields = OxmlElement(
-        "w:updateFields"
-    )
-
-
-    update_fields.set(
-        qn("w:val"),
-        "1"
-    )
-
-
-    settings.append(
-        update_fields
-    )
+    # Sin "w:updateFields": hacía que Word preguntara al abrir
+    # si actualizar campos. El índice usa enlaces, sin campos.
 
 
     create_custom_styles(
@@ -1500,6 +1565,37 @@ def generate_word_document(
         "entre ellos."
     )
 
+    # Diagrama maestro: un solo diagrama con todos los
+    # componentes del desarrollo (OIC, VB, APEX, BIP y BD).
+    # El mismo modelo alimenta la secuencia general (2.4).
+    try:
+
+        components_model = collect_development_components(
+            package_path=package_path,
+            visual_builder_apps=visual_builder_apps,
+            apex_apps=apex_apps,
+            bip_files=bip_files,
+            database_metadata=database_metadata
+        )
+
+    except Exception as model_error:
+
+        print(
+            "[COMPONENTES] No se pudo analizar el desarrollo:",
+            repr(model_error)
+        )
+
+        components_model = None
+
+    add_diagram_image(
+        document,
+        lambda: render_component_diagram(
+            components_model,
+            f"Diagrama de Componentes — {development_name}"
+        ) if components_model else None,
+        "componentes"
+    )
+
     document.add_paragraph("")
     document.add_paragraph("")
 
@@ -1519,6 +1615,26 @@ def generate_word_document(
         "que existe entre los "
         "componentes involucrados:"
     )
+
+    # Sin relaciones entre componentes (p. ej. solo objetos de
+    # base de datos) no hay secuencia: se indica en el texto.
+    if components_model and components_model.get("relations"):
+
+        add_diagram_image(
+            document,
+            lambda: generate_general_sequence_diagram(
+                components_model,
+                f"Diagrama de Secuencia — {development_name}"
+            ),
+            "secuencia general"
+        )
+
+    else:
+
+        document.add_paragraph(
+            "No aplica: el desarrollo no tiene interacción "
+            "entre componentes."
+        )
 
     document.add_paragraph("")
     document.add_paragraph("")
@@ -1554,15 +1670,11 @@ def generate_word_document(
 
     else:
 
-        iar_files = find_all_iar_files(
+        # Una sola versión por integración (la más alta): un .par
+        # puede traer varias versiones de la misma integración.
+        for _latest_name, extracted_iar in latest_integration_versions(
             package_path
-        )
-
-        for iar in iar_files:
-
-            extracted_iar = extract_iar(
-                iar
-            )
+        ):
 
             integration_name = (
                 get_project_name(
@@ -2046,68 +2158,34 @@ def generate_word_document(
                     "Diagrama de Secuencia del Endpoint:"
                 )
 
-                integration_type = "REST"
-
-                if is_scheduled_integration(
-                    extracted_iar
-                ):
-
-                    integration_type = "scheduled"
-
-                img_path = (
-                    generate_sequence_diagram_png(
-
-                        endpoint,
-
-                        rows,
-
-                        integration_type
-                    )
+                source_title = next(
+                    (
+                        app.get("ConnectionName")
+                        for app in applications
+                        if app.get("Role") == "source"
+                        and app.get("ConnectionName")
+                    ),
+                    "Cliente REST"
                 )
 
-                if img_path and os.path.exists(
-                    img_path
-                ):
-
-                    add_framed_image(
-
-                        document,
-
-                        img_path,
-
-                        width=Inches(6.5)
-                    )
-
-                    # =================================
-                    # CLEAN TEMP IMAGE
-                    # =================================
-
-                    try:
-
-                        image_dir = os.path.dirname(
-                            image_path
-                        )
-
-                        if os.path.exists(
-                            image_path
-                        ):
-                            os.remove(
-                                image_path
-                            )
-
-                        import shutil
-
-                        shutil.rmtree(
-                            image_dir,
-                            ignore_errors=True
-                        )
-
-                    except Exception as cleanup_error:
-
-                        print(
-                            "[VB CLEANUP]",
-                            cleanup_error
-                        )
+                add_diagram_image(
+                    document,
+                    lambda: generate_integration_sequence_diagram(
+                        analyze_flow(
+                            flow,
+                            applications,
+                            extracted_iar,
+                            root
+                        ),
+                        is_scheduled_integration(extracted_iar),
+                        f"Diagrama de Secuencia — {integration_name}",
+                        endpoint_name=endpoint,
+                        integration_title=integration_name,
+                        source_title=source_title,
+                        extracted_iar=extracted_iar
+                    ),
+                    f"secuencia de {integration_name}"
+                )
 
 
                 # =========================================
@@ -2210,7 +2288,13 @@ def generate_word_document(
         # APPLICATIONS
         # =================================================
 
-        for vb_zip in visual_builder_apps:
+        for app_number, vb_zip in enumerate(
+            visual_builder_apps,
+            start=1
+        ):
+
+            # Cada app lleva su propio título (3.1, 3.2...).
+            app_header_done = False
 
             try:
 
@@ -2303,7 +2387,9 @@ def generate_word_document(
                         ""
                     )
 
-                    if screen_counter == 1:
+                    if not app_header_done:
+
+                        app_header_done = True
 
                         if hasattr(
                             vb_zip,
@@ -2325,7 +2411,7 @@ def generate_word_document(
 
                         create_header(
                             document,
-                            f"3.1\t{app_name}",
+                            f"3.{app_number}\t{app_name}",
                             size=14
                         )
 
@@ -2654,7 +2740,6 @@ def generate_word_document(
 
                 if extraction_root:
 
-                    import shutil
 
                     shutil.rmtree(
                         extraction_root,
@@ -2814,6 +2899,13 @@ def generate_word_document(
             # REPORT SECTION
             # =============================================
 
+            if job_id:
+                update_activity(
+                    job_id,
+                    f"Documentando {len(bip_metadata.get('reports', []))} "
+                    f"reportes BI Publisher"
+                )
+
             add_report_design_section(
                 document,
                 bip_metadata
@@ -2865,6 +2957,14 @@ def generate_word_document(
 
         try:
             document.add_page_break()
+
+            if job_id:
+                update_activity(
+                    job_id,
+                    "Generando sentencias SQL de "
+                    f"{len(bip_metadata.get('reports', []))} reportes"
+                )
+
             add_sql_design_section(
                 document,
                 bip_metadata

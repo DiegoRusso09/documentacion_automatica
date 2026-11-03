@@ -8,6 +8,10 @@ import html
 import os
 import tempfile
 
+from oic_doc_generator.backend.renderers.screenshot_renderer import (
+    launch_chromium
+)
+
 from playwright.sync_api import (
     sync_playwright
 )
@@ -69,11 +73,7 @@ def render_html_exact(
 
     with sync_playwright() as playwright:
 
-        browser = (
-            playwright.chromium.launch(
-                headless=True
-            )
-        )
+        browser = launch_chromium(playwright)
 
 
         page = (

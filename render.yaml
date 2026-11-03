@@ -15,3 +15,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
+      # Clave de Google AI Studio; se rellena en el panel de Render.
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # Para varios proveedores: crea un Secret File llamado
+      # ia_proveedores.json (Render lo monta en /etc/secrets/),
+      # o define GROQ_API_KEY, CEREBRAS_API_KEY, etc.

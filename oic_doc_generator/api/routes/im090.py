@@ -26,6 +26,11 @@ from oic_doc_generator.api.services.im090_service import (
     generate_im090_service
 )
 
+from oic_doc_generator.backend.utils.job_temp import (
+    clean_old_deliveries,
+    job_temp_dir
+)
+
 from oic_doc_generator.api.job_manager import (
     create_job,
     get_job,
@@ -130,44 +135,49 @@ def run_im090_job(
 
     try:
 
-        generate_im090_service(
+        clean_old_deliveries()
 
-            job_id=
-                job_id,
+        # Temporales del trabajo: se borran al terminar.
+        with job_temp_dir("im090"):
 
-            author_name=
-                author_name,
+            generate_im090_service(
 
-            development_name=
-                development_name,
+                job_id=
+                    job_id,
 
-            schema_name=
-                schema_name,
+                author_name=
+                    author_name,
 
-            vb_files=
-                vb_files,
+                development_name=
+                    development_name,
 
-            apex_files=
-                apex_files,
+                schema_name=
+                    schema_name,
 
-            oic_files=
-                oic_files,
+                vb_files=
+                    vb_files,
 
-            bip_files=
-                bip_files,
+                apex_files=
+                    apex_files,
 
-            sql_files=
-                sql_files,
+                oic_files=
+                    oic_files,
 
-            erp_roles=
-                erp_roles,
+                bip_files=
+                    bip_files,
 
-            reviewers=
-                [],
+                sql_files=
+                    sql_files,
 
-            approvers=
-                approvers
-        )
+                erp_roles=
+                    erp_roles,
+
+                reviewers=
+                    [],
+
+                approvers=
+                    approvers
+            )
 
 
     except Exception as error:

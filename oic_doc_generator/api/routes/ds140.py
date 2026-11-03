@@ -15,6 +15,11 @@ from io import BytesIO
 import asyncio
 import traceback
 
+from oic_doc_generator.backend.utils.job_temp import (
+    clean_old_deliveries,
+    job_temp_dir
+)
+
 from oic_doc_generator.api.job_manager import (
     create_job,
     get_job,
@@ -89,26 +94,32 @@ def run_ds140_job(
             f"[DS140] Iniciando job {job_id}"
         )
 
-        generate_ds140_service(
+        clean_old_deliveries()
 
-            job_id,
+        # Todo lo intermedio (extracciones, imágenes...) se borra
+        # al terminar, aunque falle; el ZIP de entrega queda.
+        with job_temp_dir("ds140"):
 
-            author_name,
+            generate_ds140_service(
 
-            development_name,
+                job_id,
 
-            company_name,
+                author_name,
 
-            vb_files,
+                development_name,
 
-            apex_files,
+                company_name,
 
-            oic_files,
+                vb_files,
 
-            bip_files,
+                apex_files,
 
-            sql_files
-        )
+                oic_files,
+
+                bip_files,
+
+                sql_files
+            )
 
         print(
             f"[DS140] Job {job_id} finalizado"

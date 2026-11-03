@@ -185,7 +185,20 @@ def extract_datasource(
 
             return datasource
 
-    return ""
+    # Sin origen en los datasets: el data model usa su origen por
+    # defecto (defaultDataSourceRef, p. ej. ApplicationDB_FSCM).
+    return _default_datasource(dm_root)
+
+
+def _default_datasource(dm_root):
+
+    if dm_root is None:
+        return ""
+
+    return dm_root.attrib.get(
+        "defaultDataSourceRef",
+        ""
+    )
 
 
 # =========================================================
@@ -342,8 +355,17 @@ def extract_dataset_sqls(
 
         datasource = ""
 
+        dataset_type = "sql"
+
+        url = ""
+
         # =================================================
-        # SEARCH SQL
+        # SEARCH SQL / HTTP
+        # =================================================
+        #
+        # Un dataset puede ser SQL o HTTP (p. ej. llamar a una
+        # integración OIC por REST). Sin dataSourceRef propio,
+        # usa el origen por defecto del data model.
         # =================================================
 
         for child in elem.iter():
@@ -352,13 +374,32 @@ def extract_dataset_sqls(
 
                 child_tag = clean_tag(
                     child.tag
-                )
+                ).lower()
 
             except:
 
                 continue
 
-            if child_tag.lower() != "sql":
+            if child_tag == "http":
+
+                dataset_type = "http"
+
+                datasource = child.attrib.get(
+                    "dataSourceRef",
+                    ""
+                )
+
+                for http_child in child:
+
+                    try:
+                        if clean_tag(http_child.tag).lower() == "url":
+                            url = (http_child.text or "").strip()
+                    except Exception:
+                        continue
+
+                break
+
+            if child_tag != "sql":
 
                 continue
 
@@ -379,10 +420,16 @@ def extract_dataset_sqls(
                 dataset_name,
 
             "datasource":
-                datasource,
+                datasource or _default_datasource(dm_root),
 
             "sql":
-                sql_text
+                sql_text,
+
+            "type":
+                dataset_type,
+
+            "url":
+                url
         })
 
     return result

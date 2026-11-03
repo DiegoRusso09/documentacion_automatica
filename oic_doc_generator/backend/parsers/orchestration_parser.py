@@ -3,6 +3,8 @@
 # oic_doc_generator/parsers/orchestration_parser.py
 # =========================================================
 
+import os
+import re
 import xml.etree.ElementTree as ET
 
 from oic_doc_generator.backend.utils.xml_utils import (
@@ -15,7 +17,8 @@ from oic_doc_generator.backend.parsers.schedule_parser import (
 )
 
 from oic_doc_generator.backend.parsers.project_parser import (
-    build_application_map
+    build_application_map,
+    find_project_file
 )
 
 
@@ -242,6 +245,53 @@ def is_possible_scheduled_flow(
 # =========================================================
 # GENERATE DESCRIPTION
 # =========================================================
+#
+# Construye un esquema jerárquico del flujo a partir de la
+# orquestación real del .iar:
+#
+# - respeta qué actividades están dentro de cada While, For,
+#   Switch (ramas con su condición) y Scope;
+# - separa el manejo de errores del flujo principal;
+# - agrupa actividades consecutivas del mismo tipo.
+#
+# El esquema es el texto que recibe la IA y, si la IA no está
+# disponible, el que se escribe en el Word.
+# =========================================================
+
+# Etiquetas que no aportan a la descripción del flujo.
+IGNORED_TAGS = {
+    "integrationmetadata",
+    "transformer",
+    "receive",
+    "schedulereceive",
+    "pickreceive",
+    "subscribe",
+    "note"
+}
+
+# Actividades simples que se agrupan cuando son consecutivas.
+GROUPABLE_KINDS = {
+    "assignment": "Assignment",
+    "stitch": "Stitch (actualización de variables)",
+    "logger": "Logger (registro en el log de actividad)"
+}
+
+# Nombres por defecto que OIC pone a los grupos de Assignment.
+DEFAULT_LABEL_PREFIXES = (
+    "assign",
+    "label"
+)
+
+# Condiciones más largas se omiten: en el documento no aportan
+# y la IA no puede resumirlas sin riesgo de alterarlas.
+MAX_EXPRESSION_LENGTH = 120
+
+# Nombres por defecto que OIC pone a While/For/Switch/Scope.
+DEFAULT_ACTION_NAME = re.compile(
+    r"^(while|for|switch|scope|router)\d*$",
+    re.IGNORECASE
+)
+
 
 def generate_description(
     endpoint_name,
@@ -258,18 +308,111 @@ def generate_description(
             "el flujo."
         )
 
+    lines = render_flow_tree(
+        analyze_flow(
+            flow_node,
+            applications,
+            extracted_iar,
+            project_root
+        )
+    )
+
+    if not lines:
+        lines = ["- Flujo sin actividades"]
+
+    # =====================================================
+    # HEADER
+    # =====================================================
+
+    if is_scheduled_integration(extracted_iar):
+
+        header = "Integración programada. Flujo:"
+
+    else:
+
+        header = f"Endpoint {endpoint_name}. Flujo:"
+
+    return "\n".join([header] + lines)
+
+
+# =========================================================
+# RENDER
+# =========================================================
+
+def render_flow_tree(items, depth=0):
+
+    lines = []
+
+    indent = "  " * depth
+
+    for current in items:
+
+        if current["kind"] in GROUPABLE_KINDS:
+
+            text = (
+                f"{current['count']} "
+                f"{GROUPABLE_KINDS[current['kind']]}"
+            )
+
+            if current["names"]:
+                text += f" ({', '.join(current['names'])})"
+
+        else:
+
+            text = current["text"]
+
+        if current["children"]:
+            text += ":"
+
+        lines.append(f"{indent}- {text}")
+
+        lines.extend(
+            render_flow_tree(current["children"], depth + 1)
+        )
+
+    return lines
+
+
+# =========================================================
+# ANALYZE FLOW
+# =========================================================
+#
+# Devuelve el árbol del flujo. Cada item:
+#   {"kind", "text", "children", "count", "names"}
+# y las llamadas (kind "invoke") llevan además "app" con los
+# datos de la conexión o integración invocada. Lo usan la
+# descripción y los diagramas.
+# =========================================================
+
+def analyze_flow(
+    flow_node,
+    applications,
+    extracted_iar,
+    project_root
+):
+
     app_map = build_application_map(
         applications
     )
 
-    # =====================================================
-    # ROOT
-    # =====================================================
-
     root = project_root
 
     # =====================================================
-    # BUILD PROCESSOR MAP
+    # PROJECT DIR (para leer expr.properties)
+    # =====================================================
+
+    project_file = find_project_file(
+        extracted_iar
+    )
+
+    project_inf_dir = (
+        os.path.dirname(project_file)
+        if project_file
+        else ""
+    )
+
+    # =====================================================
+    # PROCESSOR MAP
     # =====================================================
 
     processor_map = {}
@@ -277,330 +420,337 @@ def generate_description(
     for elem in root.iter():
 
         try:
-
-            tag = clean_tag(
-                elem.tag
-            ).lower()
-
-        except:
-
+            tag = clean_tag(elem.tag).lower()
+        except Exception:
             continue
 
         if tag != "processor":
-
             continue
 
-        processor_name = elem.attrib.get(
-            "name",
-            ""
-        )
+        processor_name = elem.attrib.get("name", "")
 
         if processor_name:
-
-            processor_map[
-                processor_name
-            ] = elem
+            processor_map[processor_name] = elem
 
     # =====================================================
-    # GET PROCESSOR PROPERTY
+    # HELPERS
     # =====================================================
 
-    def get_processor_property(
-        processor_node,
-        property_name
-    ):
+    def child_text(node, child_tag):
+
+        for child in node:
+
+            try:
+                if clean_tag(child.tag).lower() == child_tag:
+                    return (child.text or "").strip()
+            except Exception:
+                continue
+
+        return ""
+
+    def get_processor(refuri):
+
+        return processor_map.get(
+            (refuri or "").split("/")[0]
+        )
+
+    def get_processor_property(processor_node, property_name):
 
         for child in processor_node.iter():
 
             try:
-
-                tag = clean_tag(
-                    child.tag
-                ).lower()
-
-            except:
-
-                continue
-
-            if tag != "property":
-
+                tag = clean_tag(child.tag).lower()
+            except Exception:
                 continue
 
             if (
-                child.attrib.get(
-                    "name",
-                    ""
-                )
-                ==
-                property_name
+                tag == "property"
+                and child.attrib.get("name", "") == property_name
             ):
-
-                return child.attrib.get(
-                    "value",
-                    ""
-                )
+                return child.attrib.get("value", "")
 
         return ""
 
+    def read_expression(container):
+
+        # Lee el primer expr.properties del nodo (processor u
+        # output) y devuelve (nombre, texto legible).
+
+        if container is None or not project_inf_dir:
+            return "", ""
+
+        for child in container.iter():
+
+            try:
+                tag = clean_tag(child.tag).lower()
+            except Exception:
+                continue
+
+            location = child.attrib.get("location", "")
+
+            if tag != "resource" or not location.endswith("expr.properties"):
+                continue
+
+            path = os.path.normpath(
+                os.path.join(project_inf_dir, location)
+            )
+
+            if not os.path.isfile(path):
+                continue
+
+            values = {}
+
+            with open(path, encoding="utf-8", errors="replace") as file:
+
+                for line in file:
+
+                    if " : " in line:
+                        key, value = line.split(" : ", 1)
+                        values[key.strip()] = value.strip()
+
+            text = values.get("TextExpression", "")
+
+            if len(text) > MAX_EXPRESSION_LENGTH:
+                text = "una condición compleja"
+
+            return values.get("ExpressionName", ""), text
+
+        return "", ""
+
+    def get_route_output(route_refuri):
+
+        # route refUri: processor_X/output_Y
+        parts = (route_refuri or "").split("/")
+
+        processor = get_processor(route_refuri)
+
+        if processor is None or len(parts) < 2:
+            return None
+
+        for child in processor:
+
+            try:
+                if (
+                    clean_tag(child.tag).lower() == "output"
+                    and child.attrib.get("name") == parts[1]
+                ):
+                    return child
+            except Exception:
+                continue
+
+        return None
+
     # =====================================================
-    # DESCRIPTION
+    # INVOKE
     # =====================================================
 
-    steps = []
+    def describe_invoke(node):
 
-    first_connection = True
+        app_ref = extract_application_from_refuri(
+            node.attrib.get("refUri", "")
+        )
+
+        if not app_ref:
+            return None
+
+        info = app_map.get(app_ref, {})
+
+        invoke_name = info.get("Invoke", app_ref)
+
+        if info.get("IsIntegration", False):
+
+            return (
+                f"Llamada a la integración "
+                f"{info.get('IntegrationCode', '')} "
+                f"versión {info.get('IntegrationVersion', '')}, "
+                f"endpoint {info.get('IntegrationService', '')} "
+                f"({info.get('IntegrationOperation', '')}), "
+                f"mediante el conector {invoke_name}"
+            )
+
+        return (
+            f"Conexión {info.get('Tipo', 'UNKNOWN')} "
+            f"{invoke_name}"
+        )
 
     # =====================================================
-    # RECURSIVE FLOW
+    # BUILD TREE
+    # =====================================================
+    #
+    # Cada item: {"kind", "text", "children", "count", "names"}
     # =====================================================
 
-    def process_node(node):
+    def item(kind, text="", children=None):
 
-        nonlocal first_connection
+        return {
+            "kind": kind,
+            "text": text,
+            "children": children or [],
+            "count": 1,
+            "names": []
+        }
+
+    def build(node):
+
+        items = []
 
         for child in list(node):
 
             try:
-
-                tag = clean_tag(
-                    child.tag
-                ).lower()
-
-            except:
-
+                tag = clean_tag(child.tag).lower()
+            except Exception:
                 continue
 
-            # =================================================
+            if tag in IGNORED_TAGS:
+                continue
+
+            processor = get_processor(
+                child.attrib.get("refUri", "")
+            )
+
+            processor_name = (
+                child_text(processor, "processorname")
+                if processor is not None
+                else ""
+            )
+
+            # ---------------------------------------------
             # INVOKE
-            # =================================================
+            # ---------------------------------------------
 
             if tag == "invoke":
 
-                refuri = child.attrib.get(
-                    "refUri",
-                    ""
-                )
+                text = describe_invoke(child)
 
-                app_ref = (
-                    extract_application_from_refuri(
-                        refuri
-                    )
-                )
+                if text:
 
-                if not app_ref:
+                    invoke_item = item("invoke", text)
 
-                    continue
-
-                invoke_name = app_ref
-
-                connection_type = "UNKNOWN"
-
-                if app_ref in app_map:
-
-                    invoke_name = (
-                        app_map[
-                            app_ref
-                        ].get(
-                            "Invoke",
-                            app_ref
-                        )
-                    )
-
-                    connection_type = (
-                        app_map[
-                            app_ref
-                        ].get(
-                            "Tipo",
-                            "UNKNOWN"
-                        )
-                    )
-
-                integration_info = (
-                    app_map.get(
-                        app_ref,
+                    invoke_item["app"] = app_map.get(
+                        extract_application_from_refuri(
+                            child.attrib.get("refUri", "")
+                        ),
                         {}
                     )
-                )
 
-                is_integration = (
-                    integration_info.get(
-                        "IsIntegration",
-                        False
+                    items.append(invoke_item)
+
+            # ---------------------------------------------
+            # ASSIGNMENTS (label = grupo de Assignment)
+            # ---------------------------------------------
+
+            elif tag == "label":
+
+                label_items = build(child)
+
+                label_name = child.attrib.get("name", "")
+
+                if (
+                    label_name
+                    and not label_name.lower().startswith(
+                        DEFAULT_LABEL_PREFIXES
                     )
-                )
+                ):
+                    for label_item in label_items:
+                        if label_item["kind"] == "assignment":
+                            label_item["names"].append(label_name)
+                            break
 
-                # =========================================
-                # INTEGRATION CALL
-                # =========================================
+                items.extend(label_items)
 
-                if is_integration:
+            elif tag in ["assign", "assignment"]:
 
-                    integration_code = (
-                        integration_info.get(
-                            "IntegrationCode",
-                            ""
+                items.append(item("assignment"))
+
+            elif tag == "stitch":
+
+                items.append(item("stitch"))
+
+            elif tag == "activitystreamlogger":
+
+                items.append(item("logger"))
+
+            # ---------------------------------------------
+            # SWITCH
+            # ---------------------------------------------
+
+            elif tag in ["switch", "router"]:
+
+                branches = []
+
+                for route in child:
+
+                    try:
+                        if clean_tag(route.tag).lower() != "route":
+                            continue
+                    except Exception:
+                        continue
+
+                    name, expression = read_expression(
+                        get_route_output(
+                            route.attrib.get("refUri", "")
                         )
                     )
 
-                    integration_version = (
-                        integration_info.get(
-                            "IntegrationVersion",
-                            ""
-                        )
-                    )
+                    if name.lower() == "otherwise" or expression == "Else":
 
-                    integration_operation = (
-                        integration_info.get(
-                            "IntegrationOperation",
-                            ""
-                        )
-                    )
-
-                    integration_service = (
-                        integration_info.get(
-                            "IntegrationService",
-                            ""
-                        )
-                    )
-
-                    steps.append(
-
-                        f"se llama al endpoint "
-                        f"\"{integration_service}\" "
-                        f"en la integración "
-                        f"\"{integration_code}\" "
-                        f"versión "
-                        f"\"{integration_version}\" "
-                        f"con operación "
-                        f"\"{integration_operation}\" "
-                        f"y el conector en el flujo "
-                        f"es llamado "
-                        f"{invoke_name}"
-                    )
-
-                # =========================================
-                # NORMAL CONNECTION
-                # =========================================
-
-                else:
-
-                    if first_connection:
-
-                        steps.append(
-
-                            f"una conexión "
-                            f"{connection_type} "
-                            f"llamada "
-                            f"{invoke_name}"
-                        )
-
-                        first_connection = False
+                        branch_text = "En cualquier otro caso (Otherwise)"
 
                     else:
 
-                        steps.append(
+                        branch_text = "Rama"
 
-                            f"se llama a una "
-                            f"conexión "
-                            f"{connection_type} "
-                            f"llamada "
-                            f"{invoke_name}"
+                        if name:
+                            branch_text += f" {name}"
+
+                        if expression:
+                            branch_text += f", si se cumple: {expression}"
+
+                    branches.append(
+                        item(
+                            "branch",
+                            branch_text,
+                            build(route) or [item("text", "Sin acciones")]
                         )
+                    )
 
-            # =================================================
-            # ASSIGNMENT
-            # =================================================
-
-            elif tag in [
-
-                "assign",
-
-                "assignment"
-            ]:
-
-                steps.append(
-                    "se realiza un Assignment"
+                items.append(
+                    item(
+                        "block",
+                        "Switch que evalúa condiciones y continúa por una rama",
+                        branches
+                    )
                 )
 
-            # =================================================
-            # SWITCH
-            # =================================================
-
-            elif tag in [
-
-                "switch",
-
-                "router"
-            ]:
-
-                steps.append(
-                    "se realiza un Switch"
-                )
-
-            # =================================================
+            # ---------------------------------------------
             # WHILE
-            # =================================================
+            # ---------------------------------------------
 
             elif tag == "while":
 
-                steps.append(
-                    "se realiza un While"
+                _, expression = read_expression(processor)
+
+                text = "While"
+
+                if (
+                    processor_name
+                    and not DEFAULT_ACTION_NAME.match(processor_name)
+                ):
+                    text += f" {processor_name}"
+
+                text += (
+                    f" que se repite mientras se cumpla: {expression}"
+                    if expression
+                    else " que se repite mientras se cumpla una condición"
                 )
 
-            # =================================================
-            # STAGE FILE
-            # =================================================
+                items.append(item("block", text, build(child)))
 
-            elif tag == "stagefile":
-
-                refuri = child.attrib.get(
-                    "refUri",
-                    ""
-                )
-
-                processor = processor_map.get(
-                    refuri
-                )
-
-                operation = ""
-
-                if processor is not None:
-
-                    operation = (
-                        get_processor_property(
-                            processor,
-                            "operation"
-                        )
-                    )
-
-                if operation:
-
-                    steps.append(
-
-                        f"stageFile de operación "
-                        f"{operation}"
-                    )
-
-                else:
-
-                    steps.append(
-                        "stageFile"
-                    )
-
-            # =================================================
+            # ---------------------------------------------
             # FOR
-            # =================================================
+            # ---------------------------------------------
 
             elif tag == "for":
-
-                refuri = child.attrib.get(
-                    "refUri",
-                    ""
-                )
-
-                processor = processor_map.get(
-                    refuri
-                )
 
                 iteration_name = ""
 
@@ -608,114 +758,179 @@ def generate_description(
 
                 if processor is not None:
 
-                    parallel = (
-                        get_processor_property(
-                            processor,
-                            "parallel"
-                        )
+                    parallel = get_processor_property(
+                        processor,
+                        "parallel"
                     )
 
                     for proc_child in processor.iter():
 
                         try:
-
-                            proc_tag = clean_tag(
-                                proc_child.tag
-                            ).lower()
-
-                        except:
-
+                            proc_tag = clean_tag(proc_child.tag).lower()
+                        except Exception:
                             continue
 
-                        if proc_tag == "subrole":
-
-                            if proc_child.text:
-
-                                iteration_name = (
-                                    proc_child.text.strip()
-                                )
+                        if proc_tag == "subrole" and proc_child.text:
+                            iteration_name = proc_child.text.strip()
 
                 mode = (
                     "paralela"
-                    if parallel.lower() == "true"
+                    if (parallel or "").lower() == "true"
                     else "secuencial"
                 )
 
+                text = "For"
+
                 if iteration_name:
+                    text += f" que recorre cada elemento de {iteration_name}"
 
-                    steps.append(
+                text += f" de manera {mode}"
 
-                        f"Ahora comienza un For "
-                        f"que itera sobre "
-                        f"{iteration_name} "
-                        f"de manera {mode}"
+                items.append(item("block", text, build(child)))
+
+            # ---------------------------------------------
+            # SCOPE / MANEJO DE ERRORES
+            # ---------------------------------------------
+
+            elif tag in ["try", "scope"]:
+
+                scope_name = child.attrib.get("name", "")
+
+                if DEFAULT_ACTION_NAME.match(scope_name):
+                    scope_name = ""
+
+                items.append(
+                    item(
+                        "block",
+                        f"Scope {scope_name}".strip(),
+                        build(child)
                     )
-
-                else:
-
-                    steps.append(
-                        "Ahora comienza un For"
-                    )
-
-            # =================================================
-            # SCOPE
-            # =================================================
-
-            elif tag == "scope":
-
-                steps.append(
-                    "se realiza un Scope"
                 )
 
-            # =================================================
-            # RECURSIVE
-            # =================================================
+            elif tag == "globaltry":
 
-            process_node(child)
+                # Envuelve todo el flujo: sus actividades son el
+                # flujo principal y su catchAll el manejo global.
+                items.extend(build(child))
+
+            elif tag in ["catchall", "catch"]:
+
+                is_global = clean_tag(node.tag).lower() == "globaltry"
+
+                items.append(
+                    item(
+                        "block",
+                        (
+                            "Manejo global de errores, si cualquier "
+                            "paso del flujo falla"
+                            if is_global
+                            else "Si ocurre un error en este Scope"
+                        ),
+                        build(child) or [item("text", "Sin acciones")]
+                    )
+                )
+
+            # ---------------------------------------------
+            # OTRAS ACTIVIDADES
+            # ---------------------------------------------
+
+            elif tag == "stagefile":
+
+                operation = (
+                    get_processor_property(processor, "operation")
+                    if processor is not None
+                    else ""
+                )
+
+                items.append(
+                    item(
+                        "simple",
+                        f"stageFile de operación {operation}"
+                        if operation
+                        else "stageFile"
+                    )
+                )
+
+            elif tag == "notification":
+
+                items.append(item("simple", "Envío de notificación por correo"))
+
+            elif tag == "wait":
+
+                _, expression = read_expression(processor)
+
+                items.append(
+                    item(
+                        "simple",
+                        f"Wait (espera de {expression} segundos)"
+                        if expression
+                        else "Wait (espera)"
+                    )
+                )
+
+            elif tag == "reply":
+
+                items.append(item("simple", "Reply (devuelve la respuesta al invocador)"))
+
+            elif tag == "stop":
+
+                items.append(item("simple", "Stop (fin del flujo)"))
+
+            elif tag == "ehstop":
+
+                items.append(item("simple", "Fin del manejo de errores"))
+
+            # ---------------------------------------------
+            # DESCONOCIDO: se recorre para no perder llamadas
+            # ---------------------------------------------
+
+            else:
+
+                items.extend(build(child))
+
+        return merge_consecutive(items)
+
+    def merge_consecutive(items):
+
+        merged = []
+
+        for current in items:
+
+            previous = merged[-1] if merged else None
+
+            if (
+                previous
+                and current["kind"] in GROUPABLE_KINDS
+                and previous["kind"] == current["kind"]
+            ):
+                previous["count"] += current["count"]
+                previous["names"].extend(current["names"])
+                continue
+
+            merged.append(current)
+
+        return merged
 
     # =====================================================
-    # PROCESS FLOW
+    # FLOW ROOT
+    # =====================================================
+    #
+    # Para integraciones programadas el flujo puede llegar
+    # como la raíz del proyecto: se usa su orquestación.
     # =====================================================
 
-    process_node(flow_node)
+    if clean_tag(flow_node.tag).lower() not in [
+        "orchestration",
+        "pickreceive"
+    ]:
 
-    # =====================================================
-    # EMPTY FLOW
-    # =====================================================
+        for elem in flow_node.iter():
 
-    if len(steps) == 0:
+            try:
+                if clean_tag(elem.tag).lower() == "orchestration":
+                    flow_node = elem
+                    break
+            except Exception:
+                continue
 
-        steps.append(
-            "inicio del flujo"
-        )
-
-    # =====================================================
-    # PREFIX
-    # =====================================================
-
-    if is_scheduled_integration(
-        extracted_iar
-    ):
-
-        description = (
-            "La integración "
-            "programada comienza con: "
-        )
-
-    else:
-
-        description = (
-            f"El endpoint "
-            f"{endpoint_name} "
-            f"comienza con: "
-        )
-
-    # =====================================================
-    # FINAL DESCRIPTION
-    # =====================================================
-
-    description += ", ".join(steps)
-
-    description += "."
-
-    return description
+    return build(flow_node)

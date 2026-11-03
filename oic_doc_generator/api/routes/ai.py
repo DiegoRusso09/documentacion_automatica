@@ -38,7 +38,7 @@ class NaturalizeTextRequest(
 @router.post(
     "/ai/naturalize"
 )
-async def naturalize_text(
+def naturalize_text(
     request: NaturalizeTextRequest
 ):
 

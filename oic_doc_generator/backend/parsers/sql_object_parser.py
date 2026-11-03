@@ -4,6 +4,7 @@
 # =========================================================
 
 from oic_doc_generator.backend.parsers.sql_table_parser import (
+    extract_alter_foreign_keys,
     extract_tables
 )
 
@@ -502,6 +503,8 @@ def parse_sql_files(
 
     all_triggers = []
 
+    all_alter_foreign_keys = {}
+
     # =====================================================
     # ITERATE FILES
     # =====================================================
@@ -558,6 +561,22 @@ def parse_sql_files(
                 )
             )
 
+            all_inserts.extend(
+                parsed.get(
+                    "inserts",
+                    []
+                )
+            )
+
+            for table, foreign_keys in extract_alter_foreign_keys(
+                read_sql_file(uploaded_file)
+            ).items():
+
+                all_alter_foreign_keys.setdefault(
+                    table,
+                    []
+                ).extend(foreign_keys)
+
         except Exception as e:
 
             file_name = getattr(
@@ -602,6 +621,21 @@ def parse_sql_files(
     result["triggers"] = merge_triggers(
         all_triggers
     )
+
+    # Orden global de los INSERT (en el orden de los archivos).
+    for order, insert in enumerate(all_inserts, start=1):
+        insert["insert_order"] = order
+
+    result["inserts"] = all_inserts
+
+    for table in result["tables"]:
+
+        name = (table.get("table_name") or "").upper()
+
+        for foreign_key in all_alter_foreign_keys.get(name, []):
+
+            if foreign_key not in table.setdefault("foreign_keys", []):
+                table["foreign_keys"].append(foreign_key)
 
     return result
 

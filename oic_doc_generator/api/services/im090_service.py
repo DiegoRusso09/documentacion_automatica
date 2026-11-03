@@ -1551,10 +1551,13 @@ def generate_im090_service(
     # DELIVERY FOLDER
     # =====================================================
 
+    # Fuera de la carpeta del trabajo: se descarga después.
     delivery_folder = (
         tempfile.mkdtemp(
             prefix=
-                "im090_delivery_"
+                "im090_delivery_",
+            dir=
+                tempfile.gettempdir()
         )
     )
 

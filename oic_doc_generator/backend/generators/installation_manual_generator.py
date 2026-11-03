@@ -25,8 +25,7 @@ from docx.enum.table import (
 )
 
 from docx.oxml import (
-    parse_xml,
-    OxmlElement
+    parse_xml
 )
 
 from docx.oxml.ns import (
@@ -5400,43 +5399,8 @@ def generate_installation_manual(
     document = Document()
 
 
-    # =====================================================
-    # UPDATE WORD FIELDS
-    # =====================================================
-
-    settings = (
-        document.settings.element
-    )
-
-
-    existing_update_fields = (
-        settings.find(
-            qn(
-                "w:updateFields"
-            )
-        )
-    )
-
-
-    if existing_update_fields is not None:
-
-        settings.remove(
-            existing_update_fields
-        )
-
-
-    update_fields = OxmlElement(
-        "w:updateFields"
-    )
-
-    update_fields.set(
-        qn("w:val"),
-        "1"
-    )
-
-    settings.append(
-        update_fields
-    )
+    # Sin "w:updateFields": hacía que Word preguntara al abrir
+    # si actualizar campos. El índice usa enlaces, sin campos.
 
 
     # =====================================================

@@ -274,6 +274,30 @@ def extract_data_model_name(
     return ""
 
 
+def extract_data_model_path(
+    report_root
+):
+
+    # Ruta completa del data model en el catálogo, tal como la
+    # guarda el reporte: /Custom/.../Data Models/Nombre.xdm
+    if report_root is None:
+
+        return ""
+
+    for elem in report_root.iter():
+
+        try:
+            tag = clean_tag(elem.tag)
+        except Exception:
+            continue
+
+        if tag.lower() == "datamodel" and elem.attrib.get("url"):
+
+            return unquote(elem.attrib["url"]).strip()
+
+    return ""
+
+
 # =========================================================
 # EXTRACT TEMPLATES
 # =========================================================
@@ -586,6 +610,10 @@ def parse_bip_report(
     # =====================================================
 
     result["data_model"] = extract_data_model_name(
+        report_root
+    )
+
+    result["data_model_path"] = extract_data_model_path(
         report_root
     )
 

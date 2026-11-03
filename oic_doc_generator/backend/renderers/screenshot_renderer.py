@@ -5,7 +5,10 @@
 
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
+import threading
 
 from playwright.sync_api import (
     sync_playwright
@@ -120,6 +123,71 @@ def save_render_html(
 # =========================================================
 # GENERATE SCREENSHOT
 # =========================================================
+#
+# Opciones de Chromium para servidores con poca memoria
+# (Render free: 512 MB para todo): sin GPU, sin extensiones,
+# sin tareas en segundo plano y un solo proceso de render.
+# No cambian cómo se ve la captura.
+# =========================================================
+
+_install_lock = threading.Lock()
+
+
+def _install_chromium():
+
+    # Descarga el navegador de Playwright si no está (p. ej. en
+    # Render sin "playwright install chromium" en el build).
+    with _install_lock:
+
+        print("[PLAYWRIGHT] Chromium no instalado: descargando...")
+
+        subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            check=True,
+            timeout=600
+        )
+
+        print("[PLAYWRIGHT] Chromium instalado")
+
+
+def launch_chromium(playwright):
+
+    # Lanza Chromium con opciones de poca memoria. Si falta el
+    # ejecutable, lo instala una vez y reintenta.
+    try:
+
+        return playwright.chromium.launch(
+            headless=True,
+            args=CHROMIUM_LOW_MEMORY_ARGS
+        )
+
+    except Exception as error:
+
+        if "Executable doesn't exist" not in str(error):
+            raise
+
+        _install_chromium()
+
+        return playwright.chromium.launch(
+            headless=True,
+            args=CHROMIUM_LOW_MEMORY_ARGS
+        )
+
+
+CHROMIUM_LOW_MEMORY_ARGS = [
+    "--disable-gpu",
+    "--disable-dev-shm-usage",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-default-apps",
+    "--disable-sync",
+    "--no-first-run",
+    "--mute-audio",
+    "--renderer-process-limit=1",
+    "--single-process",
+    "--no-zygote",
+    "--js-flags=--max-old-space-size=256"
+]
 
 def generate_screenshot(
     html_path,
@@ -133,9 +201,7 @@ def generate_screenshot(
             playwright.chromium.executable_path
         )
 
-        browser = playwright.chromium.launch(
-            headless=True
-        )
+        browser = launch_chromium(playwright)
 
         print("[PLAYWRIGHT] browser started")
 

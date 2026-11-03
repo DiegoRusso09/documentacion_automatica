@@ -148,15 +148,54 @@ def extract_primary_keys(
 # EXTRACT FK
 # =========================================================
 
+FOREIGN_KEY_PATTERN = (
+    r'FOREIGN\s+KEY\s*\((.*?)\)\s*REFERENCES\s+'
+    r'([A-Z0-9_$#"]+(?:\s*\.\s*[A-Z0-9_$#"]+)?)\s*\((.*?)\)'
+)
+
+ALTER_FOREIGN_KEY_PATTERN = re.compile(
+    r'ALTER\s+TABLE\s+([A-Z0-9_$#"]+(?:\s*\.\s*[A-Z0-9_$#"]+)?)\s+'
+    r'ADD\s+(?:CONSTRAINT\s+[A-Z0-9_$#"]+\s+)?'
+    r'(FOREIGN\s+KEY\s*\(.*?\)\s*REFERENCES\s+.*?\(.*?\))',
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def _object_name(value):
+
+    # ESQUEMA."TABLA" -> TABLA (sin esquema ni comillas)
+    return value.replace('"', "").split(".")[-1].strip().upper()
+
+
+def extract_alter_foreign_keys(
+    sql_text
+):
+
+    # FK definidas aparte: ALTER TABLE T ADD CONSTRAINT X
+    # FOREIGN KEY (C) REFERENCES P (C). Devuelve {tabla: [fk]}.
+    result = {}
+
+    for table, clause in ALTER_FOREIGN_KEY_PATTERN.findall(sql_text or ""):
+
+        result.setdefault(
+            _object_name(table),
+            []
+        ).extend(
+            extract_foreign_keys(clause)
+        )
+
+    return result
+
 def extract_foreign_keys(
     table_body
 ):
 
     result = []
 
+    # Acepta esquema y comillas: REFERENCES ESQUEMA."TABLA" (COL)
     matches = re.findall(
 
-        r'FOREIGN\s+KEY\s*\((.*?)\)\s*REFERENCES\s+([A-Z0-9_]+)\s*\((.*?)\)',
+        FOREIGN_KEY_PATTERN,
 
         table_body,
 
@@ -165,11 +204,11 @@ def extract_foreign_keys(
 
     for match in matches:
 
-        local_column = match[0].strip().upper()
+        local_column = match[0].replace('"', "").strip().upper()
 
-        parent_table = match[1].strip()
+        parent_table = _object_name(match[1])
 
-        parent_column = match[2].strip()
+        parent_column = match[2].replace('"', "").strip().upper()
 
         result.append({
 

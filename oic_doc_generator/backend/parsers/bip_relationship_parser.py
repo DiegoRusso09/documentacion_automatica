@@ -408,6 +408,12 @@ def match_reports_with_dms(
                     ""
                 ),
 
+            "data_model_path":
+                report_metadata.get(
+                    "data_model_path",
+                    ""
+                ),
+
             "datasource":
                 "",
 
@@ -541,6 +547,12 @@ def build_report_dependency_map(
             "data_model":
                 report.get(
                     "data_model",
+                    ""
+                ),
+
+            "data_model_path":
+                report.get(
+                    "data_model_path",
                     ""
                 ),
 

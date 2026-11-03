@@ -1,0 +1,22 @@
+{
+  "_instrucciones": [
+    "Copia este archivo como ia_proveedores.json (no se sube a git) y pega las claves.",
+    "Si api_key está vacía se usa la variable de entorno GEMINI_API_KEY.",
+    "claves_respaldo: claves de OTROS proyectos de Google (el cupo es por proyecto). Se usan en orden cuando la clave activa agota su cupo diario (429 PerDay), llega al límite por minuto o deja de ser válida. Las vacías se ignoran.",
+    "El cupo diario real lo detecta Gemini: la clave agotada se marca hasta medianoche del Pacífico y el log muestra el límite real del proyecto.",
+    "tope_diario: tope local opcional por clave (0 = sin tope, usa el límite real de Gemini).",
+    "Comprueba la configuración con: .venv\\Scripts\\python scripts\\probar_proveedores.py"
+  ],
+  "proveedores": [
+    {
+      "nombre": "gemini",
+      "api_key": "",
+      "modelo": "gemini-3.5-flash-lite",
+      "tope_diario": 0,
+      "claves_respaldo": [
+        "",
+        ""
+      ]
+    }
+  ]
+}

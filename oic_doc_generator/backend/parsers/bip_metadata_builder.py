@@ -200,6 +200,45 @@ def build_bip_metadata(
 
     result = []
 
+    def data_model_path(report):
+
+        # 1) La ruta que guarda el propio reporte (.xdo).
+        path = (report.get("data_model_path") or "").strip()
+
+        if path:
+            return path
+
+        # 2) Un data model subido con el mismo nombre; si hay
+        #    varios, el de la carpeta más parecida al reporte.
+        name = (report.get("data_model") or "").strip().upper()
+
+        report_folder = (report.get("report_path") or "").rsplit("/", 1)[0].upper()
+
+        candidates = [
+            data_model["dm_path"]
+            for data_model in data_models
+            if (data_model.get("dm_name") or "").strip().upper() == name
+            and data_model.get("dm_path")
+        ]
+
+        if not candidates:
+            return ""
+
+        def shared_prefix(path):
+
+            count = 0
+
+            for left, right in zip(path.upper(), report_folder):
+
+                if left != right:
+                    break
+
+                count += 1
+
+            return count
+
+        return max(candidates, key=shared_prefix)
+
     # =====================================================
     # ITERATE REPORTS
     # =====================================================
@@ -290,6 +329,9 @@ def build_bip_metadata(
 
             "data_model":
                 data_model,
+
+            "data_model_path":
+                data_model_path(report),
 
             "datasource":
                 datasource,

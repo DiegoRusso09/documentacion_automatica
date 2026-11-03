@@ -473,9 +473,12 @@ def generate_ds140_service(
     # DELIVERY FOLDER
     # =====================================================
 
+    # Fuera de la carpeta del trabajo: se descarga después.
     delivery_folder = tempfile.mkdtemp(
         prefix=
-            "ds140_delivery_"
+            "ds140_delivery_",
+        dir=
+            tempfile.gettempdir()
     )
 
 

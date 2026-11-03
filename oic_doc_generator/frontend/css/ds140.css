@@ -1360,3 +1360,75 @@
     color: #667085;
     cursor: pointer;
 }
+
+/* =========================================================
+   APP MODAL (reemplaza alert)
+   ========================================================= */
+
+.app-modal-overlay {
+    z-index: 10050;
+    animation: app-modal-fade .15s ease-out;
+}
+
+.app-modal-overlay.app-modal-closing {
+    opacity: 0;
+    transition: opacity .15s ease-in;
+}
+
+.app-modal {
+    max-width: 440px;
+    animation: app-modal-pop .18s ease-out;
+}
+
+.app-modal-body {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 26px 24px 18px 24px;
+}
+
+.app-modal-icon {
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    background: #5B8DB8;
+}
+
+.app-modal-error .app-modal-icon { background: #C74634; }
+.app-modal-warning .app-modal-icon { background: #E0A100; }
+.app-modal-success .app-modal-icon { background: #3BAA6E; }
+
+.app-modal-title {
+    margin: 2px 0 6px 0;
+    font-size: 18px;
+    color: #222;
+}
+
+.app-modal-message {
+    margin: 0;
+    color: #444;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.app-modal .custom-dialog-footer {
+    padding: 14px 24px 20px 24px;
+}
+
+@keyframes app-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes app-modal-pop {
+    from { transform: translateY(8px) scale(.98); opacity: 0; }
+    to { transform: none; opacity: 1; }
+}

@@ -15,6 +15,143 @@
 
 
     // =====================================================
+    // APP MODAL (reemplaza a alert)
+    // =====================================================
+    //
+    // Mismo estilo que los diálogos de la app. El tipo se
+    // deduce del mensaje (error / aviso / información) si no
+    // se indica.
+    // =====================================================
+
+    const MODAL_TYPES = {
+        error: { icon: "✕", title: "Ocurrió un problema" },
+        warning: { icon: "!", title: "Revisa la información" },
+        info: { icon: "i", title: "Información" },
+        success: { icon: "✓", title: "Listo" }
+    };
+
+    function guessModalType(message) {
+
+        const text = String(message || "").toLowerCase();
+
+        if (/error|no fue posible|fall|se perdió|se detuvo/.test(text)) {
+            return "error";
+        }
+
+        if (/debe |seleccion|cargar|indicar|ingres/.test(text)) {
+            return "warning";
+        }
+
+        if (/correctamente|éxito|listo|registrad/.test(text)) {
+            return "success";
+        }
+
+        return "info";
+    }
+
+    function showAppModal(message, options = {}) {
+
+        const type =
+            options.type || guessModalType(message);
+
+        const meta =
+            MODAL_TYPES[type] || MODAL_TYPES.info;
+
+        return new Promise((resolve) => {
+
+            const overlay = document.createElement("div");
+
+            overlay.className = "custom-dialog-overlay app-modal-overlay";
+
+            overlay.innerHTML = `
+                <div class="custom-dialog app-modal app-modal-${type}"
+                     role="alertdialog" aria-modal="true">
+                    <div class="app-modal-body">
+                        <div class="app-modal-icon"></div>
+                        <div class="app-modal-content">
+                            <h3 class="app-modal-title"></h3>
+                            <p class="app-modal-message"></p>
+                        </div>
+                    </div>
+                    <div class="custom-dialog-footer">
+                        <button type="button" class="dialog-primary-btn app-modal-ok">
+                            Entendido
+                        </button>
+                    </div>
+                </div>`;
+
+            // Texto seguro (sin interpretar HTML del mensaje).
+            overlay.querySelector(".app-modal-icon").textContent = meta.icon;
+
+            overlay.querySelector(".app-modal-title").textContent =
+                options.title || meta.title;
+
+            overlay.querySelector(".app-modal-message").textContent =
+                String(message ?? "");
+
+            const close = () => {
+
+                document.removeEventListener("keydown", onKey);
+
+                overlay.classList.add("app-modal-closing");
+
+                setTimeout(() => overlay.remove(), 150);
+
+                resolve();
+            };
+
+            const onKey = (event) => {
+
+                if (event.key === "Escape" || event.key === "Enter") {
+                    event.preventDefault();
+                    close();
+                }
+            };
+
+            overlay.querySelector(".app-modal-ok").addEventListener("click", close);
+
+            overlay.addEventListener("click", (event) => {
+                if (event.target === overlay) {
+                    close();
+                }
+            });
+
+            document.addEventListener("keydown", onKey);
+
+            document.body.appendChild(overlay);
+
+            overlay.querySelector(".app-modal-ok").focus();
+        });
+    }
+
+
+    // =====================================================
+    // CAMPOS OBLIGATORIOS
+    // =====================================================
+    //
+    // Un campo obligatorio vacío no bloquea la generación:
+    // se envía como UNDEFINED, que se ve claramente en el
+    // documento y se puede corregir después.
+    // =====================================================
+
+    const UNDEFINED_VALUE = "UNDEFINED";
+
+    function valueOrUndefined(value) {
+
+        const text = String(value ?? "").trim();
+
+        return text || UNDEFINED_VALUE;
+    }
+
+    function fieldOrUndefined(id) {
+
+        return valueOrUndefined(
+            document.getElementById(id)?.value
+        );
+    }
+
+
+    // =====================================================
     // PROGRESS ANIMATION
     // =====================================================
 
@@ -23,6 +160,15 @@
     let targetProgress = 0;
 
     let progressAnimationFrame = null;
+
+    // Fallos seguidos al consultar el estado. Un 502 suelto
+    // (p. ej. el servidor ocupado) no debe cancelar todo.
+    let statusFailures = 0;
+
+    const MAX_STATUS_FAILURES = 8;
+
+    // Color normal de la barra (el mismo de ds140.html).
+    const PROGRESS_COLOR = "#6DBE45";
 
 
     // =====================================================
@@ -56,6 +202,98 @@
 
             progressBar.style.width =
                 "0%";
+        }
+    }
+
+
+    // =====================================================
+    // SHOW PROGRESS ERROR
+    // =====================================================
+    //
+    // Detiene la barra, la pone en rojo y explica qué pasó,
+    // para que no parezca que el proceso sigue avanzando.
+    // =====================================================
+
+    function showProgressError(message) {
+
+        if (progressAnimationFrame) {
+
+            cancelAnimationFrame(
+                progressAnimationFrame
+            );
+
+            progressAnimationFrame = null;
+        }
+
+        const progressBar =
+            document.getElementById(
+                "progress-bar"
+            );
+
+        if (progressBar) {
+
+            progressBar.style.transition =
+                "none";
+
+            progressBar.style.width =
+                `${displayedProgress}%`;
+
+            progressBar.style.background =
+                "#C0392B";
+        }
+
+        const progressText =
+            document.getElementById(
+                "progress-text"
+            );
+
+        if (progressText) {
+
+            progressText.innerText =
+                "Error - el proceso se detuvo";
+        }
+
+        const activityText =
+            document.getElementById(
+                "activity-text"
+            );
+
+        if (activityText) {
+
+            activityText.innerText =
+                message;
+        }
+
+        const detailText =
+            document.getElementById(
+                "detail-text"
+            );
+
+        if (detailText) {
+
+            detailText.innerText =
+                "Vuelve a intentarlo. Si se repite, el servidor puede " +
+                "haberse quedado sin memoria con archivos muy grandes.";
+        }
+    }
+
+
+    function clearProgressError() {
+
+        const progressBar =
+            document.getElementById(
+                "progress-bar"
+            );
+
+        // Vuelve al verde y la transición originales de la
+        // barra (definidos en ds140.html).
+        if (progressBar) {
+
+            progressBar.style.background =
+                PROGRESS_COLOR;
+
+            progressBar.style.transition =
+                "width .3s";
         }
     }
 
@@ -1064,24 +1302,18 @@
 
             formData.append(
                 "author_name",
-                author
-                    ? author.value
-                    : ""
+                valueOrUndefined(author?.value)
             );
 
 
             formData.append(
                 "development_name",
-                development
-                    ? development.value
-                    : ""
+                valueOrUndefined(development?.value)
             );
 
             formData.append(
                 "company_name",
-                company
-                    ? company.value.trim()
-                    : ""
+                valueOrUndefined(company?.value)
             );
 
 
@@ -1178,6 +1410,10 @@
             currentJobId =
                 result.job_id;
 
+            statusFailures = 0;
+
+            clearProgressError();
+
 
             if (statusInterval) {
 
@@ -1204,7 +1440,7 @@
             );
 
 
-            alert(
+            showAppModal(
                 error.message
             );
 
@@ -1253,6 +1489,8 @@
 
             const job =
                 await response.json();
+
+            statusFailures = 0;
 
 
             if (!job) {
@@ -1448,7 +1686,12 @@
                     null;
 
 
-                alert(
+                showProgressError(
+                    job.error ||
+                    "Error generando documento"
+                );
+
+                showAppModal(
                     job.error ||
                     "Error generando documento"
                 );
@@ -1465,6 +1708,26 @@
                 error
             );
 
+            statusFailures += 1;
+
+            // Fallo momentáneo: se sigue consultando.
+            if (statusFailures < MAX_STATUS_FAILURES) {
+
+                const activityText =
+                    document.getElementById(
+                        "activity-text"
+                    );
+
+                if (activityText) {
+
+                    activityText.innerText =
+                        `Reconectando con el servidor... ` +
+                        `(intento ${statusFailures} de ${MAX_STATUS_FAILURES})`;
+                }
+
+                return;
+            }
+
 
             if (statusInterval) {
 
@@ -1476,9 +1739,19 @@
                     null;
             }
 
+            const lost = /\((404|502|503)\)/.test(error.message);
 
-            alert(
-                error.message
+            const message = lost
+                ? "El servidor se reinició y el proceso se perdió " +
+                  `(${error.message.match(/\((\d+)\)/)[1]}).`
+                : error.message;
+
+            showProgressError(
+                message
+            );
+
+            showAppModal(
+                message
             );
 
 
@@ -1526,49 +1799,21 @@
         return {
 
             autor:
-                document
-                    .getElementById(
-                        "dialog_author"
-                    )
-                    ?.value
-                    .trim()
-                || "",
+                fieldOrUndefined("dialog_author"),
 
             nombre_desarrollo:
-                document
-                    .getElementById(
-                        "dialog_development_name"
-                    )
-                    ?.value
-                    .trim()
-                || "",
+                fieldOrUndefined("dialog_development_name"),
 
             empresa:
-                document
-                    .getElementById(
-                        "dialog_company"
-                    )
-                    ?.value
-                    .trim()
-                || "",
+                fieldOrUndefined("dialog_company"),
 
             esquema:
-                document
-                    .getElementById(
-                        "dialog_schema"
-                    )
-                    ?.value
-                    .trim()
-                || "",
+                requiresSchema
+                    ? fieldOrUndefined("dialog_schema")
+                    : (document.getElementById("dialog_schema")?.value.trim() || ""),
 
             numero_ticket:
-                document
-                    .getElementById(
-                        "dialog_ticket"
-                    )
-                    ?.value
-                    .trim()
-                || "",
+                fieldOrUndefined("dialog_ticket"),
 
             requiresSchema:
                 requiresSchema
@@ -1585,61 +1830,7 @@
             getRegisterFormData();
 
 
-        // =====================================================
-        // VALIDATIONS
-        // =====================================================
-
-        if (!data.autor) {
-
-            alert(
-                "Debe ingresar el autor."
-            );
-
-            return;
-        }
-
-
-        if (!data.nombre_desarrollo) {
-
-            alert(
-                "Debe ingresar el nombre de desarrollo."
-            );
-
-            return;
-        }
-
-
-        if (!data.empresa) {
-
-            alert(
-                "Debe ingresar la empresa."
-            );
-
-            return;
-        }
-
-
-        if (
-            data.requiresSchema &&
-            !data.esquema
-        ) {
-
-            alert(
-                "Debe ingresar el esquema."
-            );
-
-            return;
-        }
-
-
-        if (!data.numero_ticket) {
-
-            alert(
-                "Debe ingresar el número de ticket."
-            );
-
-            return;
-        }
+        // Campos vacíos: ya vienen como UNDEFINED.
 
 
         const totalFiles =
@@ -1653,7 +1844,7 @@
 
         if (totalFiles === 0) {
 
-            alert(
+            showAppModal(
                 "Debe seleccionar al menos un archivo."
             );
 
@@ -1929,7 +2120,7 @@
 
         if (!ticket) {
 
-            alert(
+            showAppModal(
                 "Debe ingresar el número de ticket."
             );
 
@@ -2067,7 +2258,7 @@
             );
 
 
-            alert(
+            showAppModal(
                 error.message
                 ||
                 "No fue posible descargar la matriz."
@@ -3157,7 +3348,7 @@
 
             if (!hasComponents) {
 
-                alert(
+                showAppModal(
                     "Debe cargar al menos un componente."
                 );
 
@@ -3170,67 +3361,20 @@
             // =================================================
 
             const author =
-                document
-                    .getElementById(
-                        "im090_author"
-                    )
-                    ?.value
-                    .trim()
-                || "";
+                fieldOrUndefined("im090_author");
 
 
             const developmentName =
-                document
-                    .getElementById(
-                        "im090_development_name"
-                    )
-                    ?.value
-                    .trim()
-                || "";
+                fieldOrUndefined("im090_development_name");
 
 
             const schemaName =
-                document
-                    .getElementById(
-                        "im090_schema"
-                    )
-                    ?.value
-                    .trim()
-                || "";
-
-
-            if (!author) {
-
-                alert(
-                    "Debe indicar el autor."
-                );
-
-                return;
-            }
-
-
-            if (!developmentName) {
-
-                alert(
-                    "Debe indicar el nombre del desarrollo."
-                );
-
-                return;
-            }
-
-
-            if (
                 fileStore.sql.length > 0
-                &&
-                !schemaName
-            ) {
+                    ? fieldOrUndefined("im090_schema")
+                    : (document.getElementById("im090_schema")?.value.trim() || "");
 
-                alert(
-                    "Debe indicar el esquema de Base de Datos."
-                );
 
-                return;
-            }
+            // Campos vacíos: ya vienen como UNDEFINED.
 
 
             // =================================================
@@ -3525,7 +3669,7 @@
             );
 
 
-            alert(
+            showAppModal(
                 error.message
             );
 
@@ -3843,7 +3987,7 @@
                     null;
 
 
-                alert(
+                showAppModal(
                     job.error
                     ||
                     "Error generando IM090."
@@ -3875,7 +4019,7 @@
             }
 
 
-            alert(
+            showAppModal(
                 error.message
             );
 
