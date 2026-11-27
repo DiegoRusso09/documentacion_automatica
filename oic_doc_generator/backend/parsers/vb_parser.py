@@ -210,7 +210,13 @@ def should_ignore_file(
 
     lower_name = file_name.lower()
 
-    lower_path = full_path.lower()
+    # Se compara con "/" para que funcione igual en Windows
+    # y en Linux; full_path llega relativo a la carpeta de la
+    # aplicación, así la ruta temporal no influye.
+    lower_path = (
+        "/"
+        + full_path.replace("\\", "/").lstrip("/")
+    ).lower()
 
     # =====================================================
     # IGNORE SHELL
@@ -433,11 +439,16 @@ def find_visual_builder_pages(
             # IGNORE FILE
             # =============================================
 
+            relative_path = os.path.relpath(
+                full_path,
+                application_folder
+            )
+
             if should_ignore_file(
 
                 file,
 
-                full_path
+                relative_path
             ):
 
                 continue
@@ -538,6 +549,23 @@ def build_page_metadata(
     )
 
     result = {
+
+        "layout":
+            extraction_metadata.get(
+                "layout"
+            ),
+
+        "extension_name":
+            extraction_metadata.get(
+                "extension_name",
+                ""
+            ),
+
+        "app_id":
+            extraction_metadata.get(
+                "app_id",
+                ""
+            ),
 
         "root_path":
             extraction_metadata.get(

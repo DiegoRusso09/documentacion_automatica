@@ -670,13 +670,145 @@ def _open_zip(uploaded):
     return zipfile.ZipFile(source)
 
 
+VB_SERVICE_PATTERN = re.compile(
+    # classic:    services/<conexión>/openapi3.json
+    # VB Studio:  extension1/sources/services/self/<svc>/openapi3.json
+    r"(?:^|/)services/(?:self/)?([^/]+)/openapi3\.json$"
+)
+
+VB_CATALOG_PATTERN = re.compile(
+    r"(?:^|/)services/(?:self/)?catalog\.json$"
+)
+
+VB_BUSINESS_OBJECT_PATTERN = re.compile(
+    r"(?:^|/)businessObjects/default/objects/([^/]+)/"
+)
+
+VB_CATALOG_URL_PATTERN = re.compile(
+    # vb-catalog://backends/site_App:ics
+    # vb-catalog://backends/base:fscmRest/11.13.18.05:{...}
+    r"vb-catalog://backends/(?:[^:/]+:)?([^/]+)"
+)
+
+
+def _vb_server_text(spec, backend_types):
+
+    # Servidores del servicio en minúsculas. En VB Studio el
+    # servidor es una referencia vb-catalog:// al catálogo;
+    # se agrega una pista del tipo de backend (ics = OIC,
+    # fscmRest/hcmRest = Fusion) para que _call_target sepa
+    # a qué sistema llama.
+    texts = []
+
+    for server in spec.get("servers") or []:
+
+        url = server.get("url", "")
+
+        texts.append(url)
+
+        match = VB_CATALOG_URL_PATTERN.search(url)
+
+        if not match:
+            continue
+
+        backend = match.group(1)
+
+        backend_type = backend_types.get(backend, "")
+
+        if backend.lower() == "ics" or backend_type == "ics":
+            texts.append("/ic/api/integration")
+
+        elif backend.lower() in ("fscmrest", "hcmrest", "crmrest"):
+            texts.append("fscmrestapi")
+
+    return " ".join(texts).lower()
+
+
+def _vb_catalog(archive, names):
+
+    # catalog.json de VB Studio: backends propios (ics,
+    # custom...) y servicios de Fusion (fscmRest, hcmRest)
+    # declarados sin openapi3.json propio.
+    backend_types = {}
+
+    catalog_services = []
+
+    for name in names:
+
+        if not VB_CATALOG_PATTERN.search(name):
+            continue
+
+        try:
+            catalog = json.loads(archive.read(name).decode("utf-8", "ignore"))
+        except ValueError:
+            continue
+
+        for backend, info in (catalog.get("backends") or {}).items():
+            backend_types[backend] = (info or {}).get("serviceType", "")
+
+        for service, spec in (catalog.get("services") or {}).items():
+            catalog_services.append((service, spec or {}))
+
+    return backend_types, catalog_services
+
+
+def _vb_service_calls(connection, spec, server):
+
+    calls = []
+
+    for path, operations in (spec.get("paths") or {}).items():
+
+        methods = [
+            method.upper()
+            for method in operations
+            if method.lower() in ("get", "post", "put", "patch", "delete")
+        ]
+
+        if path == "/describe.openapi":
+
+            # Servicio de Fusion del catálogo: los recursos que
+            # usa la app vienen en x-vb.queryParameters.resources
+            resources = (
+                ((operations.get("get") or {}).get("x-vb") or {})
+                .get("queryParameters", {})
+                .get("resources", "")
+            )
+
+            for resource in filter(None, (r.strip() for r in resources.split(","))):
+                calls.append({
+                    "connection": connection,
+                    "server": server,
+                    "path": f"/{resource}",
+                    "methods": ["GET"]
+                })
+
+            continue
+
+        calls.append({
+            "connection": connection,
+            "server": server,
+            "path": path,
+            "methods": methods
+        })
+
+    return calls
+
+
 def _analyze_vb_zip(uploaded):
 
-    # Estructura de una app Visual Builder exportada:
+    # Estructura de una app Visual Builder exportada.
+    #
+    # VB de OIC (classic):
     #   services/<conexión>/openapi3.json  servicios que llama
     #                                      (servidor + rutas)
     #   businessObjects/default/objects/   Business Objects
     #   webApps/<app>/pages/*-page.json     páginas
+    #
+    # VB Studio (App UI de Fusion):
+    #   extension1/sources/services/self/catalog.json
+    #   extension1/sources/services/self/<svc>/openapi3.json
+    #   extension1/sources/ui/self/applications/<app>/flows/
+    #       <flow>/pages/*-page.json
     result = {
         "calls": [],
         "business_objects": [],
@@ -689,9 +821,13 @@ def _analyze_vb_zip(uploaded):
 
             names = archive.namelist()
 
+            backend_types, catalog_services = _vb_catalog(archive, names)
+
             for name in names:
 
-                if not (name.startswith("services/") and name.endswith("openapi3.json")):
+                match = VB_SERVICE_PATTERN.search(name)
+
+                if not match:
                     continue
 
                 try:
@@ -699,31 +835,27 @@ def _analyze_vb_zip(uploaded):
                 except ValueError:
                     continue
 
-                server = " ".join(
-                    server.get("url", "")
-                    for server in spec.get("servers") or []
-                ).lower()
+                result["calls"] += _vb_service_calls(
+                    match.group(1),
+                    spec,
+                    _vb_server_text(spec, backend_types)
+                )
 
-                for path, operations in (spec.get("paths") or {}).items():
+            for service, spec in catalog_services:
 
-                    methods = [
-                        method.upper()
-                        for method in operations
-                        if method.lower() in ("get", "post", "put", "patch", "delete")
-                    ]
-
-                    result["calls"].append({
-                        "connection": name.split("/")[1],
-                        "server": server,
-                        "path": path,
-                        "methods": methods
-                    })
+                result["calls"] += _vb_service_calls(
+                    service,
+                    spec,
+                    _vb_server_text(spec, backend_types)
+                )
 
             result["business_objects"] = sorted({
-                name.split("/")[3]
-                for name in names
-                if name.startswith("businessObjects/default/objects/")
-                and len(name.split("/")) > 4
+                match.group(1)
+                for match in (
+                    VB_BUSINESS_OBJECT_PATTERN.search(name)
+                    for name in names
+                )
+                if match
             })
 
             result["pages"] = sorted({
@@ -830,8 +962,14 @@ def contribute_apps(model, kind, apps):
 
                 # La ruta empieza con el código de la integración:
                 # /ACME_CREAR_PEDIDO/1.0/start
+                # En VB Studio la ruta es completa:
+                # /ic/api/integration/v1/flows/rest/ACME/1.0/...
                 codes = sorted({
-                    call["path"].strip("/").split("/")[0]
+                    (
+                        OIC_FLOW_PATTERN.search(call["path"]).group(1)
+                        if OIC_FLOW_PATTERN.search(call["path"])
+                        else call["path"].strip("/").split("/")[0]
+                    )
                     for call in calls
                     if call["path"].strip("/")
                 })
