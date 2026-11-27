@@ -189,6 +189,115 @@ CHROMIUM_LOW_MEMORY_ARGS = [
     "--js-flags=--max-old-space-size=256"
 ]
 
+# =========================================================
+# JET SCREENSHOT
+# =========================================================
+#
+# Páginas armadas por jet_page_builder: cargan Oracle JET
+# desde el CDN, así que hay que esperar a que el runtime
+# termine (window.__VB_READY) antes de la captura. Se usa un
+# perfil persistente para reutilizar la caché HTTP entre
+# pantallas y no bajar JET de nuevo en cada una.
+# =========================================================
+
+JET_VIEWPORT_WIDTH = 1366
+
+JET_READY_TIMEOUT_MS = 90000
+
+_jet_lock = threading.Lock()
+
+_JET_PROFILE_DIR = os.path.join(
+    tempfile.gettempdir(),
+    "vb_jet_browser_profile"
+)
+
+
+def generate_jet_screenshot(
+    html_path,
+    output_png
+):
+
+    # Devuelve True si JET dibujó la página; False si no
+    # (CDN caído, tiempo agotado...), para usar el respaldo.
+    with _jet_lock, sync_playwright() as playwright:
+
+        try:
+
+            context = playwright.chromium.launch_persistent_context(
+                _JET_PROFILE_DIR,
+                headless=True,
+                args=CHROMIUM_LOW_MEMORY_ARGS,
+                viewport={
+                    "width": JET_VIEWPORT_WIDTH,
+                    "height": 900
+                }
+            )
+
+        except Exception as error:
+
+            if "Executable doesn't exist" not in str(error):
+                raise
+
+            _install_chromium()
+
+            context = playwright.chromium.launch_persistent_context(
+                _JET_PROFILE_DIR,
+                headless=True,
+                args=CHROMIUM_LOW_MEMORY_ARGS,
+                viewport={
+                    "width": JET_VIEWPORT_WIDTH,
+                    "height": 900
+                }
+            )
+
+        try:
+
+            page = context.new_page()
+
+            print("[PLAYWRIGHT][JET] goto")
+
+            page.goto(
+                f"file:///{html_path}",
+                wait_until="load",
+                timeout=JET_READY_TIMEOUT_MS
+            )
+
+            page.wait_for_function(
+                "window.__VB_READY === true",
+                timeout=JET_READY_TIMEOUT_MS
+            )
+
+            ok = page.evaluate("window.__VB_OK === true")
+
+            errors = page.evaluate("window.__VB_ERRORS || []")
+
+            if errors:
+                print("[PLAYWRIGHT][JET] avisos:", errors[:10])
+
+            if not ok:
+                print("[PLAYWRIGHT][JET] JET no terminó: se usa el respaldo")
+                return False
+
+            # Imágenes de resources/ y fuentes
+            page.wait_for_load_state("networkidle", timeout=15000)
+
+            page.wait_for_timeout(300)
+
+            page.locator("#vb-root").screenshot(
+                path=output_png
+            )
+
+            print(
+                f"[SCREENSHOT_RENDERER] screenshot JET generado: {output_png}"
+            )
+
+            return True
+
+        finally:
+
+            context.close()
+
+
 def generate_screenshot(
     html_path,
     output_png
@@ -271,8 +380,13 @@ def generate_screenshot(
 
 def render_html_to_image(
     html_content,
-    resources_path
+    resources_path,
+    fallback_html=None
 ):
+
+    # html_content puede ser una página JET (jet_page_builder);
+    # en ese caso fallback_html es el HTML del traductor
+    # anterior y se usa si JET no logra dibujar la página.
 
     # =====================================================
     # TEMP DIR
@@ -318,6 +432,28 @@ def render_html_to_image(
     # =====================================================
     # GENERATE
     # =====================================================
+
+    if fallback_html:
+
+        try:
+
+            if generate_jet_screenshot(
+                html_path=html_path,
+                output_png=output_png
+            ):
+                return output_png
+
+        except Exception as error:
+
+            print(
+                "[SCREENSHOT_RENDERER] captura JET falló, "
+                f"se usa el respaldo: {error!r}"
+            )
+
+        html_path = save_render_html(
+            html_content=fallback_html,
+            temp_dir=temp_dir
+        )
 
     generate_screenshot(
 

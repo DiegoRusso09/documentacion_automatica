@@ -120,6 +120,11 @@ from oic_doc_generator.backend.renderers.html_builder import (
     build_complete_html
 )
 
+from oic_doc_generator.backend.renderers.jet_page_builder import (
+    build_vb_jet_html,
+    jet_rendering_enabled
+)
+
 from oic_doc_generator.backend.renderers.screenshot_renderer import (
     render_html_to_image
 )
@@ -2447,6 +2452,27 @@ def generate_word_document(
                             )
                         )
 
+                        # Página con Oracle JET real (Redwood).
+                        # complete_html queda como respaldo si
+                        # el CDN de JET no responde.
+                        jet_html = None
+
+                        if jet_rendering_enabled():
+
+                            try:
+
+                                jet_html = build_vb_jet_html(
+                                    page,
+                                    vb_metadata
+                                )
+
+                            except Exception as jet_error:
+
+                                print(
+                                    "[VB] No se pudo armar la página JET:",
+                                    repr(jet_error)
+                                )
+
                         # =================================
                         # RENDER IMAGE
                         # =================================
@@ -2462,8 +2488,13 @@ def generate_word_document(
                             )
 
                             image_path = render_html_to_image(
-                                html_content=complete_html,
-                                resources_path=resources_path
+                                html_content=jet_html or complete_html,
+                                resources_path=resources_path,
+                                fallback_html=(
+                                    complete_html
+                                    if jet_html
+                                    else None
+                                )
                             )
 
                         except Exception as e:
