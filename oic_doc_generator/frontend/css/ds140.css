@@ -1432,3 +1432,93 @@
     from { transform: translateY(8px) scale(.98); opacity: 0; }
     to { transform: none; opacity: 1; }
 }
+
+
+/* =========================================================
+   IM090 - VISUAL BUILDER STUDIO BACKENDS
+   ========================================================= */
+
+.im090-vb-app {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e3e3e3;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.im090-vb-app-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.im090-vb-app-meta {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.im090-vb-backend-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+.im090-vb-backend-name {
+    font-size: 13px;
+}
+
+.im090-vb-backend-detail {
+    display: block;
+    font-size: 11px;
+    color: #777;
+}
+
+.im090-vb-backend-row select {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.im090-vb-note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 6px;
+}
+
+.im090-vb-warning {
+    font-size: 12px;
+    color: #8a5300;
+    background: #fff4e0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-top: 6px;
+}
+
+.im090-vb-settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    margin-bottom: 10px;
+}
+
+.im090-vb-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    color: #444;
+}
+
+.im090-vb-settings input {
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

@@ -21,6 +21,11 @@ from oic_doc_generator.backend.utils.sql_exporter import (
     export_database_sql
 )
 
+from oic_doc_generator.backend.parsers.vbs_backend_parser import (
+    analyze_vbs_backends,
+    apply_auth_selection
+)
+
 from oic_doc_generator.backend.generators.installation_manual_generator import (
     generate_installation_manual
 )
@@ -959,6 +964,68 @@ def calculate_im090_progress_plan(
 # GENERATE IM090
 # =========================================================
 
+def build_vbs_installation_plan(
+    vb_files,
+    vb_backend_auth=None,
+    vb_install_settings=None
+):
+
+    # Extensiones de Visual Builder Studio con sus backends y
+    # la autenticación elegida en el diálogo para cada uno.
+    # Los zips del VB de OIC (webApps) no entran aquí.
+    selections = vb_backend_auth or []
+
+    apps = []
+
+    for index, vb_file in enumerate(vb_files or []):
+
+        try:
+
+            analysis = analyze_vbs_backends(
+                vb_file
+            )
+
+        except Exception as error:
+
+            print(
+                "[IM090] No se pudo leer la app VB:",
+                repr(error)
+            )
+
+            continue
+
+        if analysis.get("layout") != "extension":
+            continue
+
+        selection = {}
+
+        if index < len(selections):
+
+            item = selections[index] or {}
+
+            if (
+                not item.get("file_name")
+                or
+                item.get("file_name") == analysis["file_name"]
+            ):
+                selection = item.get("selection") or {}
+
+        apps.append(
+            apply_auth_selection(
+                analysis,
+                selection
+            )
+        )
+
+    if not apps:
+        return None
+
+    return {
+        "apps": apps,
+        "settings": vb_install_settings or {}
+    }
+
+
 def generate_im090_service(
 
     job_id,
@@ -983,7 +1050,11 @@ def generate_im090_service(
 
     reviewers=None,
 
-    approvers=None
+    approvers=None,
+
+    vb_backend_auth=None,
+
+    vb_install_settings=None
 ):
 
     # =====================================================
@@ -1490,6 +1561,17 @@ def generate_im090_service(
 
 
     # =====================================================
+    # VISUAL BUILDER STUDIO
+    # =====================================================
+
+    vbs_installation_plan = build_vbs_installation_plan(
+        vb_files,
+        vb_backend_auth,
+        vb_install_settings
+    )
+
+
+    # =====================================================
     # GENERATE WORD
     # =====================================================
 
@@ -1527,7 +1609,10 @@ def generate_im090_service(
                 schema_name,
 
             database_export_info=
-                database_export_info
+                database_export_info,
+
+            vbs_installation_plan=
+                vbs_installation_plan
         )
     )
 

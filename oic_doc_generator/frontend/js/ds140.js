@@ -2917,6 +2917,336 @@
 
 
     // =====================================================
+    // IM090 - VISUAL BUILDER STUDIO BACKENDS
+    // =====================================================
+    //
+    // Al abrir el diálogo se envían los zips de VB al
+    // servidor, que devuelve los backends de cada extensión
+    // (catalog.json). El usuario elige la autenticación de
+    // cada uno y la selección viaja con el IM090.
+    // =====================================================
+
+    let im090VbAnalysis = [];
+
+    let im090VbAuthMethods = [];
+
+    let im090VbSignature = "";
+
+    const im090VbAuthSelection = {};
+
+    const IM090_VB_SERVER_KIND = {
+        local: "servidor local",
+        in_source: "servidor en el código fuente",
+        reference: "apunta a otro backend"
+    };
+
+
+    function im090VbFilesSignature() {
+
+        return fileStore.vb
+            .map(file => `${file.name}:${file.size}:${file.lastModified}`)
+            .join("|");
+    }
+
+
+    function im090VbKey(appIndex, backendId) {
+
+        return `${appIndex}::${backendId}`;
+    }
+
+
+    async function loadIM090VbBackends() {
+
+        const group =
+            document.getElementById("im090_vb_backends_group");
+
+        const container =
+            document.getElementById("im090_vb_backends_container");
+
+        if (!group || !container) {
+            return;
+        }
+
+        if (fileStore.vb.length === 0) {
+
+            group.style.display = "none";
+
+            im090VbAnalysis = [];
+
+            return;
+        }
+
+        group.style.display = "block";
+
+        const signature = im090VbFilesSignature();
+
+        if (
+            signature === im090VbSignature
+            &&
+            im090VbAnalysis.length > 0
+        ) {
+
+            renderIM090VbBackends();
+
+            return;
+        }
+
+        container.innerHTML =
+            '<div class="im090-vb-note">Analizando aplicaciones...</div>';
+
+        try {
+
+            const formData = new FormData();
+
+            fileStore.vb.forEach(
+                file => formData.append("vb_files", file)
+            );
+
+            const response = await fetch(
+                "/api/im090/vb-backends",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            im090VbAnalysis = data.apps || [];
+
+            im090VbAuthMethods = data.auth_methods || [];
+
+            im090VbSignature = signature;
+
+            renderIM090VbBackends();
+        }
+        catch (error) {
+
+            console.error("[IM090] backends VB:", error);
+
+            container.innerHTML =
+                '<div class="im090-vb-warning">'
+                + "No se pudieron leer los backends de las aplicaciones: "
+                + escapeHtml(error.message)
+                + "</div>";
+        }
+    }
+
+
+    function renderIM090VbBackends() {
+
+        const container =
+            document.getElementById("im090_vb_backends_container");
+
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = "";
+
+        im090VbAnalysis.forEach((app, appIndex) => {
+
+            const box = document.createElement("div");
+
+            box.className = "im090-vb-app";
+
+            const title = app.extension_name || app.file_name;
+
+            const uiNames = (app.applications || [])
+                .map(item => item.name)
+                .join(", ");
+
+            box.innerHTML =
+                `<div class="im090-vb-app-title">${escapeHtml(title)}</div>`
+                + '<div class="im090-vb-app-meta">'
+                + escapeHtml(app.file_name)
+                + (app.extension_id ? ` · ${escapeHtml(app.extension_id)}` : "")
+                + (uiNames ? ` · App UI: ${escapeHtml(uiNames)}` : "")
+                + "</div>";
+
+            if (app.layout !== "extension") {
+
+                box.insertAdjacentHTML(
+                    "beforeend",
+                    '<div class="im090-vb-note">'
+                    + "No es una extensión de Visual Builder Studio "
+                    + "(no tiene sources/services/self/catalog.json); "
+                    + "no se configuran backends."
+                    + "</div>"
+                );
+
+                container.appendChild(box);
+
+                return;
+            }
+
+            if (!(app.backends || []).length) {
+
+                box.insertAdjacentHTML(
+                    "beforeend",
+                    '<div class="im090-vb-note">La extensión no define backends propios.</div>'
+                );
+            }
+
+            (app.backends || []).forEach(backend => {
+
+                const row = document.createElement("div");
+
+                row.className = "im090-vb-backend-row";
+
+                const services = (backend.services || []).length;
+
+                const details = [
+                    backend.id,
+                    IM090_VB_SERVER_KIND[backend.server_kind] || backend.server_kind,
+                    services === 1 ? "1 servicio" : `${services} servicios`
+                ];
+
+                if (backend.reference) {
+                    details.push(`→ ${backend.reference}`);
+                }
+
+                const name = document.createElement("div");
+
+                name.className = "im090-vb-backend-name";
+
+                name.innerHTML =
+                    `<strong>${escapeHtml(backend.label)}</strong>`
+                    + `<span class="im090-vb-backend-detail">${escapeHtml(details.join(" · "))}</span>`;
+
+                const select = document.createElement("select");
+
+                select.setAttribute(
+                    "aria-label",
+                    `Autenticación de ${backend.label}`
+                );
+
+                select.innerHTML =
+                    '<option value="">Seleccione la autenticación...</option>'
+                    + im090VbAuthMethods
+                        .map(method =>
+                            `<option value="${escapeHtml(method.key)}">${escapeHtml(method.label)}</option>`
+                        )
+                        .join("");
+
+                const key = im090VbKey(appIndex, backend.id);
+
+                select.value =
+                    im090VbAuthSelection[key]
+                    || backend.detected_auth
+                    || "";
+
+                if (select.value) {
+                    im090VbAuthSelection[key] = select.value;
+                }
+
+                select.addEventListener("change", () => {
+                    im090VbAuthSelection[key] = select.value;
+                });
+
+                row.appendChild(name);
+
+                row.appendChild(select);
+
+                box.appendChild(row);
+            });
+
+            if ((app.base_backends || []).length) {
+
+                box.insertAdjacentHTML(
+                    "beforeend",
+                    '<div class="im090-vb-note">'
+                    + "Backends de Oracle Cloud Applications (no requieren configuración): "
+                    + escapeHtml(app.base_backends.join(", "))
+                    + "</div>"
+                );
+            }
+
+            (app.warnings || []).forEach(warning => {
+
+                box.insertAdjacentHTML(
+                    "beforeend",
+                    `<div class="im090-vb-warning">${escapeHtml(warning)}</div>`
+                );
+            });
+
+            container.appendChild(box);
+        });
+    }
+
+
+    function collectIM090VbAuth() {
+
+        // Lista alineada con fileStore.vb: [{file_name, selection}]
+        return fileStore.vb.map((file, appIndex) => {
+
+            const app = im090VbAnalysis[appIndex] || {};
+
+            const selection = {};
+
+            (app.backends || []).forEach(backend => {
+
+                const value =
+                    im090VbAuthSelection[im090VbKey(appIndex, backend.id)];
+
+                if (value) {
+                    selection[backend.id] = value;
+                }
+            });
+
+            return {
+                file_name: file.name,
+                selection
+            };
+        });
+    }
+
+
+    function collectIM090VbSettings() {
+
+        const value = id =>
+            (document.getElementById(id)?.value || "").trim();
+
+        return {
+            source_env: value("im090_vb_source_env"),
+            target_env: value("im090_vb_target_env"),
+            target_erp_url: value("im090_vb_target_erp_url"),
+            target_oic_url: value("im090_vb_target_oic_url"),
+            repository: value("im090_vb_repository")
+        };
+    }
+
+
+    function missingIM090VbAuth() {
+
+        // Backends con servicios que aún no tienen autenticación
+        const missing = [];
+
+        im090VbAnalysis.forEach((app, appIndex) => {
+
+            (app.backends || []).forEach(backend => {
+
+                if (
+                    (backend.services || []).length > 0
+                    &&
+                    !im090VbAuthSelection[im090VbKey(appIndex, backend.id)]
+                ) {
+                    missing.push(
+                        `${backend.label} (${app.extension_name || app.file_name})`
+                    );
+                }
+            });
+        });
+
+        return missing;
+    }
+
+
+    // =====================================================
     // OPEN IM090 DIALOG
     // =====================================================
 
@@ -2942,12 +3272,17 @@
                     fileStore.oic.length > 0
                     ||
                     fileStore.sql.length > 0
+                    ||
+                    fileStore.vb.length > 0
                 )
                     ?
                     "block"
                     :
                     "none";
         }
+
+        // Backends de Visual Builder Studio (asíncrono)
+        loadIM090VbBackends();
 
         // =================================================
         // ERP ROLE INPUT
@@ -3357,6 +3692,26 @@
 
 
             // =================================================
+            // VISUAL BUILDER STUDIO - AUTENTICACIÓN
+            // =================================================
+
+            const missingVbAuth =
+                missingIM090VbAuth();
+
+            if (missingVbAuth.length > 0) {
+
+                showAppModal(
+                    "Seleccione la autenticación de los backends de "
+                    + "Visual Builder Studio: "
+                    + missingVbAuth.join(", ")
+                    + "."
+                );
+
+                return;
+            }
+
+
+            // =================================================
             // VALUES
             // =================================================
 
@@ -3493,6 +3848,25 @@
                 }
             );
 
+
+
+            // Autenticación elegida por backend de VB Studio
+            if (fileStore.vb.length > 0) {
+
+                formData.append(
+                    "vb_backend_auth",
+                    JSON.stringify(
+                        collectIM090VbAuth()
+                    )
+                );
+
+                formData.append(
+                    "vb_install_settings",
+                    JSON.stringify(
+                        collectIM090VbSettings()
+                    )
+                );
+            }
 
 
             // =================================================

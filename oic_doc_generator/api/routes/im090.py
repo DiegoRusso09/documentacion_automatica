@@ -4,6 +4,7 @@
 # =========================================================
 
 from io import BytesIO
+import json
 from typing import List, Optional
 import os
 
@@ -24,6 +25,11 @@ from fastapi.responses import (
 
 from oic_doc_generator.api.services.im090_service import (
     generate_im090_service
+)
+
+from oic_doc_generator.backend.parsers.vbs_backend_parser import (
+    AUTH_METHODS,
+    analyze_vbs_backends
 )
 
 from oic_doc_generator.backend.utils.job_temp import (
@@ -129,7 +135,11 @@ def run_im090_job(
 
     erp_roles,
 
-    approvers
+    approvers,
+
+    vb_backend_auth=None,
+
+    vb_install_settings=None
 
 ):
 
@@ -176,7 +186,13 @@ def run_im090_job(
                     [],
 
                 approvers=
-                    approvers
+                    approvers,
+
+                vb_backend_auth=
+                    vb_backend_auth,
+
+                vb_install_settings=
+                    vb_install_settings
             )
 
 
@@ -192,6 +208,93 @@ def run_im090_job(
             job_id,
             error
         )
+
+
+# =========================================================
+# VISUAL BUILDER STUDIO - BACKENDS
+# =========================================================
+
+def parse_vb_backend_auth(raw):
+
+    # Selección de autenticación enviada por el diálogo.
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        print("[IM090] vb_backend_auth inválido")
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    return [
+        item if isinstance(item, dict) else {}
+        for item in data
+    ]
+
+
+def parse_vb_install_settings(raw):
+
+    # Datos del pase de Visual Builder Studio enviados por el
+    # diálogo (solo textos conocidos).
+    if not raw:
+        return {}
+
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return {}
+
+    if not isinstance(data, dict):
+        return {}
+
+    keys = (
+        "source_env",
+        "target_env",
+        "target_erp_url",
+        "target_oic_url",
+        "repository"
+    )
+
+    return {
+        key: str(data.get(key) or "").strip()[:300]
+        for key in keys
+    }
+
+
+@router.post(
+    "/im090/vb-backends"
+)
+async def detect_vb_backends(
+
+    vb_files: Optional[List[UploadFile]] = File(None)
+
+):
+
+    # Backends de cada zip de Visual Builder Studio, para que
+    # el diálogo del IM090 pida la autenticación de cada uno.
+    apps = []
+
+    for memory_file in await to_memory_files(vb_files):
+
+        apps.append(
+            analyze_vbs_backends(
+                memory_file
+            )
+        )
+
+    return {
+        "apps": apps,
+        "auth_methods": [
+            {
+                "key": method["key"],
+                "label": method["label"]
+            }
+            for method in AUTH_METHODS
+        ]
+    }
 
 
 # =========================================================
@@ -223,7 +326,14 @@ async def start_im090(
 
     bip_files: Optional[List[UploadFile]] = File(None),
 
-    sql_files: Optional[List[UploadFile]] = File(None)
+    sql_files: Optional[List[UploadFile]] = File(None),
+
+    # JSON: [{"file_name": "...", "selection": {"ics": "basic"}}]
+    # alineado con vb_files.
+    vb_backend_auth: str = Form(""),
+
+    # JSON: ambiente origen/destino, URLs y repositorio del pase
+    vb_install_settings: str = Form("")
 
 ):
 
@@ -398,7 +508,15 @@ async def start_im090(
 
         erp_roles or [],
 
-        approvers or []
+        approvers or [],
+
+        parse_vb_backend_auth(
+            vb_backend_auth
+        ),
+
+        parse_vb_install_settings(
+            vb_install_settings
+        )
     )
 
     # =====================================================

@@ -59,6 +59,10 @@ from oic_doc_generator.backend.renderers.bip_installation_renderer import (
     render_bip_validation_image
 )
 
+from oic_doc_generator.backend.generators.vbs_installation_section import (
+    add_vbs_installation_section
+)
+
 from oic_doc_generator.backend.renderers.oic_installation_renderer import (
     render_oic_integration_row_image,
     render_oic_activate_icon_image,
@@ -5393,6 +5397,7 @@ def generate_installation_manual(
     database_export_info=None,
     bip_installation_plan=None,
     oic_installation_plan=None,
+    vbs_installation_plan=None,
     job_id=None
 ):
 
@@ -5517,9 +5522,33 @@ def generate_installation_manual(
                     1
             )
 
+    # Sin BD, el título "3" (que agrega la sección de BD) se
+    # pone antes de la primera sección de instalación.
+    section_three_pending = (
+        "Objetos BD" not in selected_components
+    )
+
+    def add_section_three_header():
+
+        nonlocal section_three_pending
+
+        if section_three_pending:
+
+            create_header(
+                document,
+                "3\tInstrucciones para la instalación del Módulo"
+            )
+
+            section_three_pending = False
+
+
+    # Orden del capítulo 3: BD (3.1), reportes BIP (3.2),
+    # integraciones OIC (3.3) y aplicaciones (3.4).
     if bip_installation_plan:
 
         document.add_page_break()
+
+        add_section_three_header()
 
         add_bip_installation_section(
             document,
@@ -5536,10 +5565,28 @@ def generate_installation_manual(
 
         document.add_page_break()
 
+        add_section_three_header()
+
         add_oic_installation_section(
             document,
             oic_installation_plan,
             job_id=job_id
+        )
+
+
+    # =====================================================
+    # VISUAL BUILDER STUDIO (APLICACIONES)
+    # =====================================================
+
+    if vbs_installation_plan:
+
+        document.add_page_break()
+
+        add_section_three_header()
+
+        add_vbs_installation_section(
+            document,
+            vbs_installation_plan
         )
 
 

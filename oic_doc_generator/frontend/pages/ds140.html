@@ -879,6 +879,62 @@
 
 
             <!-- =========================================
+                 VISUAL BUILDER STUDIO - BACKENDS
+            ========================================== -->
+
+            <div id="im090_vb_backends_group" class="im090-requirement-card" style="display:none;">
+
+                <div class="im090-requirement-card-title">
+                    Visual Builder Studio - Backends
+                </div>
+
+                <div class="im090-requirement-help">
+                    Datos del pase y backends detectados en cada aplicación.
+                    El zip solo se usa como referencia: no guarda el método de
+                    autenticación, así que seleccione el que usa cada backend
+                    en el ambiente destino para que el manual muestre los pasos
+                    de matriculación correspondientes. Los campos vacíos quedan
+                    como &lt;valor por completar&gt;.
+                </div>
+
+                <div class="im090-vb-settings">
+
+                    <label>
+                        Ambiente origen (proyecto VBS)
+                        <input id="im090_vb_source_env" type="text" placeholder="TEST">
+                    </label>
+
+                    <label>
+                        Ambiente destino
+                        <input id="im090_vb_target_env" type="text" placeholder="PROD">
+                    </label>
+
+                    <label>
+                        URL ERP destino
+                        <input id="im090_vb_target_erp_url" type="text"
+                            placeholder="https://<instancia>.fa.ocs.oraclecloud.com">
+                    </label>
+
+                    <label>
+                        URL OIC destino
+                        <input id="im090_vb_target_oic_url" type="text"
+                            placeholder="https://<instancia>.integration.<región>.ocp.oraclecloud.com">
+                    </label>
+
+                    <label>
+                        Repositorio Git (opcional)
+                        <input id="im090_vb_repository" type="text" placeholder="Ej. Lector_Inteligente">
+                    </label>
+
+                </div>
+
+                <div id="im090_vb_backends_container">
+                </div>
+
+            </div>
+
+
+            <!-- =========================================
                  COMPONENT SUMMARY
             ========================================== -->
 
